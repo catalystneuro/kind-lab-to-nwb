@@ -1,0 +1,85 @@
+[project]
+name = "kind-lab-to-nwb"
+version = "0.0.1"
+description = "NWB conversion scripts, functions, and classes for Kind lab conversion"
+readme = "README.md"
+authors = [{ name = "CatalystNeuro", email = "ben.dichter@catalystneuro.com" }]
+maintainers = [{ name = "CatalystNeuro", email = "ben.dichter@catalystneuro.com" }]
+license = { file = "LICENSE" }
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+  "neuroconv",
+  "nwbinspector",
+]
+
+[project.urls]
+Repository="https://github.com/catalystneuro/kind-lab-to-nwb"
+
+[project.optional-dependencies]
+arc_ecephys_2024 = [
+  "neuroconv==0.6.5"   # Pinned dependencies to specific versions
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["*"]
+
+[tool.black]
+line-length = 120
+target-version = ['py39', 'py310', 'py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  \.toml
+  |\.yml
+  |\.md
+  |\.txt
+  |\.sh
+  |\.git
+  |\.ini
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+reverse_relative = true
+known_first_party = ["kind_lab_to_nwb"]
+
+[tool.codespell]
+skip = '.git*,*.pdf,*.css'
+check-hidden = true
+ignore-words-list = 'assertin'
+
+[tool.ruff]
+
+[tool.ruff.lint]
+select = [
+    #"F401",  # Unused import
+    "I",  # All isort rules
+]
+fixable = ["ALL"]
+
+
+[tool.ruff.lint.isort]
+relative-imports-order = "closest-to-furthest"
+known-first-party = ["neuroconv"]

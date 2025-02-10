@@ -1,4 +1,4 @@
-name: kind_lab_to_nwb_env
+name: kind-lab-to-nwb-env
 channels:
 - conda-forge
 - defaults

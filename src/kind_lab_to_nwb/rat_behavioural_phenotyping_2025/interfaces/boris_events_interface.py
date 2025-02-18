@@ -79,12 +79,13 @@ class BORISBehavioralEventsInterface(BaseDataInterface):
         with open(self.file_path, "r") as f:
             boris_output = json.load(f)
         for idx, event in boris_output["behaviors_conf"].items():
+            if event["type"] != "State event" and event["type"] != "Point event":
+                raise NotImplementedError(f"Event {event['type']} not implemented")
             if event["code"] == event_type and event["type"] == "State event":
                 return True
             elif event["code"] == event_type and event["type"] == "Point event":
                 return False
-            else:
-                raise ValueError(f"Could not determine is the event {event_type} is a state or point event.")
+        raise ValueError(f"Could not determine is the event {event_type} is a state or point event.")
 
     def _get_data_from_observation_id(self) -> List[Dict]:
 

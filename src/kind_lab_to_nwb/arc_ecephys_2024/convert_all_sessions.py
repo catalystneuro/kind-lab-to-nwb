@@ -8,10 +8,9 @@ from concurrent.futures import (
 from pathlib import Path
 from pprint import pformat
 from typing import Union
-
 from tqdm import tqdm
 
-from .arc_ecephys_2024_convert_session import (
+from .convert_session import (
     session_to_nwb,
 )
 

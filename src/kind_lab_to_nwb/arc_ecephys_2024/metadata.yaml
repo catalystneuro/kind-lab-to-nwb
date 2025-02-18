@@ -1,20 +1,65 @@
 NWBFile:
-  keywords:
-    - Keyword1
-    - Keyword2
-    - Keyword3
-  related_publications:
-    https://doi.org/### or link to APA or MLA citation of the publication
-  session_description:
-    A rich text description of the experiment. Can also just be the abstract of the publication.
-  institution: Institution where the lab is located
+  keywords: # to check with Rignanese, Paul
+    - SYNGAP1
+    - epilepsy
+    - encephalopathy
+    - intellectual disability
+    - autism
+    - neurodevelopmental disorder
+    - rasopathy
+    - synaptic plasticity
+    - learning and memory
+  experiment_description:
+    The experiment investigated fear conditioning in male wild-type and Syngap+/∆-GAP rats (n=31, ages 3-6 months).
+    Recordings included Local Field Potentials (LFP), electroencephalogram (EEG), head-mounted accelerometer data, and behavioral video recordings across five experimental days.
+    The protocol involved context habituation, seizure screening, and a fear conditioning paradigm where rats were exposed to blue flashing light (5 Hz, 110 lux) paired with foot shocks.
+    Data were collected using OpenEphys software and a 16-channel Intan digitizing head stage.
+    Behavioral paradigm triggers were managed using FreezeFrame software, and behavioral cameras recorded rat movements throughout the experimental sessions.
+    The experimental design allowed for assessing neural responses, seizure occurrence, and fear learning in these genetic variants.
+  institution: University of Edinburgh
   lab: Kind
   experimenter:
-    - Last, First Middle
-    - Last, First Middle
+    - Rignanese, Paul
 Subject:
   species: Rattus norvegicus
-  description: A rich text description of the subject
-  age: TBD  # in ISO 8601, such as "P1W2D"
-  sex: TBD  # One of M, F, U, or O
-  date_of_birth: 2014-06-22 00:00:00-04:00  # Example
+  description: Subjects were Evans-SGem2/PWC were genotyped by PCR.
+    This study used male rats (n=31, 16 wild-types and 15 Syngap+/∆-GAP) bred in-house and maintained in standard housing on a 12h/12h light dark with ad libitum access to water and food.
+    Experimental animals were weaned from their dams postnatal day 22 (P22D) and housed with their WT littermates, 2-4 animals per cage.
+    Genetically modified males and WT littermates ranging from 3 to 6 months of age were used for all experiments.
+  age: P12W/P24W
+  sex: M
+  # TODO: add strain and genotype
+SessionType:
+  Hab_1:
+    session_description:
+      Experimental day 1. First session of test context habituation.
+      On experimental day 1, LFP, EEG  and head-mounted accelerometer recordings were made while all rats were habituated to the testing context for 5 min.
+  Seizure_screening:
+    session_description:
+      Experimental day 2. Session to probe seizures occurrence.
+      On experimental day 2, in a subset of animals (17 out of 31 animals), recordings were made for 1-3 hours.
+      This recording session allowed the number of seizures per rat to be calculated for correlation with subsequent behavioural measures.
+  Hab_2:
+    session_description:
+      Experimental day 3. Second session of test context habituation.
+      On experimental day 3, recordings were made while all rats were habituated to the testing context in the same manner as for experimental day 1.
+  Baseline_tone_flash_hab:
+    session_description:
+      Experimental day 4. Session to probe CS (blue led flash) pre-exposure without fear.
+      On experimental day 4, recordings were made while a subset of 19 rats were pre-exposed to 10s of blue flashing light (5 Hz 110 lux flashes, 50 / 50 duty cycle)
+      of the same properties as that used for subsequent conditioning and recall, the purpose of this exposure was to test for behavioural and LFP responses to the sensory
+      stimuli prior to association with a footshock. Pre-exposure was followed immediately by conditioning.
+  Cond:
+    session_description:
+      Experimental day 4. onditioning session with paired exposure to CS (blue led flash) and US (footshock).
+      Conditioning occurred over a 21 min period and consisted of a 3 min period to allow for exploration of the chamber followed by 6 pairings of a conditioned stimulus (CS)
+      co-terminating with the unconditioned stimulus (US).
+      In a subset of 13 animals recordings were made in that session.
+      The CS was a 10 sec blue flashing light (5 Hz 110 lux flashes, 50 / 50 duty cycle); the US was a 1 sec, 0.8 mA scrambled foot shock delivered through the bars of the floor;
+      CS presentations started at 180, 360, 490, 770, 980, and 1280 sec into the training period (Katsenavaki et al 2024).
+  Recall:
+    session_description:
+      Experimental day 5. Fear response assessment session with re-exposure to the CS (blue led flash).
+      24 hr after conditioning, on experimental day 5, retention of the conditioned response was tested.
+      Recordings were made while rats were placed into the testing context, with a 2 min period to allow for exploration,
+      then ten 30 sec long presentations of the CS, separated by 30 sec of CS were given.

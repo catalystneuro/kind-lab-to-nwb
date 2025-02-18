@@ -10,7 +10,7 @@ from neuroconv.utils import (
     dict_deep_update,
     load_dict_from_file,
 )
-from neuroconv.tools.path_expansion import LocalPathExpander
+
 
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.marble_interaction.nwbconverter import (
     MarbleInteractionNWBConverter,
@@ -20,6 +20,7 @@ from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils import (
     extract_subject_metadata_from_excel,
     get_subject_metadata_from_task,
     get_session_ids_from_excel,
+    make_ndx_event_nwbfile_from_metadata,
 )
 
 
@@ -86,14 +87,17 @@ def session_to_nwb(
         sex = "U"
     metadata["Subject"]["sex"] = sex
     # TODO add genotype
-    metadata["NWBFile"]["session_id"] = session_id
 
-    # extract subject metadata from excel sheet
+    metadata["NWBFile"]["session_id"] = session_id
+    metadata["NWBFile"]["session_description"] = metadata["SessionTypes"][session_id]["session_description"]
+
+    nwbfile = make_ndx_event_nwbfile_from_metadata(metadata=metadata)
 
     # Run conversion
     converter.run_conversion(
         metadata=metadata,
         nwbfile_path=nwbfile_path,
+        nwbfile=nwbfile,
         conversion_options=conversion_options,
         overwrite=overwrite,
     )

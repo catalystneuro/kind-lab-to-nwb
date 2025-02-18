@@ -4,7 +4,7 @@ import numpy as np
 from typing import List, Dict, Tuple
 import json
 from datetime import datetime
-from ndx_events import EventsTable, MeaningsTable, CategoricalVectorData, TimestampVectorData
+from ndx_events import EventsTable, MeaningsTable, CategoricalVectorData
 from neuroconv.basedatainterface import BaseDataInterface
 from neuroconv.utils import DeepDict
 from pydantic import FilePath

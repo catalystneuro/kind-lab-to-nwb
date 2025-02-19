@@ -2,7 +2,7 @@
 
 from pathlib import Path
 from typing import Union
-from zoneinfo import ZoneInfo
+from pynwb import NWBHDF5IO
 from pydantic import FilePath
 import warnings
 
@@ -10,7 +10,7 @@ from neuroconv.utils import (
     dict_deep_update,
     load_dict_from_file,
 )
-
+from neuroconv.tools.nwb_helpers import configure_and_write_nwbfile
 
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.marble_interaction.nwbconverter import (
     MarbleInteractionNWBConverter,
@@ -49,9 +49,8 @@ def session_to_nwb(
     conversion_options = dict()
 
     # Add Behavioral Video
-    print(video_file_paths)
-    # source_data.update(dict(Video=dict(file_paths=video_file_paths)))
-    # conversion_options.update(dict(Video=dict()))
+    source_data.update(dict(Video=dict(file_paths=video_file_paths)))
+    conversion_options.update(dict(Video=dict()))
 
     # Add Marble Interaction Annotated events from BORIS output
     if boris_file_path is not None:
@@ -133,7 +132,7 @@ if __name__ == "__main__":
     video_folder_path = cohort_folder_path / session_id
     if not video_folder_path.exists():
         raise FileNotFoundError(f"Folder {cohort_folder_path} does not exist")
-    video_file_paths = list(video_folder_path.glob(f"*subject_metadata['animal ID']*"))
+    video_file_paths = list(video_folder_path.glob(f"*{subject_metadata['animal ID']}*"))
 
     stub_test = False
     overwrite = True

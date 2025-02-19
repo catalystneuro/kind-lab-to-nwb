@@ -2,9 +2,9 @@
 
 from pathlib import Path
 from typing import Union
-from pynwb import NWBHDF5IO
 from pydantic import FilePath
 import warnings
+from datetime import datetime
 
 from neuroconv.utils import (
     dict_deep_update,
@@ -89,6 +89,18 @@ def session_to_nwb(
 
     metadata["NWBFile"]["session_id"] = session_id
     metadata["NWBFile"]["session_description"] = metadata["SessionTypes"][session_id]["session_description"]
+
+    # Check if session_start_time exists in metadata
+    if "session_start_time" not in metadata["NWBFile"]:
+        # Extract date from first video filename
+        video_path = Path(video_file_paths[0])
+        date_str = video_path.stem.split("_")[0]  # Get "2022-11-23" from filename
+        try:
+            # Convert to datetime
+            session_start_time = datetime.strptime(date_str, "%Y-%m-%d")
+            metadata["NWBFile"]["session_start_time"] = session_start_time
+        except ValueError:
+            warnings.warn(f"Could not parse session start time from video filename {video_path.name}")
 
     nwbfile = make_ndx_event_nwbfile_from_metadata(metadata=metadata)
 

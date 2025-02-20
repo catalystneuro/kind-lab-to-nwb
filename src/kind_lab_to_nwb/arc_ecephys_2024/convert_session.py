@@ -42,6 +42,11 @@ def session_to_nwb(
     recordings_folder_path = path_expander_metadata["source_data"]["OpenEphysRecording"]["folder_path"]
     source_data.update(dict(OpenEphysRecording=dict(folder_path=recordings_folder_path, stream_name="Signals CH")))
     conversion_options.update(dict(OpenEphysRecording=dict(stub_test=stub_test)))
+    # TODO :  Add EEG and LFP with spyglass compatibility
+
+    # TODO
+    # Add openephys events
+    # Add accelometer data
 
     # Add Video
     video_file_path = next(data_dir_path.glob(f"{subject_id}/{session_id}/*.avi"))

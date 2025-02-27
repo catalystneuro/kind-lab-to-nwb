@@ -36,6 +36,37 @@ Devices:
     model: "my_model"
     lens: "my_lens"
     camera_name: "my_camera_name"
+  DataAcqDevice:
+    name: "data_acq_device"
+    description: "Data acquisition device used to record the eeg data."
+    system: "my_system"
+    amplifier: "my_amplifier"
+    adc_circuit: "my_adc_circuit"
+Ecephys:
+  ShanksElectrode:
+    name: "1"
+    rel_x: 0.0
+    rel_y: 0.0
+    rel_z: 0.0
+  Shank:
+    name: "1"
+  Probe:
+    name: "probe"
+    id: 0
+    probe_type: "my_probe_type"
+    units: "my_units"
+    probe_description: "my_probe_description"
+    contact_side_numbering: False
+    contact_size: 1.0
+  NwbElectrodeGroup:
+    name: "my_electrode_group"
+    description: "my_description"
+    location: "my_location"
+    targeted_location: "my_targeted_location"
+    targeted_x: 0.0
+    targeted_y: 0.0
+    targeted_z: 0.0
+    units: "mm"
 SessionType:
   Hab_1:
     session_description:

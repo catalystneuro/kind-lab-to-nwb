@@ -1,24 +1,16 @@
-"""
-Create a mock NWB file with spyglass-compatible behavior data for testing purposes.
-
-This file also contains ephys data, since it is necessary for the behavior data to be compatible with spyglass.
-"""
+"""Create a mock NWB file with spyglass-compatible LFP data for testing purposes."""
 
 from typing import Optional
 import numpy as np
 
 from pynwb import NWBFile
-from pynwb.ecephys import ElectricalSeries
-
-from neuroconv.datainterfaces import OpenEphysRecordingInterface
+from pynwb.ecephys import LFP
 
 from ndx_franklab_novela import DataAcqDevice, Probe, Shank, ShanksElectrode, NwbElectrodeGroup
 
 
-def add_eeg(
-    nwbfile: NWBFile,
-    metadata,
-) -> None:
+def add_lfp(nwbfile: NWBFile, metadata, conversion_options: Optional[dict] = None) -> None:
+
     data_acq_device = DataAcqDevice(**metadata["Devices"]["DataAcqDevice"])
     nwbfile.add_device(data_acq_device)
 
@@ -66,6 +58,11 @@ def add_eeg(
     # electrodes = nwbfile.electrodes.create_region(
     #     name="electrodes", region=list(range(number_of_channels)), description="electrodes"
     # )
-    # TODO extract electrical_series from OpenEphysRecordingInterface
-    eeg = ElectricalSeries(electrical_series=electrical_series)
-    nwbfile.add_acquisition(eeg)
+
+    lfp_electrodes = nwbfile.electrodes.create_region(
+        name="electrodes", region=list(range(number_of_channels)), description="lfp electrodes"
+    )
+    # TODO extract lfp_eseries from OpenEphysRecordingInterface
+    lfp = LFP(electrical_series=lfp_eseries)
+    ecephys_module = nwbfile.create_processing_module(name="ecephys", description="ecephys module")
+    ecephys_module.add(lfp)

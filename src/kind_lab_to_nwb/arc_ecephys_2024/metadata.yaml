@@ -28,7 +28,14 @@ Subject:
     Genetically modified males and WT littermates ranging from 3 to 6 months of age were used for all experiments.
   age: P12W/P24W
   sex: M
-  # TODO: add strain and genotype
+Devices:
+  CameraDevice:
+    name: "camera_device"
+    description: "Camera used to record the behavior of the animals during the experiments."
+    meters_per_pixel: 1.0
+    model: "my_model"
+    lens: "my_lens"
+    camera_name: "my_camera_name"
 SessionType:
   Hab_1:
     session_description:

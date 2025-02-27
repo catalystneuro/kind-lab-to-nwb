@@ -9,9 +9,14 @@ from neuroconv.utils import (
     dict_deep_update,
     load_dict_from_file,
 )
+from neuroconv.tools.nwb_helpers import (
+    get_default_nwbfile_metadata,
+    make_nwbfile_from_metadata,
+    configure_and_write_nwbfile,
+)
 from neuroconv.tools.path_expansion import LocalPathExpander
 
-from nwbconverter import ArcEcephys2024NWBConverter
+from spyglass_utils import add_behavioral_video
 import pandas as pd
 
 
@@ -21,6 +26,7 @@ def session_to_nwb(
     path_expander_metadata: dict,
     stub_test: bool = False,
     overwrite: bool = False,
+    verbose: bool = True,
 ):
 
     data_dir_path = Path(data_dir_path)
@@ -35,25 +41,10 @@ def session_to_nwb(
     session_id = path_expander_metadata["metadata"]["NWBFile"]["session_id"]
     nwbfile_path = output_dir_path / f"sub_{subject_id}-ses{session_id}.nwb"
 
-    source_data = dict()
-    conversion_options = dict()
-
-    # Add Recording
-    recordings_folder_path = path_expander_metadata["source_data"]["OpenEphysRecording"]["folder_path"]
-    source_data.update(dict(OpenEphysRecording=dict(folder_path=recordings_folder_path, stream_name="Signals CH")))
-    conversion_options.update(dict(OpenEphysRecording=dict(stub_test=stub_test)))
-    # TODO :  Add EEG and LFP with spyglass compatibility
-
-    # Add Video
-    video_file_path = next(data_dir_path.glob(f"{subject_id}/{session_id}/*.avi"))
-    source_data.update(dict(Video=dict(file_paths=[video_file_path])))
-    conversion_options.update(dict(Video=dict(stub_test=stub_test)))
-
-    # Instantiate converter
-    converter = ArcEcephys2024NWBConverter(source_data=source_data)
+    # Get default metadata
+    metadata = get_default_nwbfile_metadata()
 
     # Add datetime to conversion
-    metadata = converter.get_metadata()
     session_date = path_expander_metadata["metadata"]["extras"]["session_date"]
     session_time = path_expander_metadata["metadata"]["extras"]["session_time"]
     session_start_time = datetime.datetime.strptime(f"{session_date} {session_time}", "%Y-%m-%d %H-%M-%S")
@@ -87,13 +78,15 @@ def session_to_nwb(
 
     metadata["Subject"]["genotype"] = subject_genotype
 
-    # Run conversion
-    converter.run_conversion(
-        metadata=metadata,
-        nwbfile_path=nwbfile_path,
-        conversion_options=conversion_options,
-        overwrite=overwrite,
-    )
+    nwbfile = make_nwbfile_from_metadata(metadata=metadata)
+
+    # Add behavioral video
+    video_file_path = next(data_dir_path.glob(f"{subject_id}/{session_id}/*.avi"))
+    add_behavioral_video(nwbfile=nwbfile, metadata=metadata, video_file_path=video_file_path)
+
+    if verbose:
+        print("Write NWB file")
+    configure_and_write_nwbfile(nwbfile=nwbfile, backend="hdf5", output_filepath=nwbfile_path)
 
 
 if __name__ == "__main__":

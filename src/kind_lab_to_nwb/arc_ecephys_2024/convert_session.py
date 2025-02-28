@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import Union
 from zoneinfo import ZoneInfo
 
+from pynwb import NWBHDF5IO
+
 from neuroconv.utils import (
     dict_deep_update,
     load_dict_from_file,
@@ -16,7 +18,7 @@ from neuroconv.tools.nwb_helpers import (
 )
 from neuroconv.tools.path_expansion import LocalPathExpander
 
-from spyglass_utils import add_behavioral_video
+from spyglass_utils import add_behavioral_video, get_channels_info_from_subject_id, add_eeg
 import pandas as pd
 
 
@@ -84,9 +86,23 @@ def session_to_nwb(
     video_file_path = next(data_dir_path.glob(f"{subject_id}/{session_id}/*.avi"))
     add_behavioral_video(nwbfile=nwbfile, metadata=metadata, video_file_path=video_file_path)
 
+    # Add EEG data
+    excel_file_path = data_dir_path / "channels_details_v2.xlsx"
+    channels_info = get_channels_info_from_subject_id(subject_id=subject_id, excel_file_path=excel_file_path)
+    folder_path = path_expander_metadata["source_data"]["OpenEphysRecording"]["folder_path"]
+
+    add_eeg(
+        nwbfile=nwbfile,
+        metadata=metadata,
+        channels_info=channels_info,
+        folder_path=folder_path,
+        stream_name="Signals CH",
+    )
+
     if verbose:
         print("Write NWB file")
-    configure_and_write_nwbfile(nwbfile=nwbfile, backend="hdf5", output_filepath=nwbfile_path)
+    with NWBHDF5IO(nwbfile_path, mode="w") as io:
+        io.write(nwbfile)
 
 
 if __name__ == "__main__":
@@ -108,7 +124,7 @@ if __name__ == "__main__":
     # Expand paths and extract metadata
     metadata_list = path_expander.expand_paths(source_data_spec)
 
-    stub_test = True
+    stub_test = False
     overwrite = True
 
     session_to_nwb(

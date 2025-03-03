@@ -1,10 +1,9 @@
 """
-Create a mock NWB file with spyglass-compatible behavior data for testing purposes.
+Utility functions to add EEG data from OpenEphys recordings to NWB files.
 
-This file also contains ephys data, since it is necessary for the behavior data to be compatible with spyglass.
+This module handles extraction of EEG data from OpenEphys files, including channel information
+management and electrical series creation in the NWB format.
 """
-
-from spikeinterface.extractors.neoextractors import OpenEphysLegacyRecordingExtractor
 
 from pydantic import DirectoryPath, FilePath
 from typing import Optional
@@ -13,6 +12,8 @@ import pandas as pd
 
 from pynwb import NWBFile
 from pynwb.ecephys import ElectricalSeries
+
+from spikeinterface.extractors.neoextractors import OpenEphysLegacyRecordingExtractor
 
 from ndx_franklab_novela import DataAcqDevice, Probe, Shank, ShanksElectrode, NwbElectrodeGroup
 
@@ -49,7 +50,7 @@ def get_channels_info_from_subject_id(subject_id: str, excel_file_path: FilePath
         if channel_id in subject_df.columns:
             value = subject_df[channel_id].iloc[0]
             bad_channel = value == "bad"
-            location = "Bad channel with no location" if bad_channel else value
+            location = "unknown" if bad_channel else value
 
             channels_info[channel_id] = {"location": location, "bad_channel": bad_channel}
         else:

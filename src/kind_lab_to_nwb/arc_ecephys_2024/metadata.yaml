@@ -32,40 +32,42 @@ Devices:
   CameraDevice:
     name: "camera_device"
     description: "Camera used to record the behavior of the animals during the experiments."
-    meters_per_pixel: 1.0
-    model: "my_model"
-    lens: "my_lens"
-    camera_name: "my_camera_name"
+    manufacturer: "Name of the camera manufacturer" #TODO add
+    meters_per_pixel: 1.0 #TODO add (Spatial resolution of the camera in meters per pixel)
+    model: "Model number or name of the camera" #TODO add
+    lens: "Specifications of the camera lens" #TODO add
+    camera_name: "Common name or label used for the camera" #TODO add
   DataAcqDevice:
     name: "data_acq_device"
-    description: "Data acquisition device used to record the eeg data."
-    system: "my_system"
-    amplifier: "my_amplifier"
-    adc_circuit: "my_adc_circuit"
+    description: "16-channel digitizing head stage C3334."
+    manufacturer: "Intan Technologies"
+    system: "the system that the device is part of" #TODO add
+    amplifier: "the amplifier used for this data acquisition device" #TODO add
+    adc_circuit: "the adc circuit used for this data acquisition device" #TODO add
 Ecephys:
   ShanksElectrode:
     name: "1"
-    rel_x: 0.0
-    rel_y: 0.0
-    rel_z: 0.0
+    rel_x: 0.0 #TODO add
+    rel_y: 0.0 #TODO add
+    rel_z: 0.0 #TODO add
   Shank:
     name: "1"
   Probe:
     name: "probe"
     id: 0
-    probe_type: "my_probe_type"
-    units: "my_units"
-    probe_description: "my_probe_description"
+    probe_type: "TDB"
+    units: "TDB"
+    probe_description: "TDB"
     contact_side_numbering: False
-    contact_size: 1.0
+    contact_size: 1.0 #TODO add
   NwbElectrodeGroup:
-    name: "my_electrode_group"
-    description: "my_description"
-    location: "my_location"
-    targeted_location: "my_targeted_location"
-    targeted_x: 0.0
-    targeted_y: 0.0
-    targeted_z: 0.0
+    name: "electrode_group"
+    description: "16-channel electrode group recording LFP and EEG signals."
+    location: "TDB"
+    targeted_location: "TDB"
+    targeted_x: 0.0 #TODO add
+    targeted_y: 0.0 #TODO add
+    targeted_z: 0.0 #TODO add
     units: "mm"
 SessionType:
   Hab_1:

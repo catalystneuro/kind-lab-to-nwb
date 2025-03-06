@@ -28,7 +28,47 @@ Subject:
     Genetically modified males and WT littermates ranging from 3 to 6 months of age were used for all experiments.
   age: P12W/P24W
   sex: M
-  # TODO: add strain and genotype
+Devices:
+  CameraDevice:
+    name: "camera_device"
+    description: "Camera used to record the behavior of the animals during the experiments."
+    manufacturer: "Name of the camera manufacturer" #TODO add
+    meters_per_pixel: 1.0 #TODO add (Spatial resolution of the camera in meters per pixel)
+    model: "Model number or name of the camera" #TODO add
+    lens: "Specifications of the camera lens" #TODO add
+    camera_name: "Common name or label used for the camera" #TODO add
+  DataAcqDevice:
+    name: "data_acq_device"
+    description: "16-channel digitizing head stage C3334."
+    manufacturer: "Intan Technologies"
+    system: "the system that the device is part of" #TODO add
+    amplifier: "the amplifier used for this data acquisition device" #TODO add
+    adc_circuit: "the adc circuit used for this data acquisition device" #TODO add
+Ecephys:
+  ShanksElectrode:
+    name: "1"
+    rel_x: 0.0 #TODO add
+    rel_y: 0.0 #TODO add
+    rel_z: 0.0 #TODO add
+  Shank:
+    name: "1"
+  Probe:
+    name: "probe"
+    id: 0
+    probe_type: "TDB"
+    units: "TDB"
+    probe_description: "TDB"
+    contact_side_numbering: False
+    contact_size: 1.0 #TODO add
+  NwbElectrodeGroup:
+    name: "electrode_group"
+    description: "16-channel electrode group recording LFP and EEG signals."
+    location: "TDB"
+    targeted_location: "TDB"
+    targeted_x: 0.0 #TODO add
+    targeted_y: 0.0 #TODO add
+    targeted_z: 0.0 #TODO add
+    units: "mm"
 SessionType:
   Hab_1:
     session_description:

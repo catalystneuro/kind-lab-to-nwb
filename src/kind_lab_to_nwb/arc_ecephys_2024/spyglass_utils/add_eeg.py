@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 
 from pynwb import NWBFile
-from pynwb.ecephys import ElectricalSeries
+from pynwb.ecephys import ElectricalSeries, LFP
 
 from spikeinterface.extractors.neoextractors import OpenEphysLegacyRecordingExtractor
 
@@ -119,7 +119,22 @@ def add_eeg(
     starting_time = time_info["t_start"]
     # conversion = extractor.get_property("gain_to_uV")
     # offset = extractor.get_property("offset_to_uV")
-    eeg = ElectricalSeries(
-        name="eeg_series", data=electrical_series, electrodes=electrodes, rate=rate, starting_time=starting_time
+    filtered = False  # TODO add filtered flag
+    if filtered:
+        electrical_series_name = "lfp_series"
+    else:
+        electrical_series_name = "eeg_series"
+
+    electrical_series = ElectricalSeries(
+        name=electrical_series_name,
+        data=electrical_series,
+        electrodes=electrodes,
+        rate=rate,
+        starting_time=starting_time,
     )
-    nwbfile.add_acquisition(eeg)
+    if filtered:
+        lfp = LFP(electrical_series=electrical_series)
+        ecephys_module = nwbfile.create_processing_module(name="ecephys", description="ecephys module")
+        ecephys_module.add(lfp)
+    else:
+        nwbfile.add_acquisition(electrical_series)

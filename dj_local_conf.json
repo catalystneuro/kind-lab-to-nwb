@@ -1,0 +1,63 @@
+{
+    "database.host": "localhost",
+    "database.password": "tutorial",
+    "database.user": "root",
+    "database.port": 3306,
+    "database.reconnect": true,
+    "connection.init_function": null,
+    "connection.charset": "",
+    "loglevel": "INFO",
+    "safemode": true,
+    "fetch_format": "array",
+    "display.limit": 12,
+    "display.width": 14,
+    "display.show_tuple_count": true,
+    "database.use_tls": true,
+    "enable_python_native_blobs": true,
+    "add_hidden_timestamp": false,
+    "filepath_checksum_size_limit": 1073741824,
+    "stores": {
+        "raw": {
+            "protocol": "file",
+            "location": "/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/raw",
+            "stage": "/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/raw"
+        },
+        "analysis": {
+            "protocol": "file",
+            "location": "/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/analysis",
+            "stage": "/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/analysis"
+        }
+    },
+    "custom": {
+        "debug_mode": "false",
+        "test_mode": "false",
+        "spyglass_dirs": {
+            "base": "/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass",
+            "raw": "/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/raw",
+            "analysis": "/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/analysis",
+            "recording": "/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/recording",
+            "sorting": "/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/spikesorting",
+            "waveforms": "/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/waveforms",
+            "temp": "/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/tmp",
+            "video": "/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/video",
+            "export": "/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/export"
+        },
+        "kachery_dirs": {
+            "cloud": "/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/.kachery-cloud",
+            "storage": "/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/kachery_storage",
+            "temp": "/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/tmp"
+        },
+        "dlc_dirs": {
+            "base": "/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/deeplabcut",
+            "project": "/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/deeplabcut/projects",
+            "video": "/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/deeplabcut/video",
+            "output": "/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/deeplabcut/output"
+        },
+        "moseq_dirs": {
+            "base": "/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/moseq",
+            "project": "/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/moseq/projects",
+            "video": "/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/moseq/video"
+        },
+        "kachery_zone": "franklab.default"
+    }
+}

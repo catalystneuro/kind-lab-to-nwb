@@ -14,11 +14,10 @@ from neuroconv.utils import (
 from neuroconv.tools.nwb_helpers import (
     get_default_nwbfile_metadata,
     make_nwbfile_from_metadata,
-    configure_and_write_nwbfile,
 )
 from neuroconv.tools.path_expansion import LocalPathExpander
 
-from spyglass_utils import add_behavioral_video, get_channels_info_from_subject_id, add_eeg
+from spyglass_utils import add_behavioral_video, get_channels_info_from_subject_id, add_electrical_series
 import pandas as pd
 
 
@@ -91,7 +90,7 @@ def session_to_nwb(
     channels_info = get_channels_info_from_subject_id(subject_id=subject_id, excel_file_path=excel_file_path)
     folder_path = path_expander_metadata["source_data"]["OpenEphysRecording"]["folder_path"]
 
-    add_eeg(
+    add_electrical_series(
         nwbfile=nwbfile,
         metadata=metadata,
         channels_info=channels_info,
@@ -108,8 +107,8 @@ def session_to_nwb(
 if __name__ == "__main__":
 
     # Parameters for conversion
-    data_dir_path = Path("D:/Kind-CN-data-share/neuronal_circuits/fear_conditionning_paradigm")
-    output_dir_path = Path("D:/kind_lab_conversion_nwb")
+    data_dir_path = Path("/media/alessandra/HD2/Kind-CN-data-share/neuronal_circuits/fear_conditionning_paradigm")
+    output_dir_path = Path("/media/alessandra/HD2/kind_lab_conversion_nwb")
 
     source_data_spec = {
         "OpenEphysRecording": {

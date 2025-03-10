@@ -58,7 +58,7 @@ def get_channels_info_from_subject_id(subject_id: str, excel_file_path: FilePath
     return channels_info
 
 
-def add_eeg(
+def add_electrical_series(
     nwbfile: NWBFile,
     metadata,
     channels_info: dict,

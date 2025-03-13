@@ -17,7 +17,12 @@ from neuroconv.tools.nwb_helpers import (
 )
 from neuroconv.tools.path_expansion import LocalPathExpander
 
-from spyglass_utils import add_behavioral_video, get_channels_info_from_subject_id, add_electrical_series
+from spyglass_utils import (
+    add_behavioral_video,
+    get_channels_info_from_subject_id,
+    add_electrical_series,
+    add_behavioral_signals,
+)
 import pandas as pd
 
 
@@ -105,6 +110,14 @@ def session_to_nwb(
         channels_info=channels_info,
         folder_path=folder_path,
         stream_name="Signals CH",
+    )
+
+    # Add accelerometer data
+    add_behavioral_signals(
+        nwbfile=nwbfile,
+        metadata=metadata,
+        folder_path=folder_path,
+        stream_name="Signals AUX",
     )
 
     if verbose:

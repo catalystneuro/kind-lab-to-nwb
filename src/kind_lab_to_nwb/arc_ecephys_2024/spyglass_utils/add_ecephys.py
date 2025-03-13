@@ -119,8 +119,8 @@ def add_electrical_series(
     starting_time = time_info["t_start"]
     # conversion = extractor.get_property("gain_to_uV")
     # offset = extractor.get_property("offset_to_uV")
-    filtered = False  # TODO add filtered flag
-    if filtered:
+
+    if extractor.is_filtered():
         electrical_series_name = "lfp_series"
     else:
         electrical_series_name = "eeg_series"
@@ -132,7 +132,7 @@ def add_electrical_series(
         rate=rate,
         starting_time=starting_time,
     )
-    if filtered:
+    if extractor.is_filtered():
         lfp = LFP(electrical_series=electrical_series)
         ecephys_module = nwbfile.create_processing_module(name="ecephys", description="ecephys module")
         ecephys_module.add(lfp)

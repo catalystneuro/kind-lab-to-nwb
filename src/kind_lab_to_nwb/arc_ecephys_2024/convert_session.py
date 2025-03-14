@@ -17,6 +17,7 @@ from neuroconv.tools.nwb_helpers import (
 )
 from neuroconv.tools.path_expansion import LocalPathExpander
 
+
 from spyglass_utils import (
     add_behavioral_video,
     get_channels_info_from_subject_id,
@@ -101,7 +102,9 @@ def session_to_nwb(
 
     # Add EEG data
     excel_file_path = data_dir_path / "channels_details_v2.xlsx"
-    channels_info = get_channels_info_from_subject_id(subject_id=subject_id, excel_file_path=excel_file_path)
+    channels_info = get_channels_info_from_subject_id(
+        subject_id=subject_id, excel_file_path=excel_file_path, number_of_channels=16
+    )
     folder_path = path_expander_metadata["source_data"]["OpenEphysRecording"]["folder_path"]
 
     add_electrical_series(
@@ -153,7 +156,7 @@ if __name__ == "__main__":
     session_to_nwb(
         data_dir_path=data_dir_path,
         output_dir_path=output_dir_path,
-        path_expander_metadata=metadata_list[69],
+        path_expander_metadata=metadata_list[5],
         stub_test=stub_test,
         overwrite=overwrite,
     )

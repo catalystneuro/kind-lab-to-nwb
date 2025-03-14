@@ -41,25 +41,20 @@ Devices:
     name: "data_acq_device"
     description: "16-channel digitizing head stage C3334."
     manufacturer: "Intan Technologies"
-    system: "the system that the device is part of" #TODO add
-    amplifier: "the amplifier used for this data acquisition device" #TODO add
-    adc_circuit: "the adc circuit used for this data acquisition device" #TODO add
+    system: "RHD2000 Evaluation System" #TODO check
+    amplifier: "Intan RHD2132 16-channel digital electrophysiology interface chip" #TODO check
+    adc_circuit: "16-bit SAR ADC, 30 kSps per channel, 2.5V reference voltage" #TODO check
 Ecephys:
-  ShanksElectrode:
-    name: "1"
-    rel_x: 0.0 #TODO add
-    rel_y: 0.0 #TODO add
-    rel_z: 0.0 #TODO add
   Shank:
-    name: "1"
+    name: "0"
   Probe:
     name: "probe"
     id: 0
-    probe_type: "TDB"
-    units: "TDB"
-    probe_description: "TDB"
+    probe_type: "Intan C3334"
+    units: "um"
+    probe_description: "16-channel digitizing head stage for EEG recordings"
     contact_side_numbering: False
-    contact_size: 1.0 #TODO add
+    contact_size: 100.0 #TODO check
   NwbElectrodeGroup:
     name: "electrode_group"
     description: "16-channel electrode group recording LFP and EEG signals."
@@ -68,7 +63,7 @@ Ecephys:
     targeted_x: 0.0 #TODO add
     targeted_y: 0.0 #TODO add
     targeted_z: 0.0 #TODO add
-    units: "mm"
+    units: "um"
 SessionType:
   Hab_1:
     session_description:

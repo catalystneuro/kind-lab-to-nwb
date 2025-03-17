@@ -23,6 +23,7 @@ from spyglass_utils import (
     get_channels_info_from_subject_id,
     add_electrical_series,
     add_behavioral_signals,
+    add_behavioral_events,
 )
 import pandas as pd
 
@@ -123,6 +124,9 @@ def session_to_nwb(
         stream_name="Signals AUX",
     )
 
+    # Add behavior events
+    add_behavioral_events(nwbfile=nwbfile, folder_path=folder_path)
+
     if verbose:
         print("Write NWB file")
     with NWBHDF5IO(nwbfile_path, mode="w") as io:
@@ -152,11 +156,11 @@ if __name__ == "__main__":
 
     stub_test = False
     overwrite = True
-
-    session_to_nwb(
-        data_dir_path=data_dir_path,
-        output_dir_path=output_dir_path,
-        path_expander_metadata=metadata_list[5],
-        stub_test=stub_test,
-        overwrite=overwrite,
-    )
+    for metadata in metadata_list:
+        session_to_nwb(
+            data_dir_path=data_dir_path,
+            output_dir_path=output_dir_path,
+            path_expander_metadata=metadata,
+            stub_test=stub_test,
+            overwrite=overwrite,
+        )

@@ -11,23 +11,60 @@ Functions:
 from pydantic import DirectoryPath
 from typing import Optional
 
-from pynwb import NWBFile
+from pynwb import NWBFile, TimeSeries
 from pynwb.behavior import BehavioralEvents, BehavioralTimeSeries
 from spikeinterface.extractors.neoextractors import OpenEphysLegacyRecordingExtractor
 
 from ndx_franklab_novela import DataAcqDevice
 
 from open_ephys.analysis import Session
+import numpy as np
 
 
 def add_behavioral_events(nwbfile: NWBFile, folder_path) -> None:
     session = Session(folder_path)
     recording = session.recordings[0]
     event_table = recording.events
-    print(event_table)
-    # behavioral_events = BehavioralEvents(name="behavioral_events", time_series=time_series)
-    # behavior_module = nwbfile.create_processing_module(name="behavior", description="behavior module")
-    # behavior_module.add(behavioral_events)
+
+    # Constants and setup
+    rate = 2000.0  # Hz
+    starting_time = 0.0  # seconds
+
+    # Create behavioral events container
+    behavioral_events = BehavioralEvents(name="behavioral_events")
+
+    # Process each channel
+    for channel, events in event_table.groupby("channel"):
+        events = events.sort_values("timestamp")
+        max_timestamp = int(events["timestamp"].max() + 1)
+        unique_states = set(events["state"].unique())
+        if all(state == 0 for state in unique_states):
+            ValueError(f"Channel {channel} has no events")
+
+        signal = np.zeros(max_timestamp)
+        for _, row in events.iterrows():
+            timestamp = int(row["timestamp"])
+            signal[timestamp:] = row["state"]
+
+        behavioral_events.add_timeseries(
+            TimeSeries(
+                name=f"ttl_channel_{channel}",
+                data=signal,
+                rate=rate,
+                starting_time=starting_time,
+                unit="n.a.",
+                description=f"TTL signal from channel {channel}",
+            )
+        )
+
+    # Check if behavior module already exists in the NWBFile
+    behavior_module = None
+    if "behavior" in nwbfile.processing:
+        behavior_module = nwbfile.processing["behavior"]
+    else:
+        behavior_module = nwbfile.create_processing_module(name="behavior", description="behavior module")
+    # Add behavioral events to the behavior module
+    behavior_module.add(behavioral_events)
 
 
 def add_behavioral_signals(

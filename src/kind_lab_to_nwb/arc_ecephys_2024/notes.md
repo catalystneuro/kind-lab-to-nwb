@@ -34,7 +34,24 @@ Katsanevaki, D., Till, S. M., Buller-Peralta, I., Nawaz, M. S., Louros, S. R., K
 ## Neurodatatype for spyglass compatibility
 
 ### Spyglass
-TODO: Add notes on spyglass
+
+#### Intan C3334 Representation (One Probe, One Shank, 16 Electrodes)
+
+**Conceptual Adaptation:** The ndx-franklòab-novela extension was originally designed with penetrating neural probes in mind, where "shanks" are physical projections containing multiple electrodes. For an EEG system like the Intan C3334, we're adapting this model to represent a fundamentally different recording approach.
+**Probe and Shank Objects:** For this EEG headset, using a single Probe object (representing the entire headset) and a single Shank object (representing the complete electrode array) is most appropriate because:
+
+* The physical EEG headset has no penetrating components
+* All electrodes are part of one integrated system on the scalp surface
+* Electrodes share a common reference coordinate system
+
+However, the "Shank" object in the ndx-franklòab-novela extension is somewhat misaligned with EEG technology.In EEG, there are no penetrating components - all electrodes sit on the scalp surface and the shank concept implies a physical relationship between electrodes that doesn't exist in the same way for EEG
+
+**Coordinate System:** In our representation, we use a single coordinate system for all electrodes:
+
+* x=0 at midline
+* y=0 at the central line
+* z=0 at scalp level
+All electrodes reference this same system, reinforcing why a single shank makes sense
 
 ### Extension for spyglass compatibility
 https://github.com/nwb-extensions/ndx-franklab-novela-record 

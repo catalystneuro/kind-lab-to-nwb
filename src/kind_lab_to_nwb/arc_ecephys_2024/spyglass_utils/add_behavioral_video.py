@@ -11,7 +11,9 @@ import numpy as np
 from pynwb import NWBFile
 from pynwb.image import ImageSeries
 from pynwb.behavior import BehavioralEvents
-from neuroconv.datainterfaces import VideoInterface
+from neuroconv.datainterfaces import (
+    VideoInterface,
+)  # requires spikeinterface>0.99.0 which is incompatible with spyglass-neuro
 
 from ndx_franklab_novela import CameraDevice
 

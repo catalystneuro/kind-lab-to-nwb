@@ -14,11 +14,17 @@ from neuroconv.utils import (
 from neuroconv.tools.nwb_helpers import (
     get_default_nwbfile_metadata,
     make_nwbfile_from_metadata,
-    configure_and_write_nwbfile,
 )
 from neuroconv.tools.path_expansion import LocalPathExpander
 
-from spyglass_utils import add_behavioral_video, get_channels_info_from_subject_id, add_eeg
+
+from spyglass_utils import (
+    add_behavioral_video,
+    get_channels_info_from_subject_id,
+    add_electrical_series,
+    add_behavioral_signals,
+    add_behavioral_events,
+)
 import pandas as pd
 
 
@@ -41,7 +47,7 @@ def session_to_nwb(
     )
     subject_id = path_expander_metadata["metadata"]["Subject"]["subject_id"]
     session_id = path_expander_metadata["metadata"]["NWBFile"]["session_id"]
-    nwbfile_path = output_dir_path / f"sub_{subject_id}-ses{session_id}.nwb"
+    nwbfile_path = output_dir_path / f"sub_{subject_id}-ses_{session_id}.nwb"
 
     # Get default metadata
     metadata = get_default_nwbfile_metadata()
@@ -73,7 +79,7 @@ def session_to_nwb(
     subject_genotype = df[df["Folder"] == subject_id]["Genotype"].iloc[0]
     if subject_genotype == "wt":
         subject_genotype = "WT"
-    if subject_genotype == "het":
+    elif subject_genotype == "het":
         subject_genotype = "Syngap+/∆-GAP"
     else:
         raise ValueError(f"Genotype {subject_genotype} not recognized")
@@ -83,21 +89,43 @@ def session_to_nwb(
     nwbfile = make_nwbfile_from_metadata(metadata=metadata)
 
     # Add behavioral video
-    video_file_path = next(data_dir_path.glob(f"{subject_id}/{session_id}/*.avi"))
-    add_behavioral_video(nwbfile=nwbfile, metadata=metadata, video_file_path=video_file_path)
+    # video_file_path = next(data_dir_path.glob(f"{subject_id}/{session_id}/*.avi"))
+    video_extensions = ["avi", "mp4", "mkv"]
+    video_file_path = None
+    for ext in video_extensions:
+        video_files = list(data_dir_path.glob(f"{subject_id}/{session_id}/*.{ext}"))
+        if video_files:
+            video_file_path = video_files[0]
+            add_behavioral_video(nwbfile=nwbfile, metadata=metadata, video_file_path=video_file_path)
+            break
+    if video_file_path is None:
+        print(f"Warning: No video file found for subject {subject_id}, session {session_id}")
 
     # Add EEG data
     excel_file_path = data_dir_path / "channels_details_v2.xlsx"
-    channels_info = get_channels_info_from_subject_id(subject_id=subject_id, excel_file_path=excel_file_path)
+    channels_info = get_channels_info_from_subject_id(
+        subject_id=subject_id, excel_file_path=excel_file_path, number_of_channels=16
+    )
     folder_path = path_expander_metadata["source_data"]["OpenEphysRecording"]["folder_path"]
 
-    add_eeg(
+    add_electrical_series(
         nwbfile=nwbfile,
         metadata=metadata,
         channels_info=channels_info,
         folder_path=folder_path,
         stream_name="Signals CH",
     )
+
+    # Add accelerometer data
+    add_behavioral_signals(
+        nwbfile=nwbfile,
+        metadata=metadata,
+        folder_path=folder_path,
+        stream_name="Signals AUX",
+    )
+
+    # Add behavior events
+    add_behavioral_events(nwbfile=nwbfile, folder_path=folder_path)
 
     if verbose:
         print("Write NWB file")
@@ -108,7 +136,9 @@ def session_to_nwb(
 if __name__ == "__main__":
 
     # Parameters for conversion
+    # data_dir_path = Path("/media/alessandra/HD2/Kind-CN-data-share/neuronal_circuits/fear_conditionning_paradigm")
     data_dir_path = Path("D:/Kind-CN-data-share/neuronal_circuits/fear_conditionning_paradigm")
+    # output_dir_path = Path("/media/alessandra/HD2/kind_lab_conversion_nwb")
     output_dir_path = Path("D:/kind_lab_conversion_nwb")
 
     source_data_spec = {
@@ -126,11 +156,11 @@ if __name__ == "__main__":
 
     stub_test = False
     overwrite = True
-
-    session_to_nwb(
-        data_dir_path=data_dir_path,
-        output_dir_path=output_dir_path,
-        path_expander_metadata=metadata_list[140],
-        stub_test=stub_test,
-        overwrite=overwrite,
-    )
+    for metadata in metadata_list:
+        session_to_nwb(
+            data_dir_path=data_dir_path,
+            output_dir_path=output_dir_path,
+            path_expander_metadata=metadata,
+            stub_test=stub_test,
+            overwrite=overwrite,
+        )

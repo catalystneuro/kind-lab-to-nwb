@@ -13,8 +13,6 @@ from pynwb.image import ImageSeries
 from pynwb.core import DynamicTable
 from pynwb.behavior import BehavioralEvents
 
-from jadhav_lab_to_nwb.olson_2024.tools.spikegadgets import readCameraModuleTimeStamps
-
 
 def add_epoch(nwbfile):
     tasks_module = nwbfile.create_processing_module(name="tasks", description="tasks module")
@@ -44,10 +42,8 @@ def add_video(nwbfile):
         camera_name="my_camera_name",
     )
     nwbfile.add_device(camera_device)
-
-    video_file_path = "/Volumes/T7/CatalystNeuro/Jadhav/SubLearnProject/SL18_D19/SL18_D19_S01_F01_BOX_SLP_20230503_112642/SL18_D19_S01_F01_BOX_SLP_20230503_112642.1.h264"
-    video_timestamps_file_path = "/Volumes/T7/CatalystNeuro/Jadhav/SubLearnProject/SL18_D19/SL18_D19_S01_F01_BOX_SLP_20230503_112642/SL18_D19_S01_F01_BOX_SLP_20230503_112642.1.videoTimeStamps"
-    timestamps, _ = readCameraModuleTimeStamps(video_timestamps_file_path)
+    video_file_path = "/media/alessandra/HD2/Kind-CN-data-share/neuronal_circuits/fear_conditionning_paradigm/Rat_684/Baseline_tone_flash_hab/Rat_684_pre_cond.avi"
+    timestamps = list(range(100))
     image_series = ImageSeries(
         name="my_image_series",
         description="my_description",
@@ -69,7 +65,7 @@ def main():
     add_epoch(nwbfile)
     add_video(nwbfile)
 
-    nwbfile_path = Path("/Volumes/T7/CatalystNeuro/Spyglass/raw/mock_video.nwb")
+    nwbfile_path = Path("/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/raw/mock_video.nwb")
     if nwbfile_path.exists():
         nwbfile_path.unlink()
     with NWBHDF5IO(nwbfile_path, "w") as io:

@@ -4,12 +4,24 @@ import os
 import datajoint as dj
 from pathlib import Path
 import numpy as np
+from pynwb import NWBHDF5IO
 
-dj_local_conf_path = "/Users/pauladkisson/Documents/CatalystNeuro/JadhavConv/jadhav-lab-to-nwb/src/jadhav_lab_to_nwb/spyglass_mock/dj_local_conf.json"
+dj.conn(use_tls=False)
+
+dj_local_conf_path = "/home/alessandra/CatalystNeuro/kind-lab-to-nwb/dj_local_conf.json"
 dj.config.load(dj_local_conf_path)  # load config for database connection info
 
+# spyglass.common has the most frequently used tables
 import spyglass.common as sgc  # this import connects to the database
+
+# spyglass.data_import has tools for inserting NWB files into the database
 import spyglass.data_import as sgi
+
+from spyglass.spikesorting.spikesorting_merge import (
+    SpikeSortingOutput,
+)  # This import is necessary for the spike sorting to be loaded properly
+import spyglass.spikesorting.v1 as sgs
+from spyglass.spikesorting.analysis.v1.group import SortedSpikesGroup
 from spyglass.utils.nwb_helper_fn import get_nwb_copy_filename
 import spyglass.lfp as sglfp
 from pynwb.ecephys import ElectricalSeries, LFP
@@ -57,7 +69,7 @@ def insert_lfp(nwb_copy_file_name: str, eseries_kwargs: dict):
 
 
 def main():
-    nwbfile_path = Path("/Volumes/T7/CatalystNeuro/Spyglass/raw/mock_lfp.nwb")
+    nwbfile_path = Path("/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/raw/mock_lfp.nwb")
     nwb_copy_file_name = get_nwb_copy_filename(nwbfile_path.name)
 
     if sgc.Session & {"nwb_file_name": nwb_copy_file_name}:

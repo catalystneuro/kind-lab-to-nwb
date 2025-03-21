@@ -30,7 +30,7 @@ Subject:
   sex: M
 Devices:
   CameraDevice:
-    name: "camera_device"
+    name: "camera_device 1"
     description: "Camera used to record the behavior of the animals during the experiments."
     manufacturer: "Name of the camera manufacturer" #TODO add
     meters_per_pixel: 1.0 #TODO add (Spatial resolution of the camera in meters per pixel)

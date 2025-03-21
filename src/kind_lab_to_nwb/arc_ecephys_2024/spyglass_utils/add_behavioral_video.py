@@ -16,6 +16,7 @@ from neuroconv.datainterfaces import (
 )  # requires spikeinterface>0.99.0 which is incompatible with spyglass-neuro
 
 from ndx_franklab_novela import CameraDevice
+from neuroconv.datainterfaces.behavior.video.video_utils import get_video_timestamps
 
 
 def add_behavioral_video(
@@ -28,10 +29,10 @@ def add_behavioral_video(
     camera_device = CameraDevice(**metadata["Devices"]["CameraDevice"])
     nwbfile.add_device(camera_device)
 
-    video_interface = VideoInterface(file_paths=[video_file_path])
     if alligned_timestamps is not None:
-        video_interface.set_aligned_timestamps(alligned_timestamps)
-    timestamps = video_interface.get_timestamps()
+        timestamps = alligned_timestamps
+    else:
+        timestamps = get_video_timestamps(file_path=video_file_path)
 
     image_series = ImageSeries(
         name=f"Video {Path(video_file_path).stem}",
@@ -39,7 +40,7 @@ def add_behavioral_video(
         unit="n.a.",
         external_file=[video_file_path],
         format="external",
-        timestamps=timestamps[0],
+        timestamps=timestamps,
         device=camera_device,
     )
 

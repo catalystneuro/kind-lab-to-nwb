@@ -161,7 +161,7 @@ def add_electrical_series(
         channel_conversion=channel_conversion,
         conversion=conversion,
     )
-    if extractor.is_filtered():
+    if extractor.is_filtered():  # TODO check with lab point person if this is correct way to check for LFP
         lfp = LFP(electrical_series=electrical_series)
         ecephys_module = nwbfile.create_processing_module(name="ecephys", description="ecephys module")
         ecephys_module.add(lfp)

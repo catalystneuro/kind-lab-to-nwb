@@ -28,7 +28,42 @@ Subject:
     Genetically modified males and WT littermates ranging from 3 to 6 months of age were used for all experiments.
   age: P12W/P24W
   sex: M
-  # TODO: add strain and genotype
+Devices:
+  CameraDevice:
+    name: "camera_device 1"
+    description: "Camera used to record the behavior of the animals during the experiments."
+    manufacturer: "Name of the camera manufacturer" #TODO add
+    meters_per_pixel: 1.0 #TODO add (Spatial resolution of the camera in meters per pixel)
+    model: "Model number or name of the camera" #TODO add
+    lens: "Specifications of the camera lens" #TODO add
+    camera_name: "Common name or label used for the camera" #TODO add
+  DataAcqDevice:
+    name: "data_acq_device"
+    description: "16-channel digitizing head stage C3334."
+    manufacturer: "Intan Technologies"
+    system: "RHD2000 Evaluation System" #TODO check
+    amplifier: "Intan RHD2132 16-channel digital electrophysiology interface chip" #TODO check
+    adc_circuit: "16-bit SAR ADC, 30 kSps per channel, 2.5V reference voltage" #TODO check
+Ecephys:
+  Shank:
+    name: "0"
+  Probe:
+    name: "probe"
+    id: 0
+    probe_type: "Intan C3334"
+    units: "um"
+    probe_description: "16-channel digitizing head stage for EEG recordings"
+    contact_side_numbering: False
+    contact_size: 100.0 #TODO check
+  NwbElectrodeGroup:
+    name: "electrode_group"
+    description: "16-channel electrode group recording LFP and EEG signals."
+    location: "TDB"
+    targeted_location: "TDB"
+    targeted_x: 0.0 #TODO add
+    targeted_y: 0.0 #TODO add
+    targeted_z: 0.0 #TODO add
+    units: "um"
 SessionType:
   Hab_1:
     session_description:

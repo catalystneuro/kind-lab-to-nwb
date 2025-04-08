@@ -46,15 +46,15 @@ Devices:
     system: "RHD2000 Evaluation System" #TODO check
     amplifier: "Intan RHD2132 16-channel digital electrophysiology interface chip" #TODO check
     adc_circuit: "16-bit SAR ADC, 30 kSps per channel, 2.5V reference voltage" #TODO check
-  ModifiedRatHabitestBox:
+  habituation_and_recall_box:
     name: "habituation_and_recall_box"
     description: "Experimental box for context habituation and fear response recall testing is a modified Coulbourne Instruments rat Habitest box dimensions 30 cm x 25 cm x 32 cm, containing a curved plastic black and white striped wall insert, smooth plastic grey floor, no electrified grid, scented with 70% ethanol by cleaning between trials."
     manufacturer: "Coulbourne Instruments"
-  RatHabitestBox:
+  conditioning_box:
     name: "conditioning_box"
     description: "Experimental box for fear conditioning is a standard, unmodified Habitest rat box with aluminium wall inserts and electrified shock floor (Coulbourne H10-11R-TC-SF) cleaned with Distel TM disinfectant wipes between trials."
     manufacturer: "Coulbourne Instruments"
-  PerspexBox:
+  seizure_screening_box:
     name: "seizure_screening_box"
     description: "Experimental box for Seizure screening  is a perspex box containing familiar bedding material."
     manufacturer: "n.a." #TODO ask

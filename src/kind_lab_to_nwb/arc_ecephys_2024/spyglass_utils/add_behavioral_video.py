@@ -9,6 +9,7 @@ from pathlib import Path
 import numpy as np
 
 from pynwb import NWBFile
+from pynwb.device import Device
 from pynwb.core import DynamicTable
 from pynwb.image import ImageSeries
 from pynwb.behavior import BehavioralEvents
@@ -27,6 +28,9 @@ def add_behavioral_video(
 
     camera_device = CameraDevice(**metadata["Devices"]["CameraDevice"])
     nwbfile.add_device(camera_device)
+
+    rat_box = Device(**metadata["Devices"][task_metadata["environment"]])
+    nwbfile.add_device(rat_box)
 
     # Add a custom processing module for tasks
     # This is necessary for the video data to be compatible with spyglass.

@@ -59,7 +59,7 @@ def add_behavioral_video(
         timestamps = get_video_timestamps(file_path=video_file_path)
 
     nwbfile.add_epoch_column(name="task_name", description="Name of the task associated with the epoch.")
-    nwbfile.add_epoch(start_time=timestamps[0], stop_time=timestamps[-1], task_name=task_metadata["name"])
+    nwbfile.add_epoch(start_time=timestamps[0], stop_time=timestamps[-1], tags=["01"], task_name=task_metadata["name"])
 
     image_series = ImageSeries(
         name=f"Video {Path(video_file_path).stem}",

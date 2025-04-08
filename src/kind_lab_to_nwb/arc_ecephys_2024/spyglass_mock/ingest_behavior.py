@@ -1,6 +1,5 @@
 """Ingest mock behavior data from an NWB file into a spyglass database."""
 
-import os
 import datajoint as dj
 from pathlib import Path
 import numpy as np

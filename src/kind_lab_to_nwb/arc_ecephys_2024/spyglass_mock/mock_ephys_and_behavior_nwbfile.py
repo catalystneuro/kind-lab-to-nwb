@@ -7,7 +7,7 @@ This file also contains ephys data, since it is necessary for the behavior data 
 from pynwb.testing.mock.file import mock_NWBFile
 from pynwb.testing.mock.ecephys import mock_ElectricalSeries
 from pynwb.testing.mock.behavior import mock_TimeSeries
-from pynwb.behavior import BehavioralEvents
+from pynwb.behavior import BehavioralEvents, BehavioralTimeSeries
 from ndx_franklab_novela import DataAcqDevice, Probe, Shank, ShanksElectrode, NwbElectrodeGroup
 from pynwb import NWBHDF5IO
 import numpy as np
@@ -76,6 +76,8 @@ def add_behavior(nwbfile):
     behavioral_events = BehavioralEvents(name="behavioral_events", time_series=time_series)
     behavior_module = nwbfile.create_processing_module(name="behavior", description="behavior module")
     behavior_module.add(behavioral_events)
+    behavioral_timeseries = BehavioralTimeSeries(name="behavioral_timeseries", time_series=time_series)
+    behavior_module.add(behavioral_timeseries)
 
 
 def main():

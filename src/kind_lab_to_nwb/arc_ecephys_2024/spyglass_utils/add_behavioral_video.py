@@ -47,8 +47,8 @@ def add_behavioral_video(
     task_table.add_row(
         task_name=task_metadata["name"],
         task_description=task_metadata["session_description"],
-        camera_id=[task_metadata["camera_id"]],
-        task_epochs=[task_metadata["task_epochs"]],
+        camera_id=task_metadata["camera_id"],
+        task_epochs=task_metadata["task_epochs"],
         environment=task_metadata["environment"],
     )
     tasks_module.add(task_table)

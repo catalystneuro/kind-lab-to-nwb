@@ -34,11 +34,11 @@ Devices:
   CameraDevice:
     name: "camera_device 0"
     description: "Camera used to record the behavior of the animals during the experiments."
-    manufacturer: "Name of the camera manufacturer" #TODO add
+    manufacturer: "camera_manufacturer" #TODO add
     meters_per_pixel: 1.0 #TODO add (Spatial resolution of the camera in meters per pixel)
-    model: "Model number or name of the camera" #TODO add
-    lens: "Specifications of the camera lens" #TODO add
-    camera_name: "Common name or label used for the camera" #TODO add
+    model: "camera_model" #TODO add
+    lens: "camera_lens" #TODO add
+    camera_name: "camera_name" #TODO add
   DataAcqDevice:
     name: "data_acq_device"
     description: "16-channel digitizing head stage C3334."

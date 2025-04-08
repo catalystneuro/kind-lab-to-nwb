@@ -48,7 +48,7 @@ def add_behavioral_events(nwbfile: NWBFile, folder_path) -> None:
 
         behavioral_events.add_timeseries(
             TimeSeries(
-                name=f"ttl_channel_{channel}",
+                name=f"ttl_channel_{channel}",  # TODO add a more specific name and description for the TTL signal
                 data=signal,
                 rate=rate,
                 starting_time=starting_time,

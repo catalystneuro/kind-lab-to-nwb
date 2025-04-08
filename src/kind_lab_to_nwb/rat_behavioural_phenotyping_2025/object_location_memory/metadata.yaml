@@ -1,0 +1,86 @@
+NWBFile:
+  keywords:
+    - object location memory
+    - spatial memory
+    - recognition memory
+    - behavioral testing
+    - rodent behavior
+    - memory assessment
+    - hippocampus-dependent memory
+  experiment_description: |
+    This experiment is part of the Rat Behavioural Phenotyping Pipeline Methodologies https://sidb.org.uk/facilities/rat-behavioural-phenotyping-pipeline/.
+    As an initial effort to characterize the rat lines, these models are being behaviorally phenotyped at SIDB. 
+    Rat models are phenotyped according to a rigorous pipeline that assesses behaviours relevant to autism with intellectual disability, such as social and motor skills, and learning and sensory processing. 
+    Different cohorts of rats are run through different subsets of tasks to overcome potential order effects on behaviours and to limit the number of tasks each animal is put through.
+    This experiment investigated object location memory in different rat models 
+    (Arid1b: https://rgd.mcw.edu/rgdweb/report/strain/main.html?id=14394518, 
+    Grin2b: https://rgd.mcw.edu/rgdweb/report/strain/main.html?id=14394515, 
+    Scn2a: https://rgd.mcw.edu/rgdweb/report/strain/main.html?id=25394530).
+    The experimenter was blind to genotype throughout the experiment and watched the trials on a screen from outside the testing room.
+    The task utilized two custom-built arenas (60x60 cm) with different wall colors and bedding.
+    Rats underwent habituation followed by sample and test trials to assess their ability to detect object location changes.
+    The protocol included group habituation (10 min), individual habituation (2 days, 10 min each),
+    sample trials (15 min with two identical objects), and test trials (3 min) with one object moved to a new location.
+    Both short-term (5 min delay) and long-term (1 hr delay) memory were assessed.
+    Object exploration was recorded via CCTV camera and manually scored using BORIS software.
+  institution: University of Edinburgh
+  lab: Kind
+  experimenter:
+    - Example, Researcher # Example value - actual experimenter name needed
+
+Subject:
+  species: Rattus norvegicus
+
+Devices:
+  BehavioralCamera:
+    description: CCTV camera fixed above the arenas for behavioral recording
+    manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+
+  Arena_LTM:
+    description:
+      Custom built arena (60x60 cm) with black laminated wood walls and woodchip bedding.
+      This arean was used to test rat for long-term memory.
+    manufacturer: Kanya UK
+
+  Arena_STM:
+    description:
+      Custom built arena (60x60 cm) with white laminated wood walls and white nesting bedding.
+      This arean was used to test rat for short-term memory.
+    manufacturer: Kanya UK
+
+SessionTypes:
+  HabD1:
+    session_description: |
+      Experimental Day 1. Suject is placed in assigned arena with cagemates for 10 min group habituation
+
+  HabD2:
+    session_description: |
+      Experimental Day 2. Individual rat placed in arena for 10 min habituation
+
+  HabD3:
+    session_description: |
+      Experimental Day 3. Individual rat placed in arena for 10 min habituation
+
+  Test STM:
+    session_description: |
+      Experimental Day 5. Short-term memory test. 
+      Two identical objects (e.g. ceramic tea lights, glass ornaments, never face or animal related) 
+      were fixed in diagonally opposing corners of the arena (10 cm from the sides of the arena). 
+      A rat was placed individually in the arena with the objects for a 15 min sample trial. 
+      The rat was then removed and placed in the holding bucket for 5 min. 
+      The objects were removed from the arena and wiped with 70% ethanol, the arena floor covering was cleared of debris,
+      mixed and flattened. The objects were returned to arena with one in the same location and one moved 
+      from the corner to the middle of the wall (the object that moved was counterbalanced across genotype). 
+      The rat was returned to the arena for a 3 min test trial, 5 min after the sample trial.
+
+  Test LTM:
+    session_description: |
+      Experimental Day 5. Long-term memory test. 
+      Two identical objects (e.g. ceramic tea lights, glass ornaments, never face or animal related) 
+      were fixed in diagonally opposing corners of the arena (10 cm from the sides of the arena). 
+      A rat was placed individually in the arena with the objects for a 15 min sample trial. 
+      The rat was then removed and placed in the holding bucket for 1 hour. 
+      The objects were removed from the arena and wiped with 70% ethanol, the arena floor covering was cleared of debris,
+      mixed and flattened. The objects were returned to arena with one in the same location and one moved 
+      from the corner to the middle of the wall (the object that moved was counterbalanced across genotype). 
+      The rat was returned to the arena for a 3 min test trial, 24 hr after the sample trial.

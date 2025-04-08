@@ -80,7 +80,7 @@ def add_electrical_series(
 
     shanks_electrodes = []
     for ch, info in channels_info.items():
-        electrode = ShanksElectrode(name=channel_names[ch], rel_x=0.0, rel_y=0.0, rel_z=0.0)
+        electrode = ShanksElectrode(name=str(ch), rel_x=0.0, rel_y=0.0, rel_z=0.0)
         shanks_electrodes.append(electrode)
 
     shank = Shank(**metadata["Ecephys"]["Shank"], shanks_electrodes=shanks_electrodes)
@@ -161,7 +161,7 @@ def add_electrical_series(
         channel_conversion=channel_conversion,
         conversion=conversion,
     )
-    if extractor.is_filtered():
+    if extractor.is_filtered():  # TODO check with lab point person if this is correct way to check for LFP
         lfp = LFP(electrical_series=electrical_series)
         ecephys_module = nwbfile.create_processing_module(name="ecephys", description="ecephys module")
         ecephys_module.add(lfp)

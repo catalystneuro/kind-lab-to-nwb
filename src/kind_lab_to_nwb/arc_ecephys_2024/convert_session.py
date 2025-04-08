@@ -65,7 +65,7 @@ def session_to_nwb(
         metadata,
         editable_metadata,
     )
-    metadata["NWBFile"]["session_description"] = editable_metadata["SessionType"][session_id]["session_description"]
+    metadata["NWBFile"]["session_description"] = editable_metadata["Tasks"][session_id]["session_description"]
 
     # Update default metadata with the metadata extracted from the path expander
     metadata = dict_deep_update(
@@ -96,7 +96,10 @@ def session_to_nwb(
         video_files = list(data_dir_path.glob(f"{subject_id}/{session_id}/*.{ext}"))
         if video_files:
             video_file_path = video_files[0]
-            add_behavioral_video(nwbfile=nwbfile, metadata=metadata, video_file_path=video_file_path)
+            task_metadata = editable_metadata["Tasks"][session_id]
+            add_behavioral_video(
+                nwbfile=nwbfile, metadata=metadata, video_file_path=video_file_path, task_metadata=task_metadata
+            )
             break
     if video_file_path is None:
         print(f"Warning: No video file found for subject {subject_id}, session {session_id}")
@@ -156,7 +159,7 @@ if __name__ == "__main__":
 
     stub_test = False
     overwrite = True
-    for metadata in metadata_list:
+    for metadata in metadata_list[:5]:
         session_to_nwb(
             data_dir_path=data_dir_path,
             output_dir_path=output_dir_path,

@@ -73,8 +73,12 @@ def add_ephys(nwbfile):
 if __name__ == "__main__":
     nwbfile = mock_NWBFile(identifier="identifier", session_description="session_description")
     add_ephys(nwbfile)
-    # add processing module to make spyglass happy
-    nwbfile.create_processing_module(name="behavior", description="dummy behavior module")
+
+    behavior_module = None
+    if "behavior" in nwbfile.processing:
+        behavior_module = nwbfile.processing["behavior"]
+    else:
+        behavior_module = nwbfile.create_processing_module(name="behavior", description="behavior module")
 
     nwbfile_path = Path("/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/raw/mock_ephys.nwb")
     if nwbfile_path.exists():

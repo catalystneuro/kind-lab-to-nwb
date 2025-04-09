@@ -110,14 +110,22 @@ def print_tables(nwbfile_path):
         camera_names = (sgc.VideoFile & {"nwb_file_name": nwb_copy_file_name}).fetch("camera_name")
         print("=== CameraDevice ===", file=f)
         print(sgc.CameraDevice & [{"camera_name": camera_name} for camera_name in camera_names], file=f)
+        print("=== Task Epoch ===", file=f)
+        print(sgc.TaskEpoch(), file=f)
 
 
-if __name__ == "__main__":
-    nwbfile_path = Path("/media/alessandra/HD2/kind_lab_conversion_nwb/sub_Rat_1716-ses_Baseline_tone_flash_hab.nwb")
-    nwb_copy_file_name = get_nwb_copy_filename(nwbfile_path.name)
+def main():
+    nwbfile_path = Path(
+        "/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/raw/sub_Rat_1716-ses_Baseline_tone_flash_hab.nwb"
+    )
 
     clean_db_entry(nwbfile_path)
 
     sgi.insert_sessions(str(nwbfile_path), rollback_on_fail=True, raise_err=True)
 
     print_tables(nwbfile_path)
+
+
+if __name__ == "__main__":
+    # clean_all_db()
+    main()

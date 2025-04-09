@@ -23,14 +23,17 @@ from pynwb.behavior import BehavioralEvents
 from pynwb import NWBHDF5IO
 import numpy as np
 from pathlib import Path
-from kind_lab_to_nwb.arc_ecephys_2024.spyglass_mock import add_ephys
 from mock_ephys_nwbfile import add_ephys
 
 
 def add_behavioral_events(nwbfile):
     time_series = mock_TimeSeries(name="behavioral_events_series", timestamps=np.arange(20), data=np.ones((20, 1)))
     behavioral_events = BehavioralEvents(name="behavioral_events", time_series=time_series)
-    behavior_module = nwbfile.create_processing_module(name="behavior", description="behavior module")
+    behavior_module = None
+    if "behavior" in nwbfile.processing:
+        behavior_module = nwbfile.processing["behavior"]
+    else:
+        behavior_module = nwbfile.create_processing_module(name="behavior", description="behavior module")
     behavior_module.add(behavioral_events)
 
 

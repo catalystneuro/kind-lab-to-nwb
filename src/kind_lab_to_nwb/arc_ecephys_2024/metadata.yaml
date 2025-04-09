@@ -80,20 +80,6 @@ Ecephys:
     targeted_z: 0.0 #TODO add
     units: "um"
 
-Epochs:
-  - name: context_habituation_1
-    task_name: context_habituation_1
-  - name: seizure_screening
-    task_name: seizure_screening
-  - name: context_habituation_2
-    task_name: context_habituation_2
-  - name: baseline_tone_flash_habituation
-    task_name: baseline_tone_flash_habituation
-  - name: fear_conditioning
-    task_name: fear_conditioning
-  - name: recall
-    task_name: recall
-
 Tasks:
   Hab_1:
     session_description:
@@ -104,7 +90,7 @@ Tasks:
     camera_id:
       - 0
     task_epochs:
-      - 0
+      - 1
   Seizure_screening:
     session_description:
       Experimental day 2. Session to probe seizures occurrence.
@@ -125,7 +111,7 @@ Tasks:
     camera_id:
       - 0
     task_epochs:
-      - 2
+      - 1
   Baseline_tone_flash_hab:
     session_description:
       Experimental day 4. Session to probe CS (blue led flash) pre-exposure without fear.
@@ -137,7 +123,7 @@ Tasks:
     camera_id:
       - 0
     task_epochs:
-      - 3
+      - 1
   Cond:
     session_description:
       Experimental day 4. Conditioning session with paired exposure to CS (blue led flash) and US (footshock).
@@ -151,7 +137,7 @@ Tasks:
     camera_id:
       - 0
     task_epochs:
-      - 4
+      - 1
   Recall:
     session_description:
       Experimental day 5. Fear response assessment session with re-exposure to the CS (blue led flash).
@@ -163,4 +149,4 @@ Tasks:
     camera_id:
       - 0
     task_epochs:
-      - 5
+      - 1

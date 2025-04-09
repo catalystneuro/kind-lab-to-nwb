@@ -104,6 +104,11 @@ def main():
     print(sgc.IntervalList() & {"nwb_file_name": nwb_copy_file_name})
     print("=== Task ===")
     print(sgc.Task())
+    print("=== Task Epoch ===")
+    print(sgc.TaskEpoch())
+    camera_names_from_task_epoch = (sgc.TaskEpoch & {"nwb_file_name": nwb_copy_file_name}).fetch("camera_names")
+    print("=== Task CameraDevice ===")
+    print(camera_names_from_task_epoch)
 
     test_behavior(nwbfile_path)
     test_video(nwbfile_path)

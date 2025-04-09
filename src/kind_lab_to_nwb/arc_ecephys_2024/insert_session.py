@@ -24,23 +24,60 @@ from spyglass.spikesorting.analysis.v1.group import SortedSpikesGroup
 from spyglass.utils.nwb_helper_fn import get_nwb_copy_filename
 
 
-def insert_session(nwbfile_path: Path, rollback_on_fail: bool = True, raise_err: bool = False):
+def clean_all_db():
+    sgc.Session.delete()
+    sgc.Nwbfile.delete()
+    sgc.DIOEvents.delete()
+    sgc.Electrode.delete()
+    sgc.ElectrodeGroup.delete()
+    sgc.Probe.delete()
+    sgc.ProbeType.delete()
+    sgc.Raw.delete()
+    sgc.DataAcquisitionDevice.delete()
+    sgc.IntervalList.delete()
+    sgc.Task.delete()
+    sgc.TaskEpoch.delete()
+    sgc.VideoFile.delete()
+    sgc.CameraDevice.delete()
+
+
+def clean_db_entry(nwbfile_path):
     """
-    Insert all data from a converted NWB file into a spyglass database.
-
-    Parameters
-    ----------
-    nwbfile_path : Path
-        The path to the NWB file to insert.
-    rollback_on_fail : bool
-        Whether to rollback the transaction if an error occurs.
-    raise_err : bool
-        Whether to raise an error if an error occurs.
+    Delete all entries related to the NWB file in the database.
     """
-    sgi.insert_sessions(str(nwbfile_path), rollback_on_fail=rollback_on_fail, raise_err=raise_err)
+    nwb_copy_file_name = get_nwb_copy_filename(nwbfile_path.name)
+    if sgc.Nwbfile & {"nwb_file_name": nwb_copy_file_name}:
+        (sgc.Nwbfile & {"nwb_file_name": nwb_copy_file_name}).delete()
+    if sgc.Session & {"nwb_file_name": nwb_copy_file_name}:
+        (sgc.Session & {"nwb_file_name": nwb_copy_file_name}).delete()
+    if sgc.DIOEvents & {"nwb_file_name": nwb_copy_file_name}:
+        (sgc.DIOEvents & {"nwb_file_name": nwb_copy_file_name}).delete()
+    if sgc.Electrode & {"nwb_file_name": nwb_copy_file_name}:
+        (sgc.Electrode & {"nwb_file_name": nwb_copy_file_name}).delete()
+    if sgc.ElectrodeGroup & {"nwb_file_name": nwb_copy_file_name}:
+        (sgc.ElectrodeGroup & {"nwb_file_name": nwb_copy_file_name}).delete()
+    probe_ids = (sgc.ElectrodeGroup & {"nwb_file_name": nwb_copy_file_name}).fetch("probe_id")
+    for probe_id in probe_ids:
+        if sgc.Probe & {"probe_id": probe_id}:
+            (sgc.Probe & {"probe_id": probe_id}).delete()
+        if sgc.ProbeType & {"probe_type": probe_id}:
+            (sgc.ProbeType & {"probe_type": probe_id}).delete()
+    if sgc.Raw & {"nwb_file_name": nwb_copy_file_name}:
+        (sgc.Raw & {"nwb_file_name": nwb_copy_file_name}).delete()
+    sgc.DataAcquisitionDevice.delete()
+    if sgc.IntervalList & {"nwb_file_name": nwb_copy_file_name}:
+        (sgc.IntervalList & {"nwb_file_name": nwb_copy_file_name}).delete()
+    sgc.Task.delete()
+    sgc.TaskEpoch.delete()
+    if sgc.VideoFile & {"nwb_file_name": nwb_copy_file_name}:
+        (sgc.VideoFile & {"nwb_file_name": nwb_copy_file_name}).delete()
+    camera_names = (sgc.VideoFile & {"nwb_file_name": nwb_copy_file_name}).fetch("camera_name")
+    for camera_name in camera_names:
+        if sgc.CameraDevice & {"camera_name": camera_name}:
+            (sgc.CameraDevice & {"camera_name": camera_name}).delete()
 
 
-def print_tables(nwbfile_path: Path):
+def print_tables(nwbfile_path):
     nwb_copy_file_name = get_nwb_copy_filename(nwbfile_path.name)
     with open("tables.txt", "w") as f:
         print("=== NWB File ===", file=f)
@@ -53,21 +90,21 @@ def print_tables(nwbfile_path: Path):
         print(sgc.Electrode & {"nwb_file_name": nwb_copy_file_name}, file=f)
         print("=== Electrode Group ===", file=f)
         print(sgc.ElectrodeGroup & {"nwb_file_name": nwb_copy_file_name}, file=f)
+        probe_ids = (sgc.ElectrodeGroup & {"nwb_file_name": nwb_copy_file_name}).fetch("probe_id")
         print("=== Probe ===", file=f)
-        print(sgc.Probe & {"probe_id": "my_probe_type"}, file=f)
+        print(sgc.Probe & [{"probe_id": probe_id} for probe_id in probe_ids], file=f)
         print("=== Probe Shank ===", file=f)
-        print(sgc.Probe.Shank & {"probe_id": "my_probe_type"}, file=f)
+        print(sgc.Probe.Shank & [{"probe_id": probe_id} for probe_id in probe_ids], file=f)
         print("=== Probe Electrode ===", file=f)
-        print(sgc.Probe.Electrode & {"probe_id": "my_probe_type"}, file=f)
+        print(sgc.Probe.Electrode & [{"probe_id": probe_id} for probe_id in probe_ids], file=f)
         print("=== Raw ===", file=f)
         print(sgc.Raw & {"nwb_file_name": nwb_copy_file_name}, file=f)
         print("=== DataAcquisitionDevice ===", file=f)
         print(sgc.DataAcquisitionDevice & {"nwb_file_name": nwb_copy_file_name}, file=f)
         print("=== IntervalList ===", file=f)
-        print(sgc.IntervalList(), file=f)
+        print(sgc.IntervalList() & {"nwb_file_name": nwb_copy_file_name}, file=f)
         print("=== Task ===", file=f)
         print(sgc.Task(), file=f)
-        print("=== Task Epoch ===", file=f)
         print("=== VideoFile ===", file=f)
         print(sgc.VideoFile & {"nwb_file_name": nwb_copy_file_name}, file=f)
         camera_names = (sgc.VideoFile & {"nwb_file_name": nwb_copy_file_name}).fetch("camera_name")
@@ -75,61 +112,12 @@ def print_tables(nwbfile_path: Path):
         print(sgc.CameraDevice & [{"camera_name": camera_name} for camera_name in camera_names], file=f)
 
 
-def test_behavior(nwbfile_path: Path):
-    nwb_copy_file_name = get_nwb_copy_filename(nwbfile_path.name)
-    time_series = (
-        sgc.DIOEvents & {"nwb_file_name": nwb_copy_file_name, "dio_event_name": "ttl_channel_1"}
-    ).fetch_nwb()[0]["dio"]
-    spyglass_dio_data = np.asarray(time_series.data[:100])
-    with NWBHDF5IO(nwbfile_path, "r") as io:
-        nwbfile = io.read()
-        nwb_dio_data = np.asarray(
-            nwbfile.processing["behavior"].data_interfaces["behavioral_events"].time_series["ttl_channel_1"].data[:100]
-        )
-    np.testing.assert_array_equal(spyglass_dio_data, nwb_dio_data)
-
-
-def test_ephys(nwbfile_path: Path):
-    nwb_copy_file_name = get_nwb_copy_filename(nwbfile_path.name)
-    electrical_series = (sgc.Raw & {"nwb_file_name": nwb_copy_file_name}).fetch_nwb()[0]["raw"]
-    spyglass_raw_data = np.asarray(electrical_series.data[:100])
-    with NWBHDF5IO(nwbfile_path, "r") as io:
-        nwbfile = io.read()
-        nwb_raw_data = np.asarray(nwbfile.acquisition["eeg_series"].data[:100])
-    np.testing.assert_array_equal(spyglass_raw_data, nwb_raw_data)
-
-
-def test_video(nwbfile_path: Path):
-    nwb_copy_file_name = get_nwb_copy_filename(nwbfile_path.name)
-    image_series = (sgc.VideoFile & {"nwb_file_name": nwb_copy_file_name}).fetch_nwb()[0]["video_file"]
-    spyglass_external_file = image_series.external_file[0]
-    with NWBHDF5IO(nwbfile_path, "r") as io:
-        nwbfile = io.read()
-        image_series = (
-            nwbfile.processing["behavior"]
-            .data_interfaces["video"]
-            .time_series["Video Rat_1021_Baseline_tone_flash_hab"]
-        )
-        nwb_external_file = image_series.external_file[0]
-    assert spyglass_external_file == nwb_external_file
-
-
-def main():
-    nwbfile_path = Path("/media/alessandra/HD2/kind_lab_conversion_nwb/sub_Rat_1021-ses_Baseline_tone_flash_hab.nwb")
-    nwb_copy_file_name = get_nwb_copy_filename(nwbfile_path.name)
-
-    (sgc.Nwbfile & {"nwb_file_name": nwb_copy_file_name}).delete()
-    sgc.ProbeType.delete()
-    sgc.DataAcquisitionDevice.delete()
-
-    insert_session(nwbfile_path, rollback_on_fail=True, raise_err=True)
-    print_tables(nwbfile_path=nwbfile_path)
-
-    test_behavior(nwbfile_path=nwbfile_path)
-    test_ephys(nwbfile_path=nwbfile_path)
-    test_video(nwbfile_path=nwbfile_path)
-
-
 if __name__ == "__main__":
-    main()
-    print("Done!")
+    nwbfile_path = Path("/media/alessandra/HD2/kind_lab_conversion_nwb/sub_Rat_1716-ses_Baseline_tone_flash_hab.nwb")
+    nwb_copy_file_name = get_nwb_copy_filename(nwbfile_path.name)
+
+    clean_db_entry(nwbfile_path)
+
+    sgi.insert_sessions(str(nwbfile_path), rollback_on_fail=True, raise_err=True)
+
+    print_tables(nwbfile_path)

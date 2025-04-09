@@ -80,7 +80,7 @@ def session_to_nwb(
     if subject_genotype == "wt":
         subject_genotype = "WT"
     elif subject_genotype == "het":
-        subject_genotype = "Syngap+/∆-GAP"
+        subject_genotype = "Syngap+/∆-GAP"  # not compatible with Spyglass
     else:
         raise ValueError(f"Genotype {subject_genotype} not recognized")
 
@@ -131,7 +131,7 @@ def session_to_nwb(
     add_behavioral_events(nwbfile=nwbfile, folder_path=folder_path)
 
     if verbose:
-        print("Write NWB file")
+        print(f"Write NWB file {nwbfile_path.name}")
     with NWBHDF5IO(nwbfile_path, mode="w") as io:
         io.write(nwbfile)
 
@@ -140,9 +140,9 @@ if __name__ == "__main__":
 
     # Parameters for conversion
     # data_dir_path = Path("/media/alessandra/HD2/Kind-CN-data-share/neuronal_circuits/fear_conditionning_paradigm")
-    data_dir_path = Path("D:/Kind-CN-data-share/neuronal_circuits/fear_conditionning_paradigm")
+    data_dir_path = Path("E:/Kind-CN-data-share/neuronal_circuits/fear_conditionning_paradigm")
     # output_dir_path = Path("/media/alessandra/HD2/kind_lab_conversion_nwb")
-    output_dir_path = Path("D:/kind_lab_conversion_nwb")
+    output_dir_path = Path("E:/kind_lab_conversion_nwb")
 
     source_data_spec = {
         "OpenEphysRecording": {

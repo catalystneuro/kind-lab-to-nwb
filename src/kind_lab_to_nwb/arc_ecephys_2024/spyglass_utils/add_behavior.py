@@ -93,9 +93,11 @@ def add_behavioral_signals(
     rate = time_info["sampling_frequency"]
     starting_time = time_info["t_start"]
 
-    behavioral_timeseries = BehavioralTimeSeries(name="behavioral_timeseries")
-    behavioral_timeseries.create_timeseries(
-        name="accelerometer_signal",
+    # Create behavioral events container
+    analog_timeseries = BehavioralEvents(name="analog")
+    analog_timeseries.create_timeseries(
+        name="analog",
+        description="Accelerometer signal",
         unit="volts",
         data=time_series,
         starting_time=starting_time,
@@ -108,4 +110,4 @@ def add_behavioral_signals(
     else:
         behavior_module = nwbfile.create_processing_module(name="behavior", description="behavior module")
 
-    behavior_module.add(behavioral_timeseries)
+    behavior_module.add(analog_timeseries)

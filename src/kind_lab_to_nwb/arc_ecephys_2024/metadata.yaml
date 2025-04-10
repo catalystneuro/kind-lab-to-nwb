@@ -20,6 +20,7 @@ NWBFile:
   lab: Kind
   experimenter:
     - Rignanese, Paul
+
 Subject:
   species: Rattus norvegicus
   description: Subjects were Evans-SGem2/PWC were genotyped by PCR.
@@ -28,15 +29,16 @@ Subject:
     Genetically modified males and WT littermates ranging from 3 to 6 months of age were used for all experiments.
   age: P12W/P24W
   sex: M
+
 Devices:
   CameraDevice:
-    name: "camera_device 1"
+    name: "camera_device 0"
     description: "Camera used to record the behavior of the animals during the experiments."
-    manufacturer: "Name of the camera manufacturer" #TODO add
+    manufacturer: "camera_manufacturer" #TODO add
     meters_per_pixel: 1.0 #TODO add (Spatial resolution of the camera in meters per pixel)
-    model: "Model number or name of the camera" #TODO add
-    lens: "Specifications of the camera lens" #TODO add
-    camera_name: "Common name or label used for the camera" #TODO add
+    model: "camera_model" #TODO add
+    lens: "camera_lens" #TODO add
+    camera_name: "camera_name" #TODO add
   DataAcqDevice:
     name: "data_acq_device"
     description: "16-channel digitizing head stage C3334."
@@ -44,15 +46,30 @@ Devices:
     system: "RHD2000 Evaluation System" #TODO check
     amplifier: "Intan RHD2132 16-channel digital electrophysiology interface chip" #TODO check
     adc_circuit: "16-bit SAR ADC, 30 kSps per channel, 2.5V reference voltage" #TODO check
+  habituation_and_recall_box:
+    name: "habituation_and_recall_box"
+    description: "Experimental box for context habituation and fear response recall testing is a modified Coulbourne Instruments rat Habitest box dimensions 30 cm x 25 cm x 32 cm, containing a curved plastic black and white striped wall insert, smooth plastic grey floor, no electrified grid, scented with 70% ethanol by cleaning between trials."
+    manufacturer: "Coulbourne Instruments"
+  conditioning_box:
+    name: "conditioning_box"
+    description: "Experimental box for fear conditioning is a standard, unmodified Habitest rat box with aluminium wall inserts and electrified shock floor (Coulbourne H10-11R-TC-SF) cleaned with Distel TM disinfectant wipes between trials."
+    manufacturer: "Coulbourne Instruments"
+  seizure_screening_box:
+    name: "seizure_screening_box"
+    description: "Experimental box for Seizure screening  is a perspex box containing familiar bedding material."
+    manufacturer: "n.a." #TODO ask
+
 Ecephys:
   Shank:
     name: "0"
   Probe:
     name: "probe"
+    description: "16-channel digitizing head stage C3334 for EEG recordings."
+    manufacturer: "Intan Technologies"
     id: 0
     probe_type: "Intan C3334"
     units: "um"
-    probe_description: "16-channel digitizing head stage for EEG recordings"
+    probe_description: "0"
     contact_side_numbering: False
     contact_size: 100.0 #TODO check
   NwbElectrodeGroup:
@@ -64,37 +81,74 @@ Ecephys:
     targeted_y: 0.0 #TODO add
     targeted_z: 0.0 #TODO add
     units: "um"
-SessionType:
+
+Tasks:
   Hab_1:
     session_description:
       Experimental day 1. First session of test context habituation.
       On experimental day 1, LFP, EEG  and head-mounted accelerometer recordings were made while all rats were habituated to the testing context for 5 min.
+    name: context_habituation_1
+    environment: habituation_and_recall_box
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
   Seizure_screening:
     session_description:
       Experimental day 2. Session to probe seizures occurrence.
       On experimental day 2, in a subset of animals (17 out of 31 animals), recordings were made for 1-3 hours.
-      This recording session allowed the number of seizures per rat to be calculated for correlation with subsequent behavioural measures.
+      This recording session allowed the number of seizures per rat to be calculated for correlation with subsequent behavioral measures.
+    name: seizure_screening
+    environment: seizure_screening_box
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
   Hab_2:
     session_description:
       Experimental day 3. Second session of test context habituation.
       On experimental day 3, recordings were made while all rats were habituated to the testing context in the same manner as for experimental day 1.
+    name: context_habituation_2
+    environment: habituation_and_recall_box
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
   Baseline_tone_flash_hab:
     session_description:
       Experimental day 4. Session to probe CS (blue led flash) pre-exposure without fear.
       On experimental day 4, recordings were made while a subset of 19 rats were pre-exposed to 10s of blue flashing light (5 Hz 110 lux flashes, 50 / 50 duty cycle)
-      of the same properties as that used for subsequent conditioning and recall, the purpose of this exposure was to test for behavioural and LFP responses to the sensory
+      of the same properties as that used for subsequent conditioning and recall, the purpose of this exposure was to test for behavioral and LFP responses to the sensory
       stimuli prior to association with a footshock. Pre-exposure was followed immediately by conditioning.
+    name: baseline_tone_flash_habituation
+    environment: conditioning_box
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
   Cond:
     session_description:
-      Experimental day 4. onditioning session with paired exposure to CS (blue led flash) and US (footshock).
+      Experimental day 4. Conditioning session with paired exposure to CS (blue led flash) and US (footshock).
       Conditioning occurred over a 21 min period and consisted of a 3 min period to allow for exploration of the chamber followed by 6 pairings of a conditioned stimulus (CS)
       co-terminating with the unconditioned stimulus (US).
       In a subset of 13 animals recordings were made in that session.
       The CS was a 10 sec blue flashing light (5 Hz 110 lux flashes, 50 / 50 duty cycle); the US was a 1 sec, 0.8 mA scrambled foot shock delivered through the bars of the floor;
       CS presentations started at 180, 360, 490, 770, 980, and 1280 sec into the training period (Katsenavaki et al 2024).
+    name: fear_conditioning
+    environment: conditioning_box
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
   Recall:
     session_description:
       Experimental day 5. Fear response assessment session with re-exposure to the CS (blue led flash).
       24 hr after conditioning, on experimental day 5, retention of the conditioned response was tested.
       Recordings were made while rats were placed into the testing context, with a 2 min period to allow for exploration,
       then ten 30 sec long presentations of the CS, separated by 30 sec of CS were given.
+    name: recall
+    environment: habituation_and_recall_box
+    camera_id:
+      - 0
+    task_epochs:
+      - 1

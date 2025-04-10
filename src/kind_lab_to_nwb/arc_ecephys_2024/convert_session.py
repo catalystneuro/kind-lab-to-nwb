@@ -65,7 +65,7 @@ def session_to_nwb(
         metadata,
         editable_metadata,
     )
-    metadata["NWBFile"]["session_description"] = editable_metadata["SessionType"][session_id]["session_description"]
+    metadata["NWBFile"]["session_description"] = editable_metadata["Tasks"][session_id]["session_description"]
 
     # Update default metadata with the metadata extracted from the path expander
     metadata = dict_deep_update(
@@ -80,7 +80,7 @@ def session_to_nwb(
     if subject_genotype == "wt":
         subject_genotype = "WT"
     elif subject_genotype == "het":
-        subject_genotype = "Syngap+/∆-GAP"
+        subject_genotype = "SyngapPlus_DeltaGAP"
     else:
         raise ValueError(f"Genotype {subject_genotype} not recognized")
 
@@ -96,7 +96,10 @@ def session_to_nwb(
         video_files = list(data_dir_path.glob(f"{subject_id}/{session_id}/*.{ext}"))
         if video_files:
             video_file_path = video_files[0]
-            add_behavioral_video(nwbfile=nwbfile, metadata=metadata, video_file_path=video_file_path)
+            task_metadata = editable_metadata["Tasks"][session_id]
+            add_behavioral_video(
+                nwbfile=nwbfile, metadata=metadata, video_file_path=video_file_path, task_metadata=task_metadata
+            )
             break
     if video_file_path is None:
         print(f"Warning: No video file found for subject {subject_id}, session {session_id}")
@@ -128,7 +131,7 @@ def session_to_nwb(
     add_behavioral_events(nwbfile=nwbfile, folder_path=folder_path)
 
     if verbose:
-        print("Write NWB file")
+        print(f"Write NWB file {nwbfile_path.name}")
     with NWBHDF5IO(nwbfile_path, mode="w") as io:
         io.write(nwbfile)
 
@@ -137,9 +140,9 @@ if __name__ == "__main__":
 
     # Parameters for conversion
     # data_dir_path = Path("/media/alessandra/HD2/Kind-CN-data-share/neuronal_circuits/fear_conditionning_paradigm")
-    data_dir_path = Path("D:/Kind-CN-data-share/neuronal_circuits/fear_conditionning_paradigm")
+    data_dir_path = Path("E:/Kind-CN-data-share/neuronal_circuits/fear_conditionning_paradigm")
     # output_dir_path = Path("/media/alessandra/HD2/kind_lab_conversion_nwb")
-    output_dir_path = Path("D:/kind_lab_conversion_nwb")
+    output_dir_path = Path("E:/kind_lab_conversion_nwb")
 
     source_data_spec = {
         "OpenEphysRecording": {
@@ -156,7 +159,7 @@ if __name__ == "__main__":
 
     stub_test = False
     overwrite = True
-    for metadata in metadata_list:
+    for metadata in metadata_list[:5]:
         session_to_nwb(
             data_dir_path=data_dir_path,
             output_dir_path=output_dir_path,

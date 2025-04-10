@@ -80,7 +80,7 @@ def session_to_nwb(
     if subject_genotype == "wt":
         subject_genotype = "WT"
     elif subject_genotype == "het":
-        subject_genotype = "Syngap+/∆-GAP"  # not compatible with Spyglass
+        subject_genotype = "SyngapPlus_DeltaGAP"
     else:
         raise ValueError(f"Genotype {subject_genotype} not recognized")
 

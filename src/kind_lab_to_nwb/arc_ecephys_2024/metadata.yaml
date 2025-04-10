@@ -64,10 +64,12 @@ Ecephys:
     name: "0"
   Probe:
     name: "probe"
+    description: "16-channel digitizing head stage C3334 for EEG recordings."
+    manufacturer: "Intan Technologies"
     id: 0
     probe_type: "Intan C3334"
     units: "um"
-    probe_description: "16-channel digitizing head stage for EEG recordings"
+    probe_description: "0"
     contact_side_numbering: False
     contact_size: 100.0 #TODO check
   NwbElectrodeGroup:

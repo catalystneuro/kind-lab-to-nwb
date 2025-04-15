@@ -8,12 +8,12 @@ NWBFile:
     - fear extinction
   experiment_description: |
     This experiment is part of the Rat Behavioural Phenotyping Pipeline Methodologies https://sidb.org.uk/facilities/rat-behavioural-phenotyping-pipeline/.
-    As an initial effort to characterize the rat lines, these models are being behaviorally phenotyped at SIDB. 
-    Rat models are phenotyped according to a rigorous pipeline that assesses behaviours relevant to autism with intellectual disability, such as social and motor skills, and learning and sensory processing. 
+    As an initial effort to characterize the rat lines, these models are being behaviorally phenotyped at SIDB.
+    Rat models are phenotyped according to a rigorous pipeline that assesses behaviours relevant to autism with intellectual disability, such as social and motor skills, and learning and sensory processing.
     Different cohorts of rats are run through different subsets of tasks to overcome potential order effects on behaviours and to limit the number of tasks each animal is put through.
-    This experiment investigated auditory fear conditioning in different rat models 
-    (Arid1b: https://rgd.mcw.edu/rgdweb/report/strain/main.html?id=14394518, 
-    Grin2b: https://rgd.mcw.edu/rgdweb/report/strain/main.html?id=14394515, 
+    This experiment investigated auditory fear conditioning in different rat models
+    (Arid1b: https://rgd.mcw.edu/rgdweb/report/strain/main.html?id=14394518,
+    Grin2b: https://rgd.mcw.edu/rgdweb/report/strain/main.html?id=14394515,
     Scn2a: https://rgd.mcw.edu/rgdweb/report/strain/main.html?id=25394530).
     The experimenter was blind to genotype throughout the experiment and watched the trials on a screen from outside the testing room.
     The task utilized two Coulbourn Fear conditioning chambers providing distinct contexts (A and B).
@@ -25,8 +25,8 @@ NWBFile:
   experimenter:
     - Example, Researcher # Example value - actual experimenter name needed
 
-Subject:
-  species: Rattus norvegicus
+#Subject:
+#  species: Rattus norvegicus
 
 Devices:
   BehavioralCamera:
@@ -73,12 +73,12 @@ SessionTypes:
     session_description: |
       Experimental Day 4. Fear recall testing in context A.
       2 min baseline, then 13 tone presentations (30s, 5kHz, 75-80dB).
-      No foot shocks delivered. Inter-tone interval 30s. 
+      No foot shocks delivered. Inter-tone interval 30s.
       The subject remained for a further 2 min before being removed and placed in a holding cage.
 
   5_RecallD2:
     session_description: |
       Experimental Day 5. Fear recall testing in context A.
       2 min baseline, then 13 tone presentations (30s, 5kHz, 75-80dB).
-      No foot shocks delivered. Inter-tone interval 30s. 
+      No foot shocks delivered. Inter-tone interval 30s.
       The subject remained for a further 2 min before being removed and placed in a holding cage.

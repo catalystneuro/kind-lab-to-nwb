@@ -94,7 +94,7 @@ class BORISBehavioralEventsInterface(BaseDataInterface):
         self._data = boris_output["observations"][self.observation_id]
         return self._data
 
-    def get_starting_time(self) -> float:
+    def set_starting_time(self) -> float:
         if self._data is None:
             self._data = self._get_data_from_observation_id()
         self._starting_time = self._data["time offset"]
@@ -111,7 +111,7 @@ class BORISBehavioralEventsInterface(BaseDataInterface):
                 f"Available event types are {event_types}"
             )
         if self._starting_time is None:
-            self.get_starting_time()
+            self.set_starting_time()
 
         if self.is_state_event(event_type):  # state event
             timestamps = [event[0] + self._starting_time for event in events if event[2] == event_type]
@@ -126,12 +126,12 @@ class BORISBehavioralEventsInterface(BaseDataInterface):
 
         return event_timestamps, event_durations
 
-    def _get_session_start_time(self) -> float:
+    def _get_session_start_time(self) -> datetime:
         """Get the start time of the session.
 
         Returns
         -------
-        float
+        datetime
             Start time of the session
         """
         if self._data is None:

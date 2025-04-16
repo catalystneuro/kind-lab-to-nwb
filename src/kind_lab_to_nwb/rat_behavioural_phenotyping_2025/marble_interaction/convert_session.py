@@ -77,9 +77,9 @@ def session_to_nwb(
     )
 
     metadata["Subject"]["subject_id"] = subject_id
-    metadata["Subject"]["date_of_birth"] = subject_metadata["DOB"]
-sex = {"male": "M", "female": "F"}.get(subject_metadata["sex"], "U")
-metadata["Subject"].update(sex=sex)
+    metadata["Subject"]["date_of_birth"] = subject_metadata["DOB (DD/MM/YYYY)"]
+    sex = {"male": "M", "female": "F"}.get(subject_metadata["sex"], "U")
+    metadata["Subject"].update(sex=sex)
     # TODO add genotype
 
     metadata["NWBFile"]["session_id"] = session_id

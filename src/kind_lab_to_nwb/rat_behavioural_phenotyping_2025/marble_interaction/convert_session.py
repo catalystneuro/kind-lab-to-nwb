@@ -49,8 +49,12 @@ def session_to_nwb(
     conversion_options = dict()
 
     # Add Behavioral Video
-    source_data.update(dict(Video=dict(file_paths=video_file_paths)))
-    conversion_options.update(dict(Video=dict()))
+    if len(video_file_paths) == 1:
+        file_path = video_file_paths[0]
+        source_data.update(dict(Video=dict(file_path=file_path)))
+        conversion_options.update(dict(Video=dict(stub_test=stub_test)))
+    elif len(video_file_paths) > 1:
+        raise ValueError(f"Multiple video files found for {subject_id}.")
 
     # Add Marble Interaction Annotated events from BORIS output
     if boris_file_path is not None:

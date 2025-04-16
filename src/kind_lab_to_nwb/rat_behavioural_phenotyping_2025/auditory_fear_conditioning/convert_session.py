@@ -7,6 +7,7 @@ from zoneinfo import ZoneInfo
 
 import pandas as pd
 from pydantic import FilePath
+from pynwb import NWBHDF5IO
 
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.auditory_fear_conditioning import (
     AuditoryFearConditioningNWBConverter,
@@ -71,6 +72,7 @@ def session_to_nwb(
     video_file_path: Union[FilePath, str],
     freeze_log_file_path: Union[FilePath, str],
     session_id: str,
+    freeze_scores_file_path: Optional[Union[FilePath, str]] = None,
     overwrite: bool = False,
 ):
     """
@@ -84,6 +86,10 @@ def session_to_nwb(
         The path to the video file to be converted.
     freeze_log_file_path: Union[FilePath, str]
         The path to the freeze log file.
+    session_id: str
+        The session ID to be used in the metadata.
+    freeze_scores_file_path: Union[FilePath, str], optional
+        The path to the freeze scores file (.csv).
     """
     nwbfile_path = Path(nwbfile_path)
     nwbfile_path.parent.mkdir(
@@ -98,6 +104,11 @@ def session_to_nwb(
     source_data.update(dict(Video=dict(file_paths=[video_file_path])))
     conversion_options.update(dict(Video=dict()))
 
+    if freeze_scores_file_path is not None:
+        # Add Freeze Scores as trials
+        # TODO: replace identifier with actual value based on subject id and session id
+        source_data.update(dict(Behavior=dict(file_path=freeze_scores_file_path, identifier="763_Arid1b(12)_D1")))
+
     converter = AuditoryFearConditioningNWBConverter(source_data=source_data, verbose=True)
 
     metadata = converter.get_metadata()
@@ -109,6 +120,7 @@ def session_to_nwb(
         editable_metadata,
     )
 
+    # Add session ID to metadata
     metadata["NWBFile"]["session_id"] = session_id
     metadata["NWBFile"]["session_description"] = metadata["SessionTypes"][session_id]["session_description"]
 
@@ -129,6 +141,10 @@ def session_to_nwb(
         overwrite=overwrite,
     )
 
+    with NWBHDF5IO(nwbfile_path, mode="r") as io:
+        nwbfile_in = io.read()
+        print(nwbfile_in.trials.to_dataframe())
+
 
 if __name__ == "__main__":
 
@@ -146,6 +162,9 @@ if __name__ == "__main__":
     video_file_path = "/Users/weian/data/1_HabD1/Box3_Arid1b(3)_HabD1_408.avi"
     # Path to the excel file containing metadata
     freeze_log_file_path = "/Users/weian/data/1_HabD1/Freeze_Log.xls"
+    # Path to the freeze scores file
+    # TODO: replace with the actual path
+    freeze_scores_file_path = "/Users/weian/data/freeze_D1Arid1b(12)AFC_D1Stats.csv"
 
     # TODO: read from excel (see Marble Interaction for reference)
     session_id = "1_HabD1"
@@ -157,6 +176,7 @@ if __name__ == "__main__":
         nwbfile_path=nwbfile_path,
         video_file_path=video_file_path,
         freeze_log_file_path=freeze_log_file_path,
+        freeze_scores_file_path=freeze_scores_file_path,
         session_id=session_id,
         overwrite=overwrite,
     )

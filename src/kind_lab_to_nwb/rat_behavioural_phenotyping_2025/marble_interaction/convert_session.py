@@ -153,7 +153,7 @@ if __name__ == "__main__":
         video_file_paths=video_file_paths,
         boris_file_path=boris_file_path,
         subject_metadata=subject_metadata,
-        session_id=session_id,
+        session_id=f"{task_acronym}_{session_id}",
         stub_test=stub_test,
         overwrite=overwrite,
     )

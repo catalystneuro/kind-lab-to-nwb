@@ -45,19 +45,19 @@ Devices:
     manufacturer: House of Marbles UK
 
 SessionTypes:
-  HabD1:
+  MI_HabD1:
     session_description: |
       Experimental Day 1. Individual habituation.
       Rat placed in arena with woodchip bedding for 20 min.
       No marbles present.
 
-  HabD2:
+  MI_HabD2:
     session_description: |
       Experimental Day 2. Individual habituation.
       Rat placed in arena with woodchip bedding for 20 min.
       No marbles present.
 
-  Test:
+  MI_Test:
     session_description: |
       Experimental Day 3. Marble interaction test.
       Rat placed in arena with woodchip bedding and 20 marbles

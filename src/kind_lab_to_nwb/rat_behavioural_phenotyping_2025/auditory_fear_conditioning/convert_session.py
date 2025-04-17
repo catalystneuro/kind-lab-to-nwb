@@ -30,7 +30,7 @@ def _convert_ffii_to_avi(
 
     Notes
     -----
-    The video conversion script is from https://github.com/jf-lab/convert-ffii.git
+    The video conversion script is forked from https://github.com/jf-lab/convert-ffii.git
     The converted avi files will be saved in the same directory as the input files.
 
     This utility function checks if the convert-ffii repository is available,
@@ -58,7 +58,7 @@ def _convert_ffii_to_avi(
     if not convert_ffii_repo_path.exists():
         print(f"Cloning convert-ffii repository to {str(convert_ffii_repo_path)}...")
         subprocess.run(
-            ["git", "clone", "https://github.com/jf-lab/convert-ffii.git", str(convert_ffii_repo_path)], check=True
+            ["git", "clone", "https://github.com/weiglszonja/convert-ffii.git", str(convert_ffii_repo_path)], check=True
         )
     else:
         print(f"Using existing convert-ffii repository at '{str(convert_ffii_repo_path)}'.")

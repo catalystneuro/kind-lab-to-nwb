@@ -58,7 +58,7 @@ def session_to_nwb(
         raise ValueError(f"Multiple video files found for {subject_id}.")
 
     # Add Marble Interaction Annotated events from BORIS output
-    if boris_file_path is not None and session_id == "MI_Test":
+    if boris_file_path is not None and "Test" in session_id:
         observation_ids = get_observation_ids(boris_file_path)
         observation_id = next((obs_id for obs_id in observation_ids if subject_id.lower() in obs_id), None)
         if observation_id is None:
@@ -105,10 +105,11 @@ def session_to_nwb(
     nwbfile = make_ndx_event_nwbfile_from_metadata(metadata=metadata)
 
     # Add other devices to the NWB file
-    for device_metadata in metadata["Devices"]:
-        # Add the device to the NWB file
-        device = Device(**device_metadata)
-        nwbfile.add_device(device)
+    if "Test" in session_id:
+        for device_metadata in metadata["Devices"]:
+            # Add the device to the NWB file
+            device = Device(**device_metadata)
+            nwbfile.add_device(device)
 
     # Run conversion
     converter.run_conversion(

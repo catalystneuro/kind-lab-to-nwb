@@ -31,28 +31,34 @@ Subject:
   species: Rattus norvegicus
 
 Devices:
-  BehavioralCamera:
-    description: CCTV camera fixed above the arena for behavioral recording
-    manufacturer: Example Manufacturer # Example value - actual manufacturer needed
-
-  Arena:
+  - name: Arena
     description: Custom built arena (60x60 cm) with black laminated wood walls and grey lino floor.The light intensity was uniformly maintained at ~20 lx. Objects were secured in fixed locations within the arena using 3m Dualock tape.
     manufacturer: Kanya UK
 
+Behavior:
+  InternalVideos:
+    BehavioralVideo:
+      description: |
+        Video recording of the rat's behavior. Recorded using a CCTV camera mounted on the ceiling above the arenas.
+      device:
+        name: BehavioralCamera
+        description: CCTV camera mounted on ceiling above arena for behavioral recording
+        manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+
 SessionTypes:
-  HabD1:
+  OR_HabD1:
     session_description: |
       Experimental Day 1. Individual rat placed in arena for 10 min habituation
 
-  HabD2:
+  OR_HabD2:
     session_description: |
       Experimental Day 2. Individual rat placed in arena for 10 min habituation
 
-  HabD3:
+  OR_HabD3:
     session_description: |
       Experimental Day 3. Individual rat placed in arena for 10 min habituation
 
-  Test STM:
+  OR_STM_test:
     session_description: |
       Experimental Day 5. Short-term memory test. 
       Two identical objects (e.g. ceramic tea lights, glass ornaments, never face or animal related) 
@@ -63,7 +69,7 @@ SessionTypes:
       replaced with a replica object and one novel object (counterbalanced for location and object between rats). 
       The rat was returned to the arena for a 3 min test trial, 5 min after the sample trial.
 
-  Test LTM:
+  OR_LTM_test:
     session_description: |
       Experimental Day 5. Long-term memory test. 
       Two identical objects (e.g. ceramic tea lights, glass ornaments, never face or animal related) 

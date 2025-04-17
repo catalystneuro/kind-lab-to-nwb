@@ -1,27 +1,17 @@
-"""Primary NWBConverter class for Object Location Memory experiment."""
+"""Primary NWBConverter class for this dataset."""
 
 from neuroconv import NWBConverter
-from neuroconv.datainterfaces import VideoInterface
-from .behaviorinterface import BORISBehavioralInterface
+from neuroconv.datainterfaces import InternalVideoInterface
+
+from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.interfaces import (
+    BORISBehavioralEventsInterface,
+)
 
 
 class ObjectLocationMemoryNWBConverter(NWBConverter):
-    """Primary conversion class for Object Location Memory behavioral dataset."""
+    """Primary conversion class for my extracellular electrophysiology dataset."""
 
     data_interface_classes = dict(
-        Video=VideoInterface,
-        BehavioralScoring=BORISBehavioralInterface,
+        ObjectLocationMemoryBehavior=BORISBehavioralEventsInterface,
+        Video=InternalVideoInterface,
     )
-
-    def __init__(self, source_data):
-        """
-        Initialize the ObjectLocationMemoryNWBConverter.
-
-        Parameters
-        ----------
-        source_data : dict
-            Dictionary with paths to source files. Should contain keys:
-            - 'Video': dict with 'file_path' pointing to video file (.ts or .mkv)
-            - 'BehavioralScoring': dict with 'file_path' pointing to BORIS scoring file (.boris or .xls)
-        """
-        super().__init__(source_data)

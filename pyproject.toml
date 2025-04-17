@@ -26,6 +26,9 @@ Repository="https://github.com/catalystneuro/kind-lab-to-nwb"
 arc_ecephys_2024 = [
   "neuroconv==0.6.5"   # Pinned dependencies to specific versions
 ]
+rat_behavioural_phenotyping = [
+  "neuroconv==0.7.2"   # Pinned dependencies to specific versions
+]
 
 [build-system]
 requires = ["setuptools"]

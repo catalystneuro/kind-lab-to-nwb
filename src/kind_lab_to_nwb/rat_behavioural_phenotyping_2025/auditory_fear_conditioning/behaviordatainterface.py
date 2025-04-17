@@ -12,9 +12,9 @@ class AuditoryFearConditioningBehavioralInterface(BaseDataInterface):
 
     keywords = ["behavior", "trials"]
 
-    def __init__(self, file_path: Union[str, Path], identifier: str):
+    def __init__(self, file_path: Union[str, Path], subject_id: str):
         super().__init__(file_path=file_path)
-        self.identifier = identifier
+        self.subject_id = subject_id
 
     def read_data(self) -> pd.DataFrame:
         df = pd.read_csv(self.source_data["file_path"])
@@ -41,21 +41,22 @@ class AuditoryFearConditioningBehavioralInterface(BaseDataInterface):
         if threshold_column_idx is None:
             raise ValueError("No row with 'Threshold' found in the CSV file.")
         # Based on the example CSVs we have, the time bins end before the threshold column
-        trial_column_end = threshold_column_idx - 1
-
         # trial onset values ("Onset" is the first row)
-        trial_start_times = data.values[0][1:trial_column_end]
+        trial_start_times = data.values[0][1:threshold_column_idx]
         # trial durations ("Duration" is the second row)
-        durations = data.values[1][1:trial_column_end]
+        durations = data.values[1][1:threshold_column_idx]
         # trial stop times
         trial_stop_times = trial_start_times + durations
 
-        filtered_df = data.loc[data["% freeze"].isin([self.identifier])]
+        animal_id = "842"  # self.subject_id.split("_")[0]
+        filtered_df = data.loc[data["% freeze"].astype(str).str.contains(animal_id, na=False)]
         if filtered_df.empty:
-            raise ValueError(f"No rows found in the CSV file for '{self.identifier}'.")
-        freeze_times = filtered_df.values[0][1:trial_column_end]
+            raise ValueError(f"No rows found in the CSV file for '{self.subject_id}'.")
+        if len(filtered_df) > 1:
+            raise ValueError(f"Multiple rows found in the CSV file for '{self.subject_id}'.")
+        freeze_times = filtered_df.values[0][1:threshold_column_idx]
         threshold = filtered_df.values[0][threshold_column_idx]
-        bout_duration = filtered_df.values[0][threshold_column_idx + 1]
+        bout_duration = float(data.values[2][threshold_column_idx + 1])
         protocol = filtered_df.values[0][threshold_column_idx + 2]
 
         nwbfile.add_trial_column(name="percentage_of_time_spent_freezing", description="%time freezing")

@@ -32,36 +32,42 @@ Subject:
   species: Rattus norvegicus
 
 Devices:
-  BehavioralCamera:
-    description: CCTV camera fixed above the arenas for behavioral recording
-    manufacturer: Example Manufacturer # Example value - actual manufacturer needed
-
-  Arena_LTM:
+  - name: Arena_LTM
     description:
       Custom built arena (60x60 cm) with black laminated wood walls and woodchip bedding.
       This arean was used to test rat for long-term memory.
     manufacturer: Kanya UK
 
-  Arena_STM:
+  - name: Arena_STM
     description:
       Custom built arena (60x60 cm) with white laminated wood walls and white nesting bedding.
       This arean was used to test rat for short-term memory.
     manufacturer: Kanya UK
 
+Behavior:
+  InternalVideos:
+    BehavioralVideo:
+      description: |
+        Video recording of the rat's behavior. Recorded using a CCTV camera mounted on the ceiling above the arenas.
+      device:
+        name: BehavioralCamera
+        description: CCTV camera mounted on ceiling above arenas for behavioral recording
+        manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+
 SessionTypes:
-  HabD1:
+  OLM_HabD1:
     session_description: |
       Experimental Day 1. Suject is placed in assigned arena with cagemates for 10 min group habituation
 
-  HabD2:
+  OLM_HabD2:
     session_description: |
       Experimental Day 2. Individual rat placed in arena for 10 min habituation
 
-  HabD3:
+  OLM_HabD3:
     session_description: |
       Experimental Day 3. Individual rat placed in arena for 10 min habituation
 
-  Test STM:
+  OLM_STM_test:
     session_description: |
       Experimental Day 5. Short-term memory test. 
       Two identical objects (e.g. ceramic tea lights, glass ornaments, never face or animal related) 
@@ -73,7 +79,7 @@ SessionTypes:
       from the corner to the middle of the wall (the object that moved was counterbalanced across genotype). 
       The rat was returned to the arena for a 3 min test trial, 5 min after the sample trial.
 
-  Test LTM:
+  OLM_LTM_test:
     session_description: |
       Experimental Day 5. Long-term memory test. 
       Two identical objects (e.g. ceramic tea lights, glass ornaments, never face or animal related) 

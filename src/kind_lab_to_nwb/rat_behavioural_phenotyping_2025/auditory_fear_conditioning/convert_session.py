@@ -115,7 +115,7 @@ def session_to_nwb(
     conversion_options = dict()
 
     # Add Behavioral Video
-    source_data.update(dict(Video=dict(file_paths=[video_file_path])))
+    source_data.update(dict(Video=dict(file_paths=[video_file_path], video_name="BehavioralVideo")))
     conversion_options.update(dict(Video=dict()))
 
     if freeze_scores_file_path is not None:

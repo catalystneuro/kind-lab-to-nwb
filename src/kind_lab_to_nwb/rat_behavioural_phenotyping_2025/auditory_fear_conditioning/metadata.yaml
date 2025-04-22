@@ -28,11 +28,17 @@ NWBFile:
 Subject:
   species: Rattus norvegicus
 
-Devices:
-  - name: BehavioralCamera
-    description: CCTV camera mounted on ceiling above chambers for behavioral recording
-    manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+Behavior:
+    ExternalVideos:
+        BehavioralVideo:
+          description: |
+            Video recording of the rat's behavior. Recorded using a CCTV camera mounted on the ceiling above the chambers.
+          device:
+              name: BehavioralCamera
+              description: CCTV camera mounted on ceiling above chambers for behavioral recording
+              manufacturer: Example Manufacturer # Example value - actual manufacturer needed
 
+Devices:
   - name: ChamberA
     description: |
       Coulbourn Fear conditioning chamber - Context A

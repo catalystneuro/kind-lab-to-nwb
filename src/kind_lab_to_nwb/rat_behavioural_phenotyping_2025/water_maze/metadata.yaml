@@ -52,7 +52,7 @@ Devices:
     manufacturer: Example Manufacturer # Example value - actual manufacturer needed
 
 SessionTypes:
-  1_Visible:
+  WM_1_Visible:
     session_description: |
       Visible platform trials (4 swims).
       Visible platform trials were conducted first to assess vision,
@@ -66,14 +66,14 @@ SessionTypes:
       towel dried and returned to its home cage.
       If the subject did not find the platform was guided to it and left on it for 20 s.
 
-  2_Reference:
+  WM_2_Reference:
     session_description: |
       Long-term spatial memory assessment.
       In long term spatial memory testing the platform remained in the same location over days and was 1-2 cm below water level.
       Spatial cues were available.
       In the first swim of each day the platform only became available after 1 min.
 
-  3_Reversal:
+  WM_3_Reversal:
     session_description: |
       Reversal learning assessment.
       In reversal learning trials the location of platform was moved to the opposite quadrant compared to prior trials.

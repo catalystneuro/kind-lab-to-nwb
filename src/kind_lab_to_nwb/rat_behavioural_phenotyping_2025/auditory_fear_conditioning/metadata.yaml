@@ -29,24 +29,24 @@ Subject:
   species: Rattus norvegicus
 
 Devices:
-  BehavioralCamera:
+  - name: BehavioralCamera
     description: CCTV camera mounted on ceiling above chambers for behavioral recording
     manufacturer: Example Manufacturer # Example value - actual manufacturer needed
 
-  ChamberA:
+  - name: ChamberA
     description: |
       Coulbourn Fear conditioning chamber - Context A
       Smooth plastic flooring, curved black/white striped plastic mat on walls,
       black/white tiles, mint toothpaste odor cue
     manufacturer: Coulbourn, Harvard Apparatus
 
-  ChamberB:
+  - name: ChamberB
     description: |
       Coulbourn Fear conditioning chamber - Context B
       Grid shock delivery floor, steel tiles on walls, no odor cue
     manufacturer: Coulbourn, Harvard Apparatus
 
-  SoundAttenuatingChamber:
+  - name: SoundAttenuatingChamber
     description: Chamber housing the fear conditioning chambers for sound isolation
     manufacturer: Coulbourn, Harvard Apparatus
 

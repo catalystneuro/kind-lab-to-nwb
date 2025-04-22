@@ -150,6 +150,10 @@ def session_to_nwb(
     session_start_time = session_start_time.replace(tzinfo=ZoneInfo("Europe/London"))
     metadata["NWBFile"].update(session_start_time=session_start_time)
 
+    # Update devices metadata based on session type
+    chamber_to_remove = "ChamberA" if session_id == "AFC_3_Conditioning" else "ChamberB"
+    metadata["Devices"] = [device for device in metadata["Devices"] if device["name"] != chamber_to_remove]
+
     # Run conversion
     converter.run_conversion(
         metadata=metadata,

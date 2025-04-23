@@ -57,8 +57,7 @@ def session_to_nwb(
 
     # Add Behavioral Video
     if len(video_file_paths) == 1:
-        file_path = video_file_paths[0]
-        source_data.update(dict(Video=dict(file_path=file_path, video_name="BehavioralVideo")))
+        source_data.update(dict(Video=dict(file_paths=video_file_paths, video_name="BehavioralVideo")))
         conversion_options.update(dict(Video=dict(stub_test=stub_test)))
     elif len(video_file_paths) > 1:
         raise ValueError(f"Multiple video files found for {subject_id}.")

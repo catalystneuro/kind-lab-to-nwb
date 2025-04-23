@@ -21,11 +21,9 @@ from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils import (
     get_subject_metadata_from_task,
     get_session_ids_from_excel,
     make_ndx_event_nwbfile_from_metadata,
-    convert_to_mp4,
+    convert_ts_to_mp4,
 )
 from pynwb.device import Device
-
-SUPPORTED_SUFFIXES = [".avi", ".mp4", ".wmv", ".mov", ".flx", ".mkv"]  # video file's suffixes supported by DANDI
 
 
 def session_to_nwb(
@@ -54,10 +52,8 @@ def session_to_nwb(
 
     # Add Behavioral Video
     if len(video_file_paths) == 1:
-        file_path = video_file_paths[0]
-        if file_path.suffix not in SUPPORTED_SUFFIXES:
-            file_path = convert_to_mp4(file_path)
-        source_data.update(dict(Video=dict(file_paths=[file_path], video_name="BehavioralVideo")))
+        file_paths = convert_ts_to_mp4(video_file_paths)
+        source_data.update(dict(Video=dict(file_paths=file_paths, video_name="BehavioralVideo")))
         conversion_options.update(dict(Video=dict()))
     elif len(video_file_paths) > 1:
         raise ValueError(f"Multiple video files found for {subject_id}.")

@@ -1,3 +1,4 @@
+import subprocess
 from pydantic import FilePath
 from typing import List
 import pandas as pd
@@ -10,8 +11,6 @@ import uuid
 from pynwb.file import Subject
 
 from ndx_events import NdxEventsNWBFile
-
-import os
 
 
 def make_ndx_event_nwbfile_from_metadata(metadata: dict) -> NdxEventsNWBFile:
@@ -120,8 +119,11 @@ def get_session_ids_from_excel(subjects_metadata_file_path: FilePath, task_acron
     return session_ids
 
 
-def convert_to_mp4(video_file_path):
-    """Convert a video file to .mp4 format using ffmpeg.
+SUPPORTED_SUFFIXES = [".avi", ".mp4", ".wmv", ".mov", ".flx", ".mkv"]  # video file's suffixes supported by DANDI
+
+
+def convert_ts_to_mp4(video_file_paths: List[FilePath]) -> List[FilePath]:
+    """Convert .ts video files to .mp4 format using ffmpeg.
     If the file is not in .mp4 format, it will create a new .mp4 file in a subdirectory called "converted".
 
     Parameters
@@ -134,23 +136,48 @@ def convert_to_mp4(video_file_path):
     Path
         Path to the converted .mp4 video file
     """
-    # Check if the input file exists
-    if not video_file_path.is_file():
-        raise FileNotFoundError(f"The file {video_file_path} does not exist.")
 
-    # Create a subdirectory called "converted"
-    output_dir = video_file_path.parent / "converted"
-    output_dir.mkdir(parents=True, exist_ok=True)
-    # Define the output file path by replacing the extension with .mp4
-    output_file_path = output_dir / (video_file_path.stem + ".mp4")
+    output_file_paths = []
 
-    # Check if the output file already exists
-    if output_file_path.is_file():
-        print(f"The file {output_file_path} already exists. Skipping conversion.")
-        return output_file_path
+    for video_file_path in video_file_paths:
+        # Create a subdirectory called "converted"
+        output_dir = video_file_path.parent / "converted"
+        output_dir.mkdir(parents=True, exist_ok=True)
+        # Check if the input file exists
+        if not video_file_path.is_file():
+            raise FileNotFoundError(f"The file {video_file_path} does not exist.")
 
-    # Use ffmpeg to convert the video file
-    command = f'ffmpeg -i "{video_file_path}" -c:v copy -c:a aac "{output_file_path}"'
-    os.system(command)
+        # Check if the input file is a .ts file
+        if video_file_path.suffix.lower() != ".ts":
+            # Check if the file is already in a supported format
+            if video_file_path.suffix.lower() in SUPPORTED_SUFFIXES:
+                print(
+                    f"Skipping conversion: {video_file_path.name} is already in {video_file_path.suffix} format, which is supported by DANDI."
+                )
+                output_file_paths.append(video_file_path)
+                continue
+            else:
+                raise ValueError(
+                    f"Unsupported file format: {video_file_path.name} has extension {video_file_path.suffix}, but only .ts files can be converted."
+                )
 
-    return output_file_path
+        # Define the output file path by replacing the extension with .mp4
+        output_file_path = output_dir / (video_file_path.stem + ".mp4")
+
+        # Check if the output file already exists
+        if output_file_path.is_file():
+            print(f"The file {output_file_path} already exists. Skipping conversion.")
+            output_file_paths.append(output_file_path)
+        else:  # Use ffmpeg to convert the video file
+            try:
+                subprocess.run(
+                    ["ffmpeg", "-i", video_file_path, "-c:v", "copy", "-c:a", "aac", output_file_path],
+                    check=True,
+                    capture_output=True,
+                )
+                output_file_paths.append(output_file_path)
+
+            except subprocess.CalledProcessError as e:
+                print(f"An error occurred: {e}")
+
+    return output_file_paths

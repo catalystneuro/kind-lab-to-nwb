@@ -48,7 +48,7 @@ class AuditoryFearConditioningBehavioralInterface(BaseDataInterface):
         # trial stop times
         trial_stop_times = trial_start_times + durations
 
-        animal_id = "842"  # self.subject_id.split("_")[0]
+        animal_id = self.subject_id.split("_")[0]
         filtered_df = data.loc[data["% freeze"].astype(str).str.contains(animal_id, na=False)]
         if filtered_df.empty:
             raise ValueError(f"No rows found in the CSV file for '{self.subject_id}'.")

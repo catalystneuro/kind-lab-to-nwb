@@ -21,6 +21,7 @@ from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils import (
     get_subject_metadata_from_task,
     get_session_ids_from_excel,
     make_ndx_event_nwbfile_from_metadata,
+    convert_ts_to_mp4,
 )
 from pynwb.device import Device
 
@@ -57,8 +58,9 @@ def session_to_nwb(
 
     # Add Behavioral Video
     if len(video_file_paths) == 1:
-        source_data.update(dict(Video=dict(file_paths=video_file_paths, video_name="BehavioralVideo")))
-        conversion_options.update(dict(Video=dict(stub_test=stub_test)))
+        file_paths = convert_ts_to_mp4(video_file_paths)
+        source_data.update(dict(Video=dict(file_paths=file_paths, video_name="BehavioralVideo")))
+        conversion_options.update(dict(Video=dict()))
     elif len(video_file_paths) > 1:
         raise ValueError(f"Multiple video files found for {subject_id}.")
 

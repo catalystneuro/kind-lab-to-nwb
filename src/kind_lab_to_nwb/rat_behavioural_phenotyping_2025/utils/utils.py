@@ -123,8 +123,10 @@ SUPPORTED_SUFFIXES = [".avi", ".mp4", ".wmv", ".mov", ".flx", ".mkv"]  # video f
 
 
 def convert_ts_to_mp4(video_file_paths: List[FilePath]) -> List[FilePath]:
-    """Convert .ts video files to .mp4 format using ffmpeg.
-    If the file is not in .mp4 format, it will create a new .mp4 file in a subdirectory called "converted".
+    """Converts video files with .ts extension to .mp4 format using ffmpeg.
+    Converted files are saved in a 'converted' subdirectory within the parent directory
+    of the original files. If a file is already in .mp4 or another supported format,
+    it is skipped. If the output file already exists, conversion is also skipped.
 
     Parameters
     ----------
@@ -133,8 +135,16 @@ def convert_ts_to_mp4(video_file_paths: List[FilePath]) -> List[FilePath]:
 
     Returns
     -------
-    Path
-        Path to the converted .mp4 video file
+    List[FilePath]
+        List of paths to the output video files (either converted .mp4 files
+        or the original files if they were already in a supported format).
+
+    Raises
+    ------
+    FileNotFoundError
+        If any of the input video files does not exist.
+    ValueError
+        If any input file has an unsupported format (not .ts and not in SUPPORTED_SUFFIXES).
     """
 
     output_file_paths = []

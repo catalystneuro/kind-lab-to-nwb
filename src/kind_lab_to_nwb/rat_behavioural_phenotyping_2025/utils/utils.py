@@ -128,8 +128,8 @@ def convert_ts_to_mp4(video_file_paths: List[FilePath]) -> List[FilePath]:
 
     Parameters
     ----------
-    video_file_path : Path
-        Path to the .ts video file
+    video_file_paths : List[FilePath]
+        The list of paths to the video files (.ts) to be converted.
 
     Returns
     -------

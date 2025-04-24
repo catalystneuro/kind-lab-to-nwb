@@ -12,6 +12,11 @@ class ObjectRecognitionNWBConverter(NWBConverter):
     """Primary conversion class for my extracellular electrophysiology dataset."""
 
     data_interface_classes = dict(
-        ObjectRecognitionBehavior=BORISBehavioralEventsInterface,
         Video=ExternalVideoInterface,
+        SampleVideo=ExternalVideoInterface,
+        TestVideo=ExternalVideoInterface,
+        TestObjectRecognitionBehavior=BORISBehavioralEventsInterface,
+        SampleObjectRecognitionBehavior=BORISBehavioralEventsInterface,
     )
+
+    # TODO align sample and test vidoe to the session start time

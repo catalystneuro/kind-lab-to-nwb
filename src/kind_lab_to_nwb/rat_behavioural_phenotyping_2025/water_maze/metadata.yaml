@@ -34,9 +34,30 @@ Subject:
 
 Behavior:
   ExternalVideos:
-    BehavioralVideo:
+    BehavioralVideoTrial1:
       description: |
-        Video recording of the rat's behavior. Recorded using a CCTV camera mounted on the ceiling above the arenas.
+        Video recording of the rat's behavior during the first swim of the day. Recorded using a CCTV camera mounted on the ceiling above the arenas.
+      device:
+        name: BehavioralCamera
+        description: CCTV camera mounted on ceiling above arenas for behavioral recording
+        manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+    BehavioralVideoTrial2:
+      description: |
+        Video recording of the rat's behavior during the second swim of the day. Recorded using a CCTV camera mounted on the ceiling above the arenas.
+      device:
+        name: BehavioralCamera
+        description: CCTV camera mounted on ceiling above arenas for behavioral recording
+        manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+    BehavioralVideoTrial3:
+      description: |
+        Video recording of the rat's behavior during the third swim of the day. Recorded using a CCTV camera mounted on the ceiling above the arenas.
+      device:
+        name: BehavioralCamera
+        description: CCTV camera mounted on ceiling above arenas for behavioral recording
+        manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+    BehavioralVideoTrial4:
+      description: |
+        Video recording of the rat's behavior during the fourth swim of the day. Recorded using a CCTV camera mounted on the ceiling above the arenas.
       device:
         name: BehavioralCamera
         description: CCTV camera mounted on ceiling above arenas for behavioral recording

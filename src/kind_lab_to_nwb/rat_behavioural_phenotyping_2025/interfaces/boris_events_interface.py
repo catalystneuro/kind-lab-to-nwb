@@ -51,11 +51,6 @@ class BORISBehavioralEventsInterface(BaseDataInterface):
 
     def get_metadata(self) -> DeepDict:
         metadata = super().get_metadata()
-
-        session_start_time = self._get_session_start_time()
-        if session_start_time is not None:
-            metadata["NWBFile"].update(session_start_time=session_start_time)
-
         return metadata
 
     def get_event_types(self) -> List[Dict]:
@@ -125,20 +120,6 @@ class BORISBehavioralEventsInterface(BaseDataInterface):
             event_durations = [np.nan for event in events if event[2] == event_type]
 
         return event_timestamps, event_durations
-
-    def _get_session_start_time(self) -> datetime:
-        """Get the start time of the session.
-
-        Returns
-        -------
-        datetime
-            Start time of the session
-        """
-        if self._data is None:
-            self._data = self._get_data_from_observation_id()
-        session_start_time = self._data["date"]
-        session_start_time = datetime.strptime(session_start_time, "%Y-%m-%dT%H:%M:%S")
-        return session_start_time
 
     def get_event_frame_index(self, event_type: str) -> List[int]:
         # Extract frame index of the events

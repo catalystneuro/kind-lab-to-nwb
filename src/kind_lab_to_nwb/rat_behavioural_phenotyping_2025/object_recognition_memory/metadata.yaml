@@ -36,7 +36,7 @@ Devices:
     manufacturer: Kanya UK
 
 Behavior:
-  InternalVideos:
+  ExternalVideos:
     BehavioralVideo:
       description: |
         Video recording of the rat's behavior. Recorded using a CCTV camera mounted on the ceiling above the arenas.

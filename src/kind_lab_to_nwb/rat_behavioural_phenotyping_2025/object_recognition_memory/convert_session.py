@@ -10,7 +10,6 @@ from neuroconv.utils import (
     dict_deep_update,
     load_dict_from_file,
 )
-from neuroconv.tools.nwb_helpers import configure_and_write_nwbfile
 
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.object_recognition_memory.nwbconverter import (
     ObjectRecognitionNWBConverter,

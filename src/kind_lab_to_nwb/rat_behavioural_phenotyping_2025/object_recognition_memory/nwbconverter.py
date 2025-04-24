@@ -19,4 +19,4 @@ class ObjectRecognitionNWBConverter(NWBConverter):
         SampleObjectRecognitionBehavior=BORISBehavioralEventsInterface,
     )
 
-    # TODO align sample and test vidoe to the session start time
+    # TODO align sample and test video to the session start time

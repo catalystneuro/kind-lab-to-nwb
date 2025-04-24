@@ -53,6 +53,20 @@ Behavior:
         name: BehavioralCamera
         description: CCTV camera mounted on ceiling above arenas for behavioral recording
         manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+    BehavioralVideoTestTrial:
+      description: |
+        Video recording of the rat's behavior during the test trial. Recorded using a CCTV camera mounted on the ceiling above the arenas.
+      device:
+        name: BehavioralCamera
+        description: CCTV camera mounted on ceiling above arena for behavioral recording
+        manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+    BehavioralVideoSampleTrial:
+      description: |
+        Video recording of the rat's behavior during the sample trial. Recorded using a CCTV camera mounted on the ceiling above the arenas.
+      device:
+        name: BehavioralCamera
+        description: CCTV camera mounted on ceiling above arena for behavioral recording
+        manufacturer: Example Manufacturer # Example value - actual manufacturer needed
 
 SessionTypes:
   OLM_HabD1:
@@ -67,7 +81,7 @@ SessionTypes:
     session_description: |
       Experimental Day 3. Individual rat placed in arena for 10 min habituation
 
-  OLM_STM_test:
+  OLM_STM:
     session_description: |
       Experimental Day 5. Short-term memory test. 
       Two identical objects (e.g. ceramic tea lights, glass ornaments, never face or animal related) 
@@ -79,7 +93,7 @@ SessionTypes:
       from the corner to the middle of the wall (the object that moved was counterbalanced across genotype). 
       The rat was returned to the arena for a 3 min test trial, 5 min after the sample trial.
 
-  OLM_LTM_test:
+  OLM_LTM:
     session_description: |
       Experimental Day 5. Long-term memory test. 
       Two identical objects (e.g. ceramic tea lights, glass ornaments, never face or animal related) 

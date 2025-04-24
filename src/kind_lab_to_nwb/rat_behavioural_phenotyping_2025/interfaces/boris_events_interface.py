@@ -138,7 +138,7 @@ class BORISBehavioralEventsInterface(BaseDataInterface):
         for video_filepath, fps in self._data["media_info"]["fps"].items():
             return float(fps)  # TODO check if fps is the same for all videos
 
-    def add_to_nwbfile(self, nwbfile, metadata, **conversion_options):
+    def add_to_nwbfile(self, nwbfile, metadata, table_name: str = "BehavioralEvents") -> None:
         event_type_meanings_table = MeaningsTable(
             name="EventTypeMeanings", description="Meanings of behavioral event types"
         )
@@ -150,7 +150,7 @@ class BORISBehavioralEventsInterface(BaseDataInterface):
         )
         # Add behavioral events to nwbfile
         behavioral_events = EventsTable(
-            name="BehavioralEvents",
+            name=table_name,
             description="Behavioral events from BORIS output",
             columns=[event_type_column],
             meanings_tables=[event_type_meanings_table],

@@ -56,33 +56,64 @@ def session_to_nwb(
     source_data = dict()
     conversion_options = dict()
 
-    # Add Behavioral Video
-    if len(video_file_paths) == 1:
-        file_paths = convert_ts_to_mp4(video_file_paths)
-        source_data.update(dict(Video=dict(file_paths=file_paths, video_name="BehavioralVideo")))
-        conversion_options.update(dict(Video=dict()))
-    elif len(video_file_paths) > 1:
-        raise ValueError(f"Multiple video files found for {subject_id}.")
-
-    # Add Marble Interaction Annotated events from BORIS output
-    if boris_file_path is not None and "test" in session_id:
-        observation_ids = get_observation_ids(boris_file_path)
-        observation_id = next(
-            (
-                obs_id
-                for obs_id in observation_ids
-                if str(subject_metadata["animal ID"]) in obs_id
-                and session_id.replace("OR_", "").lower() in obs_id.lower()
-            ),
-            None,
-        )
-        if observation_id is not None:
+    if "STM" in session_id or "LTM" in session_id:
+        if len(video_file_paths) == 2:
+            file_paths = convert_ts_to_mp4(video_file_paths)
+            test_file_paths = [file_path for file_path in file_paths if "test" in file_path.name.lower()]
+            sample_file_paths = [file_path for file_path in file_paths if "sample" in file_path.name.lower()]
             source_data.update(
-                dict(ObjectRecognitionBehavior=dict(file_path=boris_file_path, observation_id=observation_id))
+                dict(
+                    TestVideo=dict(file_paths=test_file_paths, video_name="BehavioralVideoTestTrial"),
+                    SampleVideo=dict(file_paths=sample_file_paths, video_name="BehavioralVideoSampleTrial"),
+                )
             )
-            conversion_options.update(dict(ObjectRecognitionBehavior=dict()))
+            conversion_options.update(dict(TestVideo=dict(), SampleVideo=dict()))
         else:
-            subject_id(f"Observation ID not found in BORIS file {boris_file_path}.")
+            raise ValueError(f"{len(video_file_paths)} video files found for {subject_id}. Expected 2 video files.")
+        # Add Annotated events from BORIS output
+        if boris_file_path is not None:
+            all_observation_ids = get_observation_ids(boris_file_path)
+            observation_ids = [
+                obs_id
+                for obs_id in all_observation_ids
+                if str(subject_metadata["animal ID"]) in obs_id and session_id.replace("OR_", "") in obs_id
+            ]
+            if not observation_ids:
+                print(f"Observation ID not found in BORIS file {boris_file_path}.")
+            else:
+                for observation_id in observation_ids:
+                    if "sample" in observation_id.lower():
+                        source_data.update(
+                            dict(
+                                SampleObjectRecognitionBehavior=dict(
+                                    file_path=boris_file_path, observation_id=observation_id
+                                )
+                            )
+                        )
+                        conversion_options.update(
+                            dict(SampleObjectRecognitionBehavior=dict(table_name="SampleTrialBehavioralEvents"))
+                        )
+                    elif "test" in observation_id.lower():
+                        source_data.update(
+                            dict(
+                                TestObjectRecognitionBehavior=dict(
+                                    file_path=boris_file_path, observation_id=observation_id
+                                )
+                            )
+                        )
+                        conversion_options.update(
+                            dict(TestObjectRecognitionBehavior=dict(table_name="TestTrialBehavioralEvents"))
+                        )
+                    else:
+                        raise ValueError(f"Observation ID {observation_id} not recognized.")
+
+    else:
+        if len(video_file_paths) == 1:
+            file_paths = convert_ts_to_mp4(video_file_paths)
+            source_data.update(dict(Video=dict(file_paths=file_paths, video_name="BehavioralVideo")))
+            conversion_options.update(dict(Video=dict()))
+        elif len(video_file_paths) > 1:
+            raise ValueError(f"Multiple video files found for {subject_id}.")
 
     converter = ObjectRecognitionNWBConverter(source_data=source_data)
 
@@ -169,14 +200,11 @@ if __name__ == "__main__":
         raise FileNotFoundError(f"Folder {cohort_folder_path} does not exist")
     video_file_paths = list(video_folder_path.glob(f"*{subject_metadata['animal ID']}*"))
 
-    stub_test = True
+    stub_test = False
     overwrite = True
 
     if "Test" in session_id:
-        session_id = f"{session_id.split(' ')[1]}_{session_id.split(' ')[0].lower()}"
-        video_file_paths = [
-            video_file_path for video_file_path in video_file_paths if "test" in video_file_path.name.lower()
-        ]
+        session_id = f"{session_id.split(' ')[1]}"
 
     session_to_nwb(
         output_dir_path=output_dir_path,

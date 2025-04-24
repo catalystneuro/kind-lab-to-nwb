@@ -12,8 +12,8 @@ from neuroconv.utils import (
 )
 from neuroconv.tools.nwb_helpers import configure_and_write_nwbfile
 
-from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.marble_interaction.nwbconverter import (
-    MarbleInteractionNWBConverter,
+from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.object_recognition_memory.nwbconverter import (
+    ObjectRecognitionNWBConverter,
 )
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.interfaces import get_observation_ids
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils import (
@@ -35,6 +35,13 @@ def session_to_nwb(
     stub_test: bool = False,
     overwrite: bool = False,
 ):
+    subject_id = f"{subject_metadata['animal ID']}_{subject_metadata['cohort ID']}"
+
+    if not video_file_paths:
+        warnings.warn(
+            f"No video file found. NWB file will not be created for subject {subject_id} session {session_id}."
+        )
+        return
 
     output_dir_path = Path(output_dir_path)
     if stub_test:
@@ -44,7 +51,6 @@ def session_to_nwb(
         exist_ok=True,
     )
 
-    subject_id = f"{subject_metadata['animal ID']}_{subject_metadata['cohort ID']}"
     nwbfile_path = output_dir_path / f"sub-{subject_id}_ses-{session_id}.nwb"
 
     source_data = dict()
@@ -59,17 +65,26 @@ def session_to_nwb(
         raise ValueError(f"Multiple video files found for {subject_id}.")
 
     # Add Marble Interaction Annotated events from BORIS output
-    if boris_file_path is not None and "Test" in session_id:
+    if boris_file_path is not None and "test" in session_id:
         observation_ids = get_observation_ids(boris_file_path)
-        observation_id = next((obs_id for obs_id in observation_ids if subject_id.lower() in obs_id), None)
-        if observation_id is None:
-            raise ValueError(f"No observation ID found containing subject ID '{subject_id}'")
-        source_data.update(
-            dict(MarbleInteractionBehavior=dict(file_path=boris_file_path, observation_id=observation_id))
+        observation_id = next(
+            (
+                obs_id
+                for obs_id in observation_ids
+                if str(subject_metadata["animal ID"]) in obs_id
+                and session_id.replace("OR_", "").lower() in obs_id.lower()
+            ),
+            None,
         )
-        conversion_options.update(dict(MarbleInteractionBehavior=dict()))
+        if observation_id is not None:
+            source_data.update(
+                dict(ObjectRecognitionBehavior=dict(file_path=boris_file_path, observation_id=observation_id))
+            )
+            conversion_options.update(dict(ObjectRecognitionBehavior=dict()))
+        else:
+            subject_id(f"Observation ID not found in BORIS file {boris_file_path}.")
 
-    converter = MarbleInteractionNWBConverter(source_data=source_data)
+    converter = ObjectRecognitionNWBConverter(source_data=source_data)
 
     # Add datetime to conversion
     metadata = converter.get_metadata()
@@ -106,11 +121,10 @@ def session_to_nwb(
     nwbfile = make_ndx_event_nwbfile_from_metadata(metadata=metadata)
 
     # Add other devices to the NWB file
-    if "Test" in session_id:
-        for device_metadata in metadata["Devices"]:
-            # Add the device to the NWB file
-            device = Device(**device_metadata)
-            nwbfile.add_device(device)
+    for device_metadata in metadata["Devices"]:
+        # Add the device to the NWB file
+        device = Device(**device_metadata)
+        nwbfile.add_device(device)
 
     # Run conversion
     converter.run_conversion(
@@ -125,17 +139,17 @@ def session_to_nwb(
 if __name__ == "__main__":
 
     # Parameters for conversion
-    data_dir_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/Marble Interaction")
-    output_dir_path = Path("D:/kind_lab_conversion_nwb/marble_interaction")
+    data_dir_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/Object Recognition")
+    output_dir_path = Path("D:/kind_lab_conversion_nwb/object_recognition")
     subjects_metadata_file_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/RAT ID metadata Yunkai.xlsx")
-    task_acronym = "MI"
+    task_acronym = "OR"
     session_ids = get_session_ids_from_excel(subjects_metadata_file_path, task_acronym)
 
     subjects_metadata = extract_subject_metadata_from_excel(subjects_metadata_file_path)
     subjects_metadata = get_subject_metadata_from_task(subjects_metadata, task_acronym)
 
     session_id = session_ids[-1]  # Test
-    subject_metadata = subjects_metadata[13]  # subject 408Arid1b
+    subject_metadata = subjects_metadata[137]  # subject 617Scn2a
 
     cohort_folder_path = data_dir_path / subject_metadata["line"] / f"{subject_metadata['cohort ID']}_{task_acronym}"
     if not cohort_folder_path.exists():
@@ -154,8 +168,14 @@ if __name__ == "__main__":
         raise FileNotFoundError(f"Folder {cohort_folder_path} does not exist")
     video_file_paths = list(video_folder_path.glob(f"*{subject_metadata['animal ID']}*"))
 
-    stub_test = False
+    stub_test = True
     overwrite = True
+
+    if "Test" in session_id:
+        session_id = f"{session_id.split(' ')[1]}_{session_id.split(' ')[0].lower()}"
+        video_file_paths = [
+            video_file_path for video_file_path in video_file_paths if "test" in video_file_path.name.lower()
+        ]
 
     session_to_nwb(
         output_dir_path=output_dir_path,

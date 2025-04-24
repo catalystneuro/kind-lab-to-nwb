@@ -107,10 +107,11 @@ def session_to_nwb(
     metadata["NWBFile"]["session_description"] = metadata["SessionTypes"][session_id]["session_description"]
 
     # Check if session_start_time exists in metadata
+    # TODO only date is extracted from the filename, time is not included
     if "session_start_time" not in metadata["NWBFile"]:
-        # Extract date from first video filename
+        # Extract date from video filename
         video_path = Path(video_file_paths[0])
-        date_str = video_path.stem.split("_")[0]  # Get "2022-11-23" from filename
+        date_str = video_path.stem.split(" ")[0]  # Get "2022-11-23" from filename
         try:
             # Convert to datetime
             session_start_time = datetime.strptime(date_str, "%Y-%m-%d")

@@ -24,8 +24,6 @@ def add_trials_to_nwbfile(
     nwbfile.add_trial_column(name="average_speed", description="The average speed in cm/s.")
     nwbfile.add_trial_column(name="percentage_time_near_walls", description="% time near walls")
     #    todo : add more columns
-    nwbfile.add_trial_column(name="image_series", description="The reference for the video file.")
-
     datetime_strings = trials["Date"] + " " + trials["Time"]
     video_timestamps = pd.to_datetime(datetime_strings, dayfirst=True)
     video_starting_times = [0.0]
@@ -41,5 +39,5 @@ def add_trials_to_nwbfile(
             start_time=video_starting_times[trial_index],
             stop_time=video_starting_times[trial_index] + row["Trial duration"],
             **trial_data,
-            image_series=nwbfile.acquisition[image_series_names[trial_index]],  # TBD
+            timeseries=nwbfile.acquisition[image_series_names[trial_index]],  # TBD
         )

@@ -7,23 +7,32 @@ def add_trials_to_nwbfile(
     trials: pd.DataFrame,
 ):
 
-    column_name_mapping = {
-        "Platform": "platform",
-        "Time to platform": "time_to_platform",
-        "Distance travelled (cm)": "distance_travelled_in_cm",
-        "Trial duration": "trial_duration",
-        "Average speed": "average_speed",
-        "% time near walls": "percentage_time_near_walls",
+    standard_columns = {
+        "Platform": ("platform", "Platform location"),
+        "Time to platform": ("time_to_platform", "Time taken to reach the platform in seconds"),
+        "Trial duration": ("trial_duration", "Total duration of the trial in seconds"),
+        "Distance travelled (cm)": ("distance_travelled_cm", "Distance travelled in centimeters"),
+        "Average speed": ("average_speed", "Average swimming speed in cm/s"),
+        "% time near walls": ("percent_time_near_walls", "Percentage of time spent near walls"),
+        "Platform Quadrant": ("platform_quadrant", "Quadrant containing the platform (1=NE, 2=NW, 3=SW, 4=SE)", "int"),
     }
-    nwbfile.add_trial_column(name="platform", description="The location of the platform in the maze.")
-    nwbfile.add_trial_column(
-        name="time_to_platform", description="The duration of the swim to the platform in seconds."
-    )
-    nwbfile.add_trial_column(name="distance_travelled_in_cm", description="The distance travelled in cm.")
-    nwbfile.add_trial_column(name="trial_duration", description="The duration of the trial in seconds.")
-    nwbfile.add_trial_column(name="average_speed", description="The average speed in cm/s.")
-    nwbfile.add_trial_column(name="percentage_time_near_walls", description="% time near walls")
-    #    todo : add more columns
+
+    # Add the standard columns to the NWB file
+    for _, (name, description, *optional_type) in standard_columns.items():
+        nwbfile.add_trial_column(name=name, description=description)
+
+    # Add columns for quadrant times (in seconds)
+    for quadrant in ["NE", "NW", "SW", "SE"]:
+        nwbfile.add_trial_column(
+            name=f"time_in_{quadrant}_quadrant", description=f"Time spent in {quadrant} quadrant in seconds"
+        )
+        nwbfile.add_trial_column(
+            name=f"percent_time_in_{quadrant}_quadrant", description=f"Percentage of time spent in {quadrant} quadrant"
+        )
+        nwbfile.add_trial_column(
+            name=f"time_to_platform_{quadrant}", description=f"Time to platform when in {quadrant} quadrant"
+        )
+
     datetime_strings = trials["Date"] + " " + trials["Time"]
     video_timestamps = pd.to_datetime(datetime_strings, dayfirst=True)
     video_starting_times = [0.0]
@@ -33,11 +42,35 @@ def add_trials_to_nwbfile(
 
     image_series_names = list(nwbfile.acquisition.keys())
     for trial_index, row in trials.reset_index(drop=True).iterrows():
-        trial_data = {column_name_mapping[col]: row[col] for col in column_name_mapping.keys() if col in row.index}
+        trial_data = {}
 
+        # Add standard columns
+        for csv_col, (nwb_col, _, *optional_type) in standard_columns.items():
+            if csv_col in row.index:
+                value = row[csv_col]
+                # Convert to integer if specified
+                if optional_type and optional_type[0] == "int":
+                    value = int(float(value))  # Convert through float to handle potential decimal values
+                trial_data[nwb_col] = value
+
+        # Add quadrant data - using column positions since they repeat names
+        quadrants = ["NE", "NW", "SW", "SE"]
+        # Time in quadrants (seconds) - columns 12-15
+        for i, quadrant in enumerate(quadrants):
+            trial_data[f"time_in_{quadrant}_quadrant"] = float(row.iloc[12 + i])
+
+        # Percentage time in quadrants - columns 16-19
+        for i, quadrant in enumerate(quadrants):
+            trial_data[f"percent_time_in_{quadrant}_quadrant"] = float(row.iloc[16 + i])
+
+        # Time to platform in each quadrant - columns 20-23
+        for i, quadrant in enumerate(quadrants):
+            trial_data[f"time_to_platform_{quadrant}"] = float(row.iloc[20 + i])
+
+        # Add the trial with all its data
         nwbfile.add_trial(
             start_time=video_starting_times[trial_index],
             stop_time=video_starting_times[trial_index] + row["Trial duration"],
             **trial_data,
-            timeseries=nwbfile.acquisition[image_series_names[trial_index]],  # TBD
+            timeseries=nwbfile.acquisition[image_series_names[trial_index]],
         )

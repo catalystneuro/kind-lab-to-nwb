@@ -10,38 +10,6 @@ import uuid
 
 from pynwb.file import Subject
 
-from ndx_events import NdxEventsNWBFile
-
-
-def make_ndx_event_nwbfile_from_metadata(metadata: dict) -> NdxEventsNWBFile:
-    """Make NdxEventsNWBFile from available metadata."""
-
-    assert metadata is not None, "Metadata is required to create an NWBFile but metadata=None was passed."
-
-    nwbfile_kwargs = deepcopy(metadata["NWBFile"])
-    # convert ISO 8601 string to datetime
-    if isinstance(nwbfile_kwargs.get("session_start_time"), str):
-        nwbfile_kwargs["session_start_time"] = datetime.fromisoformat(nwbfile_kwargs["session_start_time"])
-    if "session_description" not in nwbfile_kwargs:
-        nwbfile_kwargs["session_description"] = "No description."
-    if "identifier" not in nwbfile_kwargs:
-        nwbfile_kwargs["identifier"] = str(uuid.uuid4())
-    if "source_script" not in nwbfile_kwargs:
-        neuroconv_version = importlib.metadata.version("neuroconv")
-        nwbfile_kwargs["source_script"] = f"Created using NeuroConv v{neuroconv_version}"
-        nwbfile_kwargs["source_script_file_name"] = __file__  # Required for validation
-
-    if "Subject" in metadata:
-        nwbfile_kwargs["subject"] = metadata["Subject"]
-        # convert ISO 8601 string to datetime
-        if "date_of_birth" in nwbfile_kwargs["subject"] and isinstance(nwbfile_kwargs["subject"]["date_of_birth"], str):
-            nwbfile_kwargs["subject"]["date_of_birth"] = datetime.fromisoformat(
-                nwbfile_kwargs["subject"]["date_of_birth"]
-            )
-        nwbfile_kwargs["subject"] = Subject(**nwbfile_kwargs["subject"])
-
-    return NdxEventsNWBFile(**nwbfile_kwargs)
-
 
 def extract_subject_metadata_from_excel(subjects_metadata_file_path: FilePath) -> List[dict]:
     """Extract subject metadata from an excel sheet for all subjects.

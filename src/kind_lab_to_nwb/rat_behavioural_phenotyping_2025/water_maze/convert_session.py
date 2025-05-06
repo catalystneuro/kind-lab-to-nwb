@@ -102,10 +102,10 @@ def session_to_nwb(
         nwbfile_path=nwbfile_path,
     )
 
-    with NWBHDF5IO(nwbfile_path, mode="r") as io:
-        nwbfile_in = io.read()
-        print(nwbfile_in.acquisition)
-        print(nwbfile_in.trials[:])
+    # with NWBHDF5IO(nwbfile_path, mode="r") as io:
+    #     nwbfile_in = io.read()
+    #     print(nwbfile_in.acquisition)
+    #     print(nwbfile_in.trials[:])
 
 
 def get_trials_for_subject(file_path: Path, subject_id: str) -> pd.DataFrame:
@@ -133,7 +133,6 @@ def process_session(
     output_dir_path: Path,
     session_id: str,
     subject_metadata: dict,
-    overwrite: bool = True,
 ):
 
     subject_id = subject_metadata["animal ID"]
@@ -153,14 +152,13 @@ def process_session(
             session_id=session_id_with_day_num,
             subject_metadata=subject_metadata,
             trials=trials_per_session,
-            overwrite=overwrite,
         )
 
 
 if __name__ == "__main__":
 
     # Parameters for conversion
-    data_dir_path = Path("/Users/weian/data/Water Maze")
+    data_dir_path = Path("/Volumes/T9/Behavioural Pipeline/Water Maze")
     output_dir_path = data_dir_path / "nwbfiles"
 
     subjects_metadata_file_path = Path("/Users/weian/data/RAT ID metadata Yunkai copy - updated 12.2.25.xlsx")
@@ -193,14 +191,10 @@ if __name__ == "__main__":
 
     analysis_csv_file_path = cohort_folder_path / "Reference_analysis.csv"
 
-    # Whether to overwrite the NWB file if it already exists
-    overwrite = True
-
     process_session(
         analysis_csv_file_path=analysis_csv_file_path,
         all_video_file_paths=video_file_paths,
         output_dir_path=output_dir_path,
         session_id=f"{task_acronym}_{session_id}",
         subject_metadata=subject_metadata,
-        overwrite=overwrite,
     )

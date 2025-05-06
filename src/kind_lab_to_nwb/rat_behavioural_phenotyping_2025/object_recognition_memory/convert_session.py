@@ -19,10 +19,8 @@ from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils import (
     extract_subject_metadata_from_excel,
     get_subject_metadata_from_task,
     get_session_ids_from_excel,
-    make_ndx_event_nwbfile_from_metadata,
     convert_ts_to_mp4,
 )
-from pynwb.device import Device
 
 
 def session_to_nwb(
@@ -149,22 +147,16 @@ def session_to_nwb(
         except ValueError:
             warnings.warn(f"Could not parse session start time from video filename {video_path.name}")
 
-    nwbfile = make_ndx_event_nwbfile_from_metadata(metadata=metadata)
-
-    # Add other devices to the NWB file
-    for device_metadata in metadata["Devices"]:
-        # Add the device to the NWB file
-        device = Device(**device_metadata)
-        nwbfile.add_device(device)
-
     # Run conversion
     converter.run_conversion(
         metadata=metadata,
         nwbfile_path=nwbfile_path,
-        nwbfile=nwbfile,
         conversion_options=conversion_options,
         overwrite=overwrite,
     )
+
+    print(f"Conversion completed for {subject_id} session {session_id}.")
+    print(f"NWB file saved to {nwbfile_path}.")
 
 
 if __name__ == "__main__":

@@ -18,10 +18,8 @@ from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils import (
     extract_subject_metadata_from_excel,
     get_subject_metadata_from_task,
     get_session_ids_from_excel,
-    make_ndx_event_nwbfile_from_metadata,
     convert_ts_to_mp4,
 )
-from pynwb.device import Device
 
 
 def session_to_nwb(
@@ -148,19 +146,31 @@ def session_to_nwb(
         except ValueError:
             warnings.warn(f"Could not parse session start time from video filename {video_path.name}")
 
-    nwbfile = make_ndx_event_nwbfile_from_metadata(metadata=metadata)
-
-    # Add other devices to the NWB file
-    for device_metadata in metadata["Devices"]:
-        # Add the device to the NWB file
-        device = Device(**device_metadata)
-        nwbfile.add_device(device)
+    if "LTM" in session_id:
+        # Find and remove Marbles from devices if it exists
+        for i, device in enumerate(metadata.get("Devices", [])):
+            if device.get("name") == "Arena_STM":
+                metadata["Devices"].pop(i)
+            break
+    elif "STM" in session_id:
+        # Find and remove Marbles from devices if it exists
+        for i, device in enumerate(metadata.get("Devices", [])):
+            if device.get("name") == "Arena_LTM":
+                metadata["Devices"].pop(i)
+            break
+    else:
+        # Remove Arena_LTM and Arena_STM from devices if it exists
+        for i, device in enumerate(metadata.get("Devices", [])):
+            if device.get("name") == "Arena_LTM":
+                metadata["Devices"].pop(i)
+            elif device.get("name") == "Arena_STM":
+                metadata["Devices"].pop(i)
+            break
 
     # Run conversion
     converter.run_conversion(
         metadata=metadata,
         nwbfile_path=nwbfile_path,
-        nwbfile=nwbfile,
         conversion_options=conversion_options,
         overwrite=overwrite,
     )

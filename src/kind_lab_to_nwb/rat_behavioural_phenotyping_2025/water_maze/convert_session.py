@@ -24,8 +24,7 @@ def session_to_nwb(
     video_timestamps: pd.Series,
     session_id: str,
     subject_metadata: dict,
-    trials: Optional[pd.DataFrame] = None,
-    overwrite: bool = False,
+    trials: pd.DataFrame,
 ):
     """
     Convert a session of auditory fear conditioning task to NWB format.
@@ -43,8 +42,6 @@ def session_to_nwb(
         The session ID to be used in the metadata.
     subject_metadata: dict
         The metadata for the subject, including animal ID and cohort ID.
-    overwrite: bool, optional
-        Whether to overwrite the NWB file if it already exists, by default False.
     """
     output_dir_path = Path(output_dir_path)
     output_dir_path.mkdir(
@@ -54,9 +51,6 @@ def session_to_nwb(
 
     subject_id = f"{subject_metadata['animal ID']}_{subject_metadata['cohort ID']}"
     nwbfile_path = output_dir_path / f"sub-{subject_id}_ses-{session_id}.nwb"
-    if trials is not None:
-        day_num = int(trials["Day"].iloc[0])
-        nwbfile_path = output_dir_path / f"sub-{subject_id}_ses-{session_id}_D{day_num}.nwb"
 
     source_data = dict()
     conversion_options = dict()
@@ -72,7 +66,6 @@ def session_to_nwb(
     converter = WaterMazeNWBConverter(source_data=source_data, verbose=True)
 
     # Update starting time of videos
-    # TBD
     for i in range(1, len(video_timestamps)):
         video_starting_time = (video_timestamps.iloc[i] - video_timestamps.iloc[0]).total_seconds()
         converter.data_interface_objects[f"VideoTrial{i + 1}"]._starting_time = video_starting_time
@@ -92,7 +85,11 @@ def session_to_nwb(
     metadata["Subject"].update(sex=sex)
     # Add session ID to metadata
     metadata["NWBFile"]["session_id"] = session_id
-    metadata["NWBFile"]["session_description"] = metadata["SessionTypes"][session_id]["session_description"]
+    if "Day" in session_id:
+        session_key = "_".join(session_id.split("_")[:-1])
+    else:
+        session_key = session_id
+    metadata["NWBFile"]["session_description"] = metadata["SessionTypes"][session_key]["session_description"]
 
     session_start_time = video_timestamps.iloc[0]
     metadata["NWBFile"]["session_start_time"] = session_start_time.tz_localize("Europe/London")
@@ -104,17 +101,60 @@ def session_to_nwb(
         nwbfile=nwbfile,
         nwbfile_path=nwbfile_path,
     )
-    # converter.run_conversion(
-    #     metadata=metadata,
-    #     nwbfile_path=nwbfile_path,
-    #     conversion_options=conversion_options,
-    #     overwrite=overwrite,
-    # )
 
     with NWBHDF5IO(nwbfile_path, mode="r") as io:
         nwbfile_in = io.read()
         print(nwbfile_in.acquisition)
         print(nwbfile_in.trials[:])
+
+
+def get_trials_for_subject(file_path: Path, subject_id: str) -> pd.DataFrame:
+    if not file_path.exists():
+        raise FileNotFoundError(f"CSV file '{file_path}' does not exist.")
+
+    analysis_data = pd.read_csv(file_path)
+    if "Animal" not in analysis_data.columns:
+        raise ValueError(f"CSV file '{file_path}' does not contain 'Animal' column.")
+
+    filtered_data = analysis_data[analysis_data["Animal"].str.contains(subject_id, na=False)]
+
+    if filtered_data.empty:
+        raise ValueError(f"No rows found in the CSV file for '{subject_id}'.")
+
+    # Reset index to ensure consistent indexing
+    filtered_data = filtered_data.reset_index(drop=True)
+
+    return filtered_data
+
+
+def process_session(
+    analysis_csv_file_path: Path,
+    all_video_file_paths: list,
+    output_dir_path: Path,
+    session_id: str,
+    subject_metadata: dict,
+    overwrite: bool = True,
+):
+
+    subject_id = subject_metadata["animal ID"]
+    all_trials = get_trials_for_subject(file_path=analysis_csv_file_path, subject_id=str(subject_id))
+
+    for date_str, trials_per_session in all_trials.groupby("Date"):
+        video_file_paths_per_session = [all_video_file_paths[trial_num] for trial_num in trials_per_session.index]
+        datetime_strings = trials_per_session["Date"] + " " + trials_per_session["Time"]
+        video_timestamps = pd.to_datetime(datetime_strings, dayfirst=True)
+        day_num = int(trials_per_session["Day"].iloc[0])
+        session_id_with_day_num = f"{session_id}_Day{day_num}"
+
+        session_to_nwb(
+            output_dir_path=output_dir_path,
+            video_file_paths=video_file_paths_per_session,
+            video_timestamps=video_timestamps,
+            session_id=session_id_with_day_num,
+            subject_metadata=subject_metadata,
+            trials=trials_per_session,
+            overwrite=overwrite,
+        )
 
 
 if __name__ == "__main__":
@@ -151,44 +191,16 @@ if __name__ == "__main__":
             f"No video files found in for animal ID {subject_metadata['animal ID']} in '{video_folder_path}'."
         )
 
-    analysis_csv_file_path = None
-    if session_id == "2_Reference":
-        analysis_csv_file_path = cohort_folder_path / "Reference_analysis.csv"
-    elif session_id == "3_Reversal":
-        analysis_csv_file_path = cohort_folder_path / "Reversal_analysis.csv"
+    analysis_csv_file_path = cohort_folder_path / "Reference_analysis.csv"
 
     # Whether to overwrite the NWB file if it already exists
     overwrite = True
 
-    if analysis_csv_file_path is not None:
-        df = pd.read_csv(analysis_csv_file_path)
-        filtered_data = df[df["Animal"].str.contains(str(subject_metadata["animal ID"]), na=False)]
-        reduced_data = filtered_data.reindex(columns=("Date", "Time"))
-        filtered_data_index = range(len(reduced_data))
-        filtered_data.index = filtered_data_index
-        if filtered_data.empty:
-            raise ValueError(f"No rows found in the CSV file for '{subject_metadata['animal ID']}'.")
-        for session_date, session_data in filtered_data.groupby("Date"):
-            video_file_paths_per_session = [video_file_paths[i] for i in session_data.index]
-
-            datetime_strings = session_data["Date"] + " " + session_data["Time"]
-            video_timestamps = pd.to_datetime(datetime_strings, dayfirst=True)
-            day_num = int(session_data["Day"].iloc[0])
-            session_to_nwb(
-                output_dir_path=output_dir_path,
-                video_file_paths=video_file_paths_per_session,
-                video_timestamps=video_timestamps,
-                session_id=f"{task_acronym}_{session_id}",
-                subject_metadata=subject_metadata,
-                trials=session_data,
-                overwrite=overwrite,
-            )
-
-    # session_to_nwb(
-    #     output_dir_path=output_dir_path,
-    #     video_file_paths=video_file_paths,
-    #     session_id=f"{task_acronym}_{session_id}",
-    #     subject_metadata=subject_metadata,
-    #     analysis_csv_file_path=analysis_csv_file_path,
-    #     overwrite=overwrite,
-    # )
+    process_session(
+        analysis_csv_file_path=analysis_csv_file_path,
+        all_video_file_paths=video_file_paths,
+        output_dir_path=output_dir_path,
+        session_id=f"{task_acronym}_{session_id}",
+        subject_metadata=subject_metadata,
+        overwrite=overwrite,
+    )

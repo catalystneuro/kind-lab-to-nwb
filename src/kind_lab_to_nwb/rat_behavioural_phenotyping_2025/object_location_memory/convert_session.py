@@ -165,6 +165,9 @@ def session_to_nwb(
         overwrite=overwrite,
     )
 
+    print(f"Conversion completed for {subject_id} session {session_id}.")
+    print(f"NWB file saved to {nwbfile_path}.")
+
 
 if __name__ == "__main__":
 

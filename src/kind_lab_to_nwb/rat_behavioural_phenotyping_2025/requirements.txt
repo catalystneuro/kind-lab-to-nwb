@@ -1,4 +1,4 @@
-git+https://github.com/rly/ndx-events.git
+ndx-events
 openpyxl
 neuroconv[video]
 xlrd

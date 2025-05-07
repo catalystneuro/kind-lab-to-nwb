@@ -150,6 +150,8 @@ if __name__ == "__main__":
     # TODO: for HabD1 need to figure out how to match the cage number with the animal ID
     if session_id == "HabD1":
         video_file_paths = list(video_folder_path.glob(f"**"))
+    elif session_id == "Weeto":
+        raise NotImplementedError("Weeto session is not implemented yet")
     else:
         video_file_paths = list(video_folder_path.glob(f"*{subject_metadata['animal ID']}*"))
 

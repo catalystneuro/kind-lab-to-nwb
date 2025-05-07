@@ -91,7 +91,6 @@ def session_to_nwb(
     metadata["NWBFile"]["session_description"] = metadata["SessionTypes"][session_id]["session_description"]
 
     # Check if session_start_time exists in metadata
-    # TODO only date is extracted from the filename, time is not included
     if "session_start_time" not in metadata["NWBFile"]:
         metadata["NWBFile"]["session_start_time"] = session_start_time
 
@@ -143,11 +142,11 @@ if __name__ == "__main__":
     if session_id == "Hab1":
         video_file_paths = list(video_folder_path.glob(f"**"))  # TODO add video name pattern
 
-    stub_test = False
-    overwrite = True
-
     video_path = Path(video_file_paths[0])
     session_start_time = parse_datetime_from_filename(video_path.name)
+
+    stub_test = False
+    overwrite = True
 
     session_to_nwb(
         output_dir_path=output_dir_path,

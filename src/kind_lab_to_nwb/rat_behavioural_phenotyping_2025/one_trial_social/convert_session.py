@@ -31,6 +31,7 @@ def session_to_nwb(
     subject_metadata: dict,
     session_id: str,
     session_start_time: datetime,
+    audio_file_path: Union[FilePath, str] = None,
     stub_test: bool = False,
     overwrite: bool = False,
 ):
@@ -67,6 +68,11 @@ def session_to_nwb(
             raise ValueError(f"No observation ID found containing subject ID '{subject_id}'")
         source_data.update(dict(OneTrialSocialBehavior=dict(file_path=boris_file_path, observation_id=observation_id)))
         conversion_options.update(dict(OneTrialSocialBehavior=dict()))
+
+    # Add Audio if available
+    if audio_file_path is not None:
+        source_data.update(dict(Audio=dict(file_paths=[audio_file_path])))
+        conversion_options.update(dict(Audio=dict(stub_test=stub_test, write_as="acquisition")))
 
     converter = OneTrialSocialNWBConverter(source_data=source_data)
 
@@ -119,8 +125,8 @@ if __name__ == "__main__":
     subjects_metadata = extract_subject_metadata_from_excel(subjects_metadata_file_path)
     subjects_metadata = get_subject_metadata_from_task(subjects_metadata, task_acronym)
 
-    session_id = session_ids[-2]  # Test
-    subject_metadata = subjects_metadata[14]  # subject 471Arid1b
+    session_id = session_ids[-1]  # Test
+    subject_metadata = subjects_metadata[52]  # subject 635Arid1b(11)
 
     cohort_folder_path = data_dir_path / subject_metadata["line"] / f"{subject_metadata['cohort ID']}_{task_acronym}"
     if not cohort_folder_path.exists():
@@ -137,13 +143,28 @@ if __name__ == "__main__":
     video_folder_path = cohort_folder_path / session_id
     if not video_folder_path.exists():
         raise FileNotFoundError(f"Folder {cohort_folder_path} does not exist")
-    if session_id == "Hab2" or session_id == "Test":
+    if session_id == "HabD2" or session_id == "Test":
         video_file_paths = list(video_folder_path.glob(f"*{subject_metadata['animal ID']}*"))
-    if session_id == "Hab1":
+    if session_id == "HabD1":
         video_file_paths = list(video_folder_path.glob(f"**"))  # TODO add video name pattern
 
     video_path = Path(video_file_paths[0])
     session_start_time = parse_datetime_from_filename(video_path.name)
+
+    audio_folder_path = video_folder_path / "USVs"
+    if audio_folder_path.exists():
+        audio_file_paths = list(audio_folder_path.glob(f"*{subject_metadata['animal ID']}*.wav"))
+        if len(audio_file_paths) == 0:
+            audio_file_path = None
+            warnings.warn(f"No audio file found in {audio_folder_path}")
+        elif len(audio_file_paths) > 1:
+            raise ValueError(
+                f"Multiple audio files for subject {subject_metadata['animal ID']} found in {audio_folder_path}"
+            )
+        else:
+            audio_file_path = audio_file_paths[0]
+    else:
+        audio_file_path = None
 
     stub_test = False
     overwrite = True
@@ -152,6 +173,7 @@ if __name__ == "__main__":
         output_dir_path=output_dir_path,
         video_file_paths=video_file_paths,
         boris_file_path=boris_file_path,
+        audio_file_path=audio_file_path,
         subject_metadata=subject_metadata,
         session_id=f"{task_acronym}_{session_id}",
         session_start_time=session_start_time,

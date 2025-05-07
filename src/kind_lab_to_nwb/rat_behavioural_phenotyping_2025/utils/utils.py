@@ -1,10 +1,9 @@
 import subprocess
+import re
 from pydantic import FilePath
 from typing import List
 import pandas as pd
-from copy import deepcopy
 from datetime import datetime
-import importlib.metadata
 from pathlib import Path
 import uuid
 
@@ -159,3 +158,54 @@ def convert_ts_to_mp4(video_file_paths: List[FilePath]) -> List[FilePath]:
                 print(f"An error occurred: {e}")
 
     return output_file_paths
+
+
+def parse_datetime_from_filename(filename: str) -> datetime:
+    """
+    Parse datetime from a filename with one of the following formats:
+    1. "2024-03-20 10-32-22_597L_598R.ts" - Date and time separated by space ("%Y-%m-%d %H-%M-%S_")
+    2. "2022-08-01_302_303_compressed.mp4" - Only date ("%Y-%m-%d_")
+    3. "2023-03-31_10-53-05_471.mp4" - Date and time separated by underscore ("%Y-%m-%d_%H-%M-%S_")
+
+    Parameters
+    ----------
+    filename : str
+        The filename to parse
+
+    Returns
+    -------
+    datetime
+        The parsed datetime object
+
+    Raises
+    ------
+    ValueError
+        If the filename doesn't match any of the expected formats
+    """
+    # Extract just the filename if a path is provided
+    if isinstance(filename, Path):
+        filename = filename.name
+
+    # Pattern 1: Date and time separated by space (2024-03-20 10-32-22_...)
+    pattern1 = r"(\d{4}-\d{2}-\d{2} \d{2}-\d{2}-\d{2})_"
+    match = re.search(pattern1, filename)
+    if match:
+        datetime_str = match.group(1)
+        return datetime.strptime(datetime_str, "%Y-%m-%d %H-%M-%S")
+
+    # Pattern 3: Date and time separated by underscore (2023-03-31_10-53-05_...)
+    pattern3 = r"(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})_"
+    match = re.search(pattern3, filename)
+    if match:
+        datetime_str = match.group(1)
+        return datetime.strptime(datetime_str, "%Y-%m-%d_%H-%M-%S")
+
+    # Pattern 2: Only date (2022-08-01_...)
+    pattern2 = r"(\d{4}-\d{2}-\d{2})_"
+    match = re.search(pattern2, filename)
+    if match:
+        datetime_str = match.group(1)
+        return datetime.strptime(datetime_str, "%Y-%m-%d")
+
+    # If no pattern matches, raise an error
+    raise ValueError(f"Filename '{filename}' doesn't match any of the expected datetime formats")

@@ -20,6 +20,7 @@ from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils import (
     get_subject_metadata_from_task,
     get_session_ids_from_excel,
     convert_ts_to_mp4,
+    parse_datetime_from_filename,
 )
 
 
@@ -29,6 +30,7 @@ def session_to_nwb(
     boris_file_path: Union[FilePath, str],
     subject_metadata: dict,
     session_id: str,
+    session_start_time: datetime,
     stub_test: bool = False,
     overwrite: bool = False,
 ):
@@ -135,17 +137,8 @@ def session_to_nwb(
     metadata["NWBFile"]["session_description"] = metadata["SessionTypes"][session_id]["session_description"]
 
     # Check if session_start_time exists in metadata
-    # TODO only date is extracted from the filename, time is not included
     if "session_start_time" not in metadata["NWBFile"]:
-        # Extract date from video filename
-        video_path = Path(video_file_paths[0])
-        date_str = video_path.stem.split(" ")[0]  # Get "2022-11-23" from filename
-        try:
-            # Convert to datetime
-            session_start_time = datetime.strptime(date_str, "%Y-%m-%d")
-            metadata["NWBFile"]["session_start_time"] = session_start_time
-        except ValueError:
-            warnings.warn(f"Could not parse session start time from video filename {video_path.name}")
+        metadata["NWBFile"]["session_start_time"] = session_start_time
 
     # Run conversion
     converter.run_conversion(
@@ -191,6 +184,9 @@ if __name__ == "__main__":
         raise FileNotFoundError(f"Folder {cohort_folder_path} does not exist")
     video_file_paths = list(video_folder_path.glob(f"*{subject_metadata['animal ID']}*"))
 
+    video_path = Path(video_file_paths[0])
+    session_start_time = parse_datetime_from_filename(video_path.name)
+
     stub_test = False
     overwrite = True
 
@@ -203,6 +199,7 @@ if __name__ == "__main__":
         boris_file_path=boris_file_path,
         subject_metadata=subject_metadata,
         session_id=f"{task_acronym}_{session_id}",
+        session_start_time=session_start_time,
         stub_test=stub_test,
         overwrite=overwrite,
     )

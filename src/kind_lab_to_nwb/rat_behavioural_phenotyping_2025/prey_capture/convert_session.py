@@ -1,5 +1,7 @@
+import warnings
+from datetime import datetime
 from pathlib import Path
-from typing import Union
+from typing import List, Union
 from zoneinfo import ZoneInfo
 
 from pydantic import FilePath
@@ -18,7 +20,7 @@ from neuroconv.utils import dict_deep_update, load_dict_from_file
 
 def session_to_nwb(
     output_dir_path: Union[str, Path],
-    video_file_path: Union[FilePath, str],
+    video_file_paths: List[Union[FilePath, str]],
     session_id: str,
     subject_metadata: dict,
     overwrite: bool = False,
@@ -52,10 +54,12 @@ def session_to_nwb(
     conversion_options = dict()
 
     # Add Behavioral Video
-    video_file_paths = convert_ts_to_mp4(video_file_paths=[video_file_path])
-    # TODO: can there be multiple video files per session?
-    source_data.update(dict(Video=dict(file_paths=video_file_paths, video_name="BehavioralVideo")))
-    conversion_options.update(dict(Video=dict()))
+    if len(video_file_paths) == 1:
+        file_paths = convert_ts_to_mp4(video_file_paths)
+        source_data.update(dict(Video=dict(file_paths=file_paths, video_name="BehavioralVideo")))
+        conversion_options.update(dict(Video=dict()))
+    elif len(video_file_paths) > 1:
+        raise ValueError(f"Multiple video files found for {subject_id}.")
 
     converter = PreyCaptureNWBConverter(source_data=source_data, verbose=True)
 
@@ -76,10 +80,17 @@ def session_to_nwb(
     metadata["NWBFile"]["session_id"] = session_id
     metadata["NWBFile"]["session_description"] = metadata["SessionTypes"][session_id]["session_description"]
 
-    # TODO: get session start time from video name
-    session_start_time = None
-    session_start_time = session_start_time.replace(tzinfo=ZoneInfo("Europe/London"))
-    metadata["NWBFile"].update(session_start_time=session_start_time)
+    if "session_start_time" not in metadata["NWBFile"]:
+        video_path = Path(video_file_paths[0])
+        video_date_time_parts = video_path.stem.split("_")[:-1]
+        session_start_time = " ".join(video_date_time_parts)
+        try:
+            # Convert to datetime
+            session_start_time = datetime.strptime(session_start_time, "%Y-%m-%d %H-%M-%S")
+            session_start_time = session_start_time.replace(tzinfo=ZoneInfo("Europe/London"))
+            metadata["NWBFile"]["session_start_time"] = session_start_time
+        except ValueError:
+            warnings.warn(f"Could not parse session start time from video filename {video_path.name}")
 
     # Run conversion
     converter.run_conversion(
@@ -97,7 +108,7 @@ def session_to_nwb(
 if __name__ == "__main__":
 
     # Parameters for conversion
-    data_dir_path = Path("/Users/weian/data/Prey Capture")
+    data_dir_path = Path("/Volumes/T9/Behavioural Pipeline/Prey Capture")
     output_dir_path = data_dir_path / "nwbfiles"
 
     subjects_metadata_file_path = Path("/Users/weian/data/RAT ID metadata Yunkai copy - updated 12.2.25.xlsx")
@@ -110,7 +121,7 @@ if __name__ == "__main__":
     subjects_metadata = extract_subject_metadata_from_excel(subjects_metadata_file_path)
     subjects_metadata = get_subject_metadata_from_task(subjects_metadata, task_acronym)
 
-    session_id = session_ids[0]  # 1_HabD1
+    session_id = session_ids[1]  # HabD2
     subject_metadata = subjects_metadata[0]  # subject 408_Arid1b(3)
 
     cohort_folder_path = data_dir_path / subject_metadata["line"] / f"{subject_metadata['cohort ID']}_{task_acronym}"
@@ -121,16 +132,11 @@ if __name__ == "__main__":
 
     if not video_folder_path.exists():
         raise FileNotFoundError(f"Folder {cohort_folder_path} does not exist")
-    video_file_paths = list(video_folder_path.glob(f"*{subject_metadata['animal ID']}*.avi"))
-    if len(video_file_paths) == 0:
-        raise FileNotFoundError(
-            f"No video files found in for animal ID {subject_metadata['animal ID']} in '{video_folder_path}'."
-        )
-    elif len(video_file_paths) > 1:
-        raise FileExistsError(
-            f"Multiple video files found for animal ID {subject_metadata['animal ID']} in {video_folder_path}."
-        )
-    video_file_path = video_file_paths[0]
+    # TODO: for HabD1 need to figure out how to match the cage number with the animal ID
+    if session_id == "HabD1":
+        video_file_paths = list(video_folder_path.glob(f"**"))
+    else:
+        video_file_paths = list(video_folder_path.glob(f"*{subject_metadata['animal ID']}*"))
 
     stub_test = False
     # Whether to overwrite the NWB file if it already exists
@@ -138,7 +144,7 @@ if __name__ == "__main__":
 
     session_to_nwb(
         output_dir_path=output_dir_path,
-        video_file_path=video_file_path,
+        video_file_paths=video_file_paths,
         session_id=f"{task_acronym}_{session_id}",
         subject_metadata=subject_metadata,
         overwrite=overwrite,

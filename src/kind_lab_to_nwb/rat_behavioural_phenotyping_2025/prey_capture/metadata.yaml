@@ -50,38 +50,38 @@ Devices:
     manufacturer: Example Manufacturer # Example value - actual manufacturer needed
 
 SessionTypes:
-  HabD1_PC:
+  PC_HabD1:
     session_description: |
       Week 1 Experimental Day 1. Group habituation.
       Cage mates placed together in arena for 30 min.
 
-  HabD2_PC:
+  PC_HabD2:
     session_description: |
       Week 1 Experimental Day 2. Individual habituation.
       Individual rat placed in arena for 10 min.
 
-  HabD3_PC:
+  PC_HabD3:
     session_description: |
       Week 1 Experimental Day 3. Dead cricket exposure.
       Individual rat placed in starting cylinder for 15s,
       then released with dead cricket in opposite corner.
       10 min duration.
 
-  HabD4_PC:
+  PC_HabD4:
     session_description: |
       Week 1 Experimental Day 4. Dead cricket exposure with 2 min holding period after trial.
       Individual rat placed in starting cylinder for 15s,
       then released with dead cricket in opposite corner.
       10 min duration.
 
-  HabD5_PC:
+  PC_HabD5:
     session_description: |
       Week 1 Experimental Day 5. Dead cricket exposure with 2 min holding period after trial.
       Individual rat placed in starting cylinder for 15s,
       then released with dead cricket in opposite corner.
       10 min duration.
 
-  TestD1_PC:
+  PC_TestD1:
     session_description: |
       Week 2 Experimental Day 1. Live cricket hunting.
       4 trials per day, 2 min max duration per trial.
@@ -92,7 +92,7 @@ SessionTypes:
       The arena was cleared of all debris and wiped with water between trials.
       Rats were held in the holding bucket between trials, the intertrial interval was approx. 1-2 min.
 
-  TestD2_PC:
+  PC_TestD2:
     session_description: |
       Week 2 Experimental Day 2. Live cricket hunting.
       4 trials per day, 2 min max duration per trial.
@@ -103,7 +103,7 @@ SessionTypes:
       The arena was cleared of all debris and wiped with water between trials.
       Rats were held in the holding bucket between trials, the intertrial interval was approx. 1-2 min.
 
-  TestD3_PC:
+  PC_TestD3:
     session_description: |
       Week 2 Experimental Day 3. Live cricket hunting.
       4 trials per day, 2 min max duration per trial.
@@ -114,7 +114,7 @@ SessionTypes:
       The arena was cleared of all debris and wiped with water between trials.
       Rats were held in the holding bucket between trials, the intertrial interval was approx. 1-2 min.
 
-  TestD4_PC:
+  PC_TestD4:
     session_description: |
       Week 2 Experimental Day 4. Live cricket hunting.
       4 trials per day, 2 min max duration per trial.
@@ -126,7 +126,7 @@ SessionTypes:
       Rats were held in the holding bucket between trials, the intertrial interval was approx. 1-2 min.
       Ultrasonic vocalizations recorded.
 
-  TestD5_PC:
+  PC_TestD5:
     session_description: |
       Week 2 Experimental Day 5. Live cricket hunting with random locations.
       4 trials per day, 2 min max duration per trial.

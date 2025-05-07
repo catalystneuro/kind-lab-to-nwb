@@ -1,11 +1,14 @@
 import warnings
 from datetime import datetime
 from pathlib import Path
-from typing import List, Union
+from typing import List, Optional, Union
 from zoneinfo import ZoneInfo
 
 from pydantic import FilePath
 
+from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.interfaces import (
+    get_observation_ids,
+)
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.prey_capture import (
     PreyCaptureNWBConverter,
 )
@@ -23,21 +26,24 @@ def session_to_nwb(
     video_file_paths: List[Union[FilePath, str]],
     session_id: str,
     subject_metadata: dict,
+    boris_file_path: Optional[Union[FilePath, str]] = None,
     overwrite: bool = False,
 ):
     """
-    Convert a session of auditory fear conditioning task to NWB format.
+    Convert a session of prey capture task to NWB format.
 
     Parameters
     ----------
     output_dir_path : Union[str, Path]
         The folder path where the NWB file will be saved.
-    video_file_path: Union[FilePath, str]
-        The path to the video file to be converted.
+    video_file_paths: List[Union[FilePath, str]]
+        The list of video file paths to be converted.
     session_id: str
         The session ID to be used in the metadata.
     subject_metadata: dict
         The metadata for the subject, including animal ID and cohort ID.
+    boris_file_path: Optional[Union[FilePath, str]]
+        The path to the BORIS file (.boris) for the session, if available.
     overwrite: bool, optional
         Whether to overwrite the NWB file if it already exists, by default False.
     """
@@ -60,6 +66,15 @@ def session_to_nwb(
         conversion_options.update(dict(Video=dict()))
     elif len(video_file_paths) > 1:
         raise ValueError(f"Multiple video files found for {subject_id}.")
+
+    # Add Prey Capture Annotated events from BORIS output
+    if boris_file_path is not None and "Test" in session_id:
+        observation_ids = get_observation_ids(boris_file_path)
+        observation_id = next((obs_id for obs_id in observation_ids if subject_metadata["animal ID"] in obs_id), None)
+        if observation_id is None:
+            raise ValueError(f"No observation ID found containing subject ID '{subject_id}'")
+        source_data.update(dict(Behavior=dict(file_path=boris_file_path, observation_id=observation_id)))
+        conversion_options.update(dict(Behavior=dict()))
 
     converter = PreyCaptureNWBConverter(source_data=source_data, verbose=True)
 
@@ -137,6 +152,15 @@ if __name__ == "__main__":
         video_file_paths = list(video_folder_path.glob(f"**"))
     else:
         video_file_paths = list(video_folder_path.glob(f"*{subject_metadata['animal ID']}*"))
+
+    # If the data has been scored, the cohort folder would contain BORIS files (.boris) of the behaviors of interest
+    # TODO: there are no example boris files for PC shared yet
+    boris_file_paths = list(cohort_folder_path.glob("*.boris"))
+    if len(boris_file_paths) == 0:
+        boris_file_path = None
+        warnings.warn(f"No BORIS file found in {cohort_folder_path}")
+    else:
+        boris_file_path = boris_file_paths[0]
 
     stub_test = False
     # Whether to overwrite the NWB file if it already exists

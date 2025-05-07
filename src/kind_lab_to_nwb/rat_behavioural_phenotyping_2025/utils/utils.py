@@ -73,6 +73,9 @@ def get_session_ids_from_excel(subjects_metadata_file_path: FilePath, task_acron
     # Read the Excel file, specifically the "Task acronyms & structure" sheet
     df = pd.read_excel(subjects_metadata_file_path, sheet_name="Task acronyms & structure")
 
+    # Drop the Notes column if it exists
+    df = df.drop(columns=["Notes"], errors="ignore")
+
     # Find the row corresponding to the given task_acronym
     task_row = df[df.iloc[:, 0] == task_acronym]
 
@@ -84,6 +87,8 @@ def get_session_ids_from_excel(subjects_metadata_file_path: FilePath, task_acron
 
     # Remove trailing whitespace from each session ID
     session_ids = [session_id.rstrip() for session_id in session_ids]
+    # Remove parenthesis from session IDs
+    session_ids = [session_id.replace("(", "").replace(")", "") for session_id in session_ids]
     return session_ids
 
 

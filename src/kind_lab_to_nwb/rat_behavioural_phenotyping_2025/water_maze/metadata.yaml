@@ -8,17 +8,17 @@ NWBFile:
     - rodent behavior
   experiment_description: |
     This experiment is part of the Rat Behavioural Phenotyping Pipeline Methodologies https://sidb.org.uk/facilities/rat-behavioural-phenotyping-pipeline/.
-    As an initial effort to characterize the rat lines, these models are being behaviorally phenotyped at SIDB. 
-    Rat models are phenotyped according to a rigorous pipeline that assesses behaviours relevant to autism with intellectual disability, such as social and motor skills, and learning and sensory processing. 
+    As an initial effort to characterize the rat lines, these models are being behaviorally phenotyped at SIDB.
+    Rat models are phenotyped according to a rigorous pipeline that assesses behaviours relevant to autism with intellectual disability, such as social and motor skills, and learning and sensory processing.
     Different cohorts of rats are run through different subsets of tasks to overcome potential order effects on behaviours and to limit the number of tasks each animal is put through.
-    This experiment investigated spatial learning and memory in different rat models 
-    (Arid1b: https://rgd.mcw.edu/rgdweb/report/strain/main.html?id=14394518, 
-    Grin2b: https://rgd.mcw.edu/rgdweb/report/strain/main.html?id=14394515, 
+    This experiment investigated spatial learning and memory in different rat models
+    (Arid1b: https://rgd.mcw.edu/rgdweb/report/strain/main.html?id=14394518,
+    Grin2b: https://rgd.mcw.edu/rgdweb/report/strain/main.html?id=14394515,
     Scn2a: https://rgd.mcw.edu/rgdweb/report/strain/main.html?id=25394530) using the Morris Water Maze.
     The experimenter was blind to genotype and observed the swim trials from behind a partitioning wall.
-    The task utilized a circular pool (2m diameter) with extra-maze spatial cues and an Atlantis platform. 
-    A white curtain could be pulled entirely around the pool to hide the extra maze cues. 
-    The pool water was made cloudy using approximately 200 ml of liquid latex and maintained at 28-29°C. 
+    The task utilized a circular pool (2m diameter) with extra-maze spatial cues and an Atlantis platform.
+    A white curtain could be pulled entirely around the pool to hide the extra maze cues.
+    The pool water was made cloudy using approximately 200 ml of liquid latex and maintained at 28-29°C.
     The protocol included visible platform trials, spatial memory assessment, and reversal learning.
     Rats were tested on visible platform trials (4 swims/day), long-term spatial memory (4 days, 4 swims/day),
     and reversal learning with the platform in the opposite quadrant.
@@ -32,43 +32,70 @@ NWBFile:
 Subject:
   species: Rattus norvegicus
 
-Devices:
-  BehavioralCamera:
-    description: CCTV camera fixed above the arena for behavioral recording
-    manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+Behavior:
+  ExternalVideos:
+    BehavioralVideoTrial1:
+      description: |
+        Video recording of the rat's behavior during the first swim of the day. Recorded using a CCTV camera mounted on the ceiling above the arenas.
+      device:
+        name: BehavioralCamera
+        description: CCTV camera mounted on ceiling above arenas for behavioral recording
+        manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+    BehavioralVideoTrial2:
+      description: |
+        Video recording of the rat's behavior during the second swim of the day. Recorded using a CCTV camera mounted on the ceiling above the arenas.
+      device:
+        name: BehavioralCamera
+        description: CCTV camera mounted on ceiling above arenas for behavioral recording
+        manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+    BehavioralVideoTrial3:
+      description: |
+        Video recording of the rat's behavior during the third swim of the day. Recorded using a CCTV camera mounted on the ceiling above the arenas.
+      device:
+        name: BehavioralCamera
+        description: CCTV camera mounted on ceiling above arenas for behavioral recording
+        manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+    BehavioralVideoTrial4:
+      description: |
+        Video recording of the rat's behavior during the fourth swim of the day. Recorded using a CCTV camera mounted on the ceiling above the arenas.
+      device:
+        name: BehavioralCamera
+        description: CCTV camera mounted on ceiling above arenas for behavioral recording
+        manufacturer: Example Manufacturer # Example value - actual manufacturer needed
 
-  WaterMaze:
+Devices:
+  - name: WaterMaze
     description: Circular pool (2m diameter) with Atlantis platform and spatial cues
     manufacturer: Example Manufacturer # Example value - actual manufacturer needed
 
-  AtlantisPlatform:
+  - name: AtlantisPlatform
     description: Programmable platform (10cm diameter) that can rise from pool bottom (Spooner et al., 1994)
     manufacturer: Example Manufacturer # Example value - actual manufacturer needed
 
 SessionTypes:
-  1_Visible:
+  WM_1_Visible:
     session_description: |
       Visible platform trials (4 swims).
-      Visible platform trials were conducted first to assess vision, 
-      swimming ability and demonstrate to the subject that the platform is the only means of escape. 
-      The platform was raised 1-2 cm above water level and had an object positioned on top to make it clear 
-      to the swimming rat. A curtain was drawn around the pool to remove all extra maze cues. 
+      Visible platform trials were conducted first to assess vision,
+      swimming ability and demonstrate to the subject that the platform is the only means of escape.
+      The platform was raised 1-2 cm above water level and had an object positioned on top to make it clear
+      to the swimming rat. A curtain was drawn around the pool to remove all extra maze cues.
       The subject was given 4 swims per day with a maximum duration of 2 min, with approximately 15 min between swims.
-      For each swim, the platform moved location (either NE, NW, SE, SW quadrant, approximately 70 cm from the edge) 
-      and the swim started from a different release point (N, E, S, W). 
-      After the rat found the platform, it was left for 20 s before being carefully lifted, 
-      towel dried and returned to its home cage. 
+      For each swim, the platform moved location (either NE, NW, SE, SW quadrant, approximately 70 cm from the edge)
+      and the swim started from a different release point (N, E, S, W).
+      After the rat found the platform, it was left for 20 s before being carefully lifted,
+      towel dried and returned to its home cage.
       If the subject did not find the platform was guided to it and left on it for 20 s.
 
-  2_Reference:
+  WM_2_Reference:
     session_description: |
       Long-term spatial memory assessment.
-      In long term spatial memory testing the platform remained in the same location over days and was 1-2 cm below water level. 
-      Spatial cues were available. 
+      In long term spatial memory testing the platform remained in the same location over days and was 1-2 cm below water level.
+      Spatial cues were available.
       In the first swim of each day the platform only became available after 1 min.
 
-  3_Reversal:
+  WM_3_Reversal:
     session_description: |
       Reversal learning assessment.
-      In reversal learning trials the location of platform was moved to the opposite quadrant compared to prior trials. 
+      In reversal learning trials the location of platform was moved to the opposite quadrant compared to prior trials.
       In the first swim of each day the platform only became available after 1 min.

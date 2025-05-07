@@ -31,12 +31,10 @@ Subject:
   species: Rattus norvegicus
 
 Devices:
-  USVMicrophone:
+  - name: USVMicrophone
     description: M500 USB Pettersson microphone for recording ultrasonic vocalizations, hanging approx. 1.5 m above the arena.
     manufacturer: Pettersson, Wildlife Services UK
-
-  Arena:
-    name: arena
+  - name: Arena
     description: Custom built arena (60x60 cm) with white laminated wood walls and floor
     manufacturer: Kanya UK
 

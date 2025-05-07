@@ -55,14 +55,16 @@ def session_to_nwb(
     elif len(video_file_paths) > 1:
         raise ValueError(f"Multiple video files found for {subject_id}.")
 
-    # Add Marble Interaction Annotated events from BORIS output
+    # Add One Trial Social Annotated events from BORIS output
     if boris_file_path is not None and "Test" in session_id:
         observation_ids = get_observation_ids(boris_file_path)
-        observation_id = next((obs_id for obs_id in observation_ids if subject_metadata["animal ID"] in obs_id), None)
+        observation_id = next(
+            (obs_id for obs_id in observation_ids if str(subject_metadata["animal ID"]) in obs_id), None
+        )
         if observation_id is None:
             raise ValueError(f"No observation ID found containing subject ID '{subject_id}'")
         source_data.update(dict(OneTrialSocialBehavior=dict(file_path=boris_file_path, observation_id=observation_id)))
-        conversion_options.update(dict(MarbleInteractionBehavior=dict()))
+        conversion_options.update(dict(OneTrialSocialBehavior=dict()))
 
     converter = OneTrialSocialNWBConverter(source_data=source_data)
 

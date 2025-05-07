@@ -3,8 +3,7 @@
 import numpy as np
 from typing import List, Dict, Tuple
 import json
-from datetime import datetime
-from ndx_events import EventsTable, MeaningsTable, CategoricalVectorData
+from ndx_events import AnnotatedEventsTable
 from neuroconv.basedatainterface import BaseDataInterface
 from neuroconv.utils import DeepDict
 from pydantic import FilePath
@@ -51,11 +50,6 @@ class BORISBehavioralEventsInterface(BaseDataInterface):
 
     def get_metadata(self) -> DeepDict:
         metadata = super().get_metadata()
-
-        session_start_time = self._get_session_start_time()
-        if session_start_time is not None:
-            metadata["NWBFile"].update(session_start_time=session_start_time)
-
         return metadata
 
     def get_event_types(self) -> List[Dict]:
@@ -126,20 +120,6 @@ class BORISBehavioralEventsInterface(BaseDataInterface):
 
         return event_timestamps, event_durations
 
-    def _get_session_start_time(self) -> datetime:
-        """Get the start time of the session.
-
-        Returns
-        -------
-        datetime
-            Start time of the session
-        """
-        if self._data is None:
-            self._data = self._get_data_from_observation_id()
-        session_start_time = self._data["date"]
-        session_start_time = datetime.strptime(session_start_time, "%Y-%m-%dT%H:%M:%S")
-        return session_start_time
-
     def get_event_frame_index(self, event_type: str) -> List[int]:
         # Extract frame index of the events
         if self._data is None:
@@ -157,32 +137,39 @@ class BORISBehavioralEventsInterface(BaseDataInterface):
         for video_filepath, fps in self._data["media_info"]["fps"].items():
             return float(fps)  # TODO check if fps is the same for all videos
 
-    def add_to_nwbfile(self, nwbfile, metadata, **conversion_options):
-        event_type_meanings_table = MeaningsTable(
-            name="EventTypeMeanings", description="Meanings of behavioral event types"
+    def add_to_nwbfile(self, nwbfile, metadata, table_name: str = "AnnotatedBehavioralEvents") -> None:
+
+        annotated_events = AnnotatedEventsTable(
+            name=table_name,
+            description="annotated events",
+            resolution=1 / self.get_behavioral_video_fps(),
         )
+
+        annotated_events.add_column(
+            name="duration",
+            description="Duration of the behavioral event in seconds. For state events, this is the time between start and stop. For point events, this is NaN.",
+            index=True,
+        )
+        # add an event type (row) to the AnnotatedEventsTable instance
         event_types, event_descriptions = self.get_event_types()
         for event_type, event_description in zip(event_types, event_descriptions):
-            event_type_meanings_table.add_row(value=event_type, meaning=event_description)
-        event_type_column = CategoricalVectorData(
-            name="behavioral_event", description="Type of behavioral event", meanings=event_type_meanings_table
-        )
-        # Add behavioral events to nwbfile
-        behavioral_events = EventsTable(
-            name="BehavioralEvents",
-            description="Behavioral events from BORIS output",
-            columns=[event_type_column],
-            meanings_tables=[event_type_meanings_table],
-        )
-
-        for event_type in event_types:
             timestamps, durations = self.get_timestamps(event_type=event_type)
-            for timestamp, duration in zip(timestamps, durations):
-                behavioral_events.add_row(timestamp=timestamp, duration=duration, behavioral_event=event_type)
+            annotated_events.add_event_type(
+                label=event_type,
+                event_description=event_description,
+                event_times=timestamps,
+                duration=durations,
+            )
 
-        behavioral_events.timestamp.resolution = 1 / self.get_behavioral_video_fps()
-        behavioral_events.duration.resolution = 1 / self.get_behavioral_video_fps()
+        # create a processing module in the NWB file to hold processed events data
+        # if the processing module already exists, it will be used instead of creating a new one
+        if "events" in nwbfile.processing:
+            events_module = nwbfile.processing["events"]
+        else:
+            # create a new processing module
+            events_module = nwbfile.create_processing_module(name="events", description="processed event data")
 
-        nwbfile.add_events_table(behavioral_events)
+        # add the AnnotatedEventsTable instance to the processing module
+        events_module.add(annotated_events)
 
         return nwbfile

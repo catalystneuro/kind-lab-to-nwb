@@ -10,7 +10,6 @@ from neuroconv.utils import (
     dict_deep_update,
     load_dict_from_file,
 )
-from neuroconv.tools.nwb_helpers import configure_and_write_nwbfile
 
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.marble_interaction.nwbconverter import (
     MarbleInteractionNWBConverter,
@@ -20,10 +19,8 @@ from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils import (
     extract_subject_metadata_from_excel,
     get_subject_metadata_from_task,
     get_session_ids_from_excel,
-    make_ndx_event_nwbfile_from_metadata,
     convert_ts_to_mp4,
 )
-from pynwb.device import Device
 
 
 def session_to_nwb(
@@ -92,6 +89,7 @@ def session_to_nwb(
     metadata["NWBFile"]["session_description"] = metadata["SessionTypes"][session_id]["session_description"]
 
     # Check if session_start_time exists in metadata
+    # TODO only date is extracted from the filename, time is not included
     if "session_start_time" not in metadata["NWBFile"]:
         # Extract date from first video filename
         video_path = Path(video_file_paths[0])
@@ -103,23 +101,25 @@ def session_to_nwb(
         except ValueError:
             warnings.warn(f"Could not parse session start time from video filename {video_path.name}")
 
-    nwbfile = make_ndx_event_nwbfile_from_metadata(metadata=metadata)
-
     # Add other devices to the NWB file
-    if "Test" in session_id:
-        for device_metadata in metadata["Devices"]:
-            # Add the device to the NWB file
-            device = Device(**device_metadata)
-            nwbfile.add_device(device)
+    if "Test" not in session_id:
+        # Find and remove Marbles from devices if it exists
+        for i, device in enumerate(metadata.get("Devices", [])):
+            if device.get("name") == "Marbles":
+                metadata["Devices"].pop(i)
+            break
 
     # Run conversion
     converter.run_conversion(
         metadata=metadata,
         nwbfile_path=nwbfile_path,
-        nwbfile=nwbfile,
+        # nwbfile=nwbfile,
         conversion_options=conversion_options,
         overwrite=overwrite,
     )
+
+    print(f"Conversion completed for {subject_id} session {session_id}.")
+    print(f"NWB file saved to {nwbfile_path}.")
 
 
 if __name__ == "__main__":

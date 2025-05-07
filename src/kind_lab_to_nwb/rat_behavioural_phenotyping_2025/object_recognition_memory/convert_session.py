@@ -10,7 +10,6 @@ from neuroconv.utils import (
     dict_deep_update,
     load_dict_from_file,
 )
-from neuroconv.tools.nwb_helpers import configure_and_write_nwbfile
 
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.object_recognition_memory.nwbconverter import (
     ObjectRecognitionNWBConverter,
@@ -20,10 +19,8 @@ from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils import (
     extract_subject_metadata_from_excel,
     get_subject_metadata_from_task,
     get_session_ids_from_excel,
-    make_ndx_event_nwbfile_from_metadata,
     convert_ts_to_mp4,
 )
-from pynwb.device import Device
 
 
 def session_to_nwb(
@@ -56,33 +53,64 @@ def session_to_nwb(
     source_data = dict()
     conversion_options = dict()
 
-    # Add Behavioral Video
-    if len(video_file_paths) == 1:
-        file_paths = convert_ts_to_mp4(video_file_paths)
-        source_data.update(dict(Video=dict(file_paths=file_paths, video_name="BehavioralVideo")))
-        conversion_options.update(dict(Video=dict()))
-    elif len(video_file_paths) > 1:
-        raise ValueError(f"Multiple video files found for {subject_id}.")
-
-    # Add Marble Interaction Annotated events from BORIS output
-    if boris_file_path is not None and "test" in session_id:
-        observation_ids = get_observation_ids(boris_file_path)
-        observation_id = next(
-            (
-                obs_id
-                for obs_id in observation_ids
-                if str(subject_metadata["animal ID"]) in obs_id
-                and session_id.replace("OR_", "").lower() in obs_id.lower()
-            ),
-            None,
-        )
-        if observation_id is not None:
+    if "STM" in session_id or "LTM" in session_id:
+        if len(video_file_paths) == 2:
+            file_paths = convert_ts_to_mp4(video_file_paths)
+            test_file_paths = [file_path for file_path in file_paths if "test" in file_path.name.lower()]
+            sample_file_paths = [file_path for file_path in file_paths if "sample" in file_path.name.lower()]
             source_data.update(
-                dict(ObjectRecognitionBehavior=dict(file_path=boris_file_path, observation_id=observation_id))
+                dict(
+                    TestVideo=dict(file_paths=test_file_paths, video_name="BehavioralVideoTestTrial"),
+                    SampleVideo=dict(file_paths=sample_file_paths, video_name="BehavioralVideoSampleTrial"),
+                )
             )
-            conversion_options.update(dict(ObjectRecognitionBehavior=dict()))
+            conversion_options.update(dict(TestVideo=dict(), SampleVideo=dict()))
         else:
-            subject_id(f"Observation ID not found in BORIS file {boris_file_path}.")
+            raise ValueError(f"{len(video_file_paths)} video files found for {subject_id}. Expected 2 video files.")
+        # Add Annotated events from BORIS output
+        if boris_file_path is not None:
+            all_observation_ids = get_observation_ids(boris_file_path)
+            observation_ids = [
+                obs_id
+                for obs_id in all_observation_ids
+                if str(subject_metadata["animal ID"]) in obs_id and session_id.replace("OR_", "") in obs_id
+            ]
+            if not observation_ids:
+                print(f"Observation ID not found in BORIS file {boris_file_path}.")
+            else:
+                for observation_id in observation_ids:
+                    if "sample" in observation_id.lower():
+                        source_data.update(
+                            dict(
+                                SampleObjectRecognitionBehavior=dict(
+                                    file_path=boris_file_path, observation_id=observation_id
+                                )
+                            )
+                        )
+                        conversion_options.update(
+                            dict(SampleObjectRecognitionBehavior=dict(table_name="SampleTrialBehavioralEvents"))
+                        )
+                    elif "test" in observation_id.lower():
+                        source_data.update(
+                            dict(
+                                TestObjectRecognitionBehavior=dict(
+                                    file_path=boris_file_path, observation_id=observation_id
+                                )
+                            )
+                        )
+                        conversion_options.update(
+                            dict(TestObjectRecognitionBehavior=dict(table_name="TestTrialBehavioralEvents"))
+                        )
+                    else:
+                        raise ValueError(f"Observation ID {observation_id} not recognized.")
+
+    else:
+        if len(video_file_paths) == 1:
+            file_paths = convert_ts_to_mp4(video_file_paths)
+            source_data.update(dict(Video=dict(file_paths=file_paths, video_name="BehavioralVideo")))
+            conversion_options.update(dict(Video=dict()))
+        elif len(video_file_paths) > 1:
+            raise ValueError(f"Multiple video files found for {subject_id}.")
 
     converter = ObjectRecognitionNWBConverter(source_data=source_data)
 
@@ -107,10 +135,11 @@ def session_to_nwb(
     metadata["NWBFile"]["session_description"] = metadata["SessionTypes"][session_id]["session_description"]
 
     # Check if session_start_time exists in metadata
+    # TODO only date is extracted from the filename, time is not included
     if "session_start_time" not in metadata["NWBFile"]:
-        # Extract date from first video filename
+        # Extract date from video filename
         video_path = Path(video_file_paths[0])
-        date_str = video_path.stem.split("_")[0]  # Get "2022-11-23" from filename
+        date_str = video_path.stem.split(" ")[0]  # Get "2022-11-23" from filename
         try:
             # Convert to datetime
             session_start_time = datetime.strptime(date_str, "%Y-%m-%d")
@@ -118,22 +147,16 @@ def session_to_nwb(
         except ValueError:
             warnings.warn(f"Could not parse session start time from video filename {video_path.name}")
 
-    nwbfile = make_ndx_event_nwbfile_from_metadata(metadata=metadata)
-
-    # Add other devices to the NWB file
-    for device_metadata in metadata["Devices"]:
-        # Add the device to the NWB file
-        device = Device(**device_metadata)
-        nwbfile.add_device(device)
-
     # Run conversion
     converter.run_conversion(
         metadata=metadata,
         nwbfile_path=nwbfile_path,
-        nwbfile=nwbfile,
         conversion_options=conversion_options,
         overwrite=overwrite,
     )
+
+    print(f"Conversion completed for {subject_id} session {session_id}.")
+    print(f"NWB file saved to {nwbfile_path}.")
 
 
 if __name__ == "__main__":
@@ -168,14 +191,11 @@ if __name__ == "__main__":
         raise FileNotFoundError(f"Folder {cohort_folder_path} does not exist")
     video_file_paths = list(video_folder_path.glob(f"*{subject_metadata['animal ID']}*"))
 
-    stub_test = True
+    stub_test = False
     overwrite = True
 
     if "Test" in session_id:
-        session_id = f"{session_id.split(' ')[1]}_{session_id.split(' ')[0].lower()}"
-        video_file_paths = [
-            video_file_path for video_file_path in video_file_paths if "test" in video_file_path.name.lower()
-        ]
+        session_id = f"{session_id.split(' ')[1]}"
 
     session_to_nwb(
         output_dir_path=output_dir_path,

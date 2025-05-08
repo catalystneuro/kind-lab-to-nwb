@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import List, Optional, Union
 from zoneinfo import ZoneInfo
 
+import natsort
 from pydantic import FilePath
 from pynwb import NWBHDF5IO
 
@@ -20,7 +21,7 @@ from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils import (
     get_subject_metadata_from_task,
     parse_datetime_from_filename,
 )
-from neuroconv.datainterfaces import ExternalVideoInterface
+from neuroconv.datainterfaces import AudioInterface, ExternalVideoInterface
 from neuroconv.utils import dict_deep_update, load_dict_from_file
 
 
@@ -30,6 +31,7 @@ def session_to_nwb(
     session_id: str,
     subject_metadata: dict,
     boris_file_path: Optional[Union[FilePath, str]] = None,
+    usv_file_paths: Optional[List[Union[FilePath, str]]] = None,
     overwrite: bool = False,
 ):
     """
@@ -47,6 +49,8 @@ def session_to_nwb(
         The metadata for the subject, including animal ID and cohort ID.
     boris_file_path: Optional[Union[FilePath, str]]
         The path to the BORIS file (.boris) for the session, if available.
+    usv_file_paths: Optional[List[Union[FilePath, str]]]
+        The list of USV file paths to be converted, if available.
     overwrite: bool, optional
         Whether to overwrite the NWB file if it already exists, by default False.
     """
@@ -97,6 +101,18 @@ def session_to_nwb(
             raise ValueError(f"No observation ID found containing subject ID '{subject_id}'")
         boris_interface = BORISBehavioralEventsInterface(file_path=boris_file_path, observation_id=observation_id)
         data_interfaces.append(boris_interface)
+
+    # Add USV files
+    if usv_file_paths is not None:
+        for usv_file_path in usv_file_paths:
+            # TODO: remove this when fixed in neuroconv
+            old_path = Path(usv_file_path)
+            # Replace "4.1.wav" with "4-1.wav"
+            new_name = old_path.stem.replace(".", "-") + old_path.suffix
+            new_path = old_path.with_name(new_name)
+            old_path.rename(new_path)
+            audio_interface = AudioInterface(file_paths=[usv_file_path])
+            data_interfaces.append(audio_interface)
 
     converter = PreyCaptureNWBConverter(data_interfaces=data_interfaces, verbose=True)
 
@@ -156,7 +172,7 @@ if __name__ == "__main__":
     subjects_metadata = extract_subject_metadata_from_excel(subjects_metadata_file_path)
     subjects_metadata = get_subject_metadata_from_task(subjects_metadata, task_acronym)
 
-    session_id = session_ids[1]  # HabD2
+    session_id = session_ids[-3]  # HabD2
     subject_metadata = subjects_metadata[0]  # subject 408_Arid1b(3)
 
     cohort_folder_path = data_dir_path / subject_metadata["line"] / f"{subject_metadata['cohort ID']}_{task_acronym}"
@@ -169,9 +185,9 @@ if __name__ == "__main__":
         raise FileNotFoundError(f"Folder {cohort_folder_path} does not exist")
     # TODO: for HabD1 need to figure out how to match the cage number with the animal ID
     if session_id == "HabD1":
-        video_file_paths = list(video_folder_path.glob(f"**"))
+        video_file_paths = natsort.natsorted(video_folder_path.glob(f"**"))
     else:
-        video_file_paths = list(video_folder_path.glob(f"*{subject_metadata['animal ID']}*"))
+        video_file_paths = natsort.natsorted(video_folder_path.glob(f"*{subject_metadata['animal ID']}*"))
 
     # If the data has been scored, the cohort folder would contain BORIS files (.boris) of the behaviors of interest
     # TODO: there are no example boris files for PC shared yet
@@ -182,6 +198,12 @@ if __name__ == "__main__":
     else:
         boris_file_path = boris_file_paths[0]
 
+    # Optional, add USV files
+    usv_file_paths = natsort.natsorted(video_folder_path.rglob(f"*{subject_metadata['animal ID']}*.wav"))
+    if len(usv_file_paths) == 0:
+        usv_file_paths = None
+        warnings.warn(f"No USV file found in {video_folder_path}")
+
     stub_test = False
     # Whether to overwrite the NWB file if it already exists
     overwrite = True
@@ -191,5 +213,6 @@ if __name__ == "__main__":
         video_file_paths=video_file_paths,
         session_id=f"{task_acronym}_{session_id}",
         subject_metadata=subject_metadata,
+        usv_file_paths=usv_file_paths,
         overwrite=overwrite,
     )

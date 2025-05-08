@@ -97,7 +97,7 @@ def add_behavioral_signals(
     analog_timeseries = BehavioralEvents(name="analog")
     analog_timeseries.create_timeseries(
         name="analog",
-        description="Accelerometer signal",
+        description="AccelerometerXComponent AccelerometerYComponent AccelerometerZComponent",
         unit="volts",
         data=time_series,
         starting_time=starting_time,

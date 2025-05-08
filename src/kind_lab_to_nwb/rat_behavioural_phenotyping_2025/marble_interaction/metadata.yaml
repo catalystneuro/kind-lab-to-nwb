@@ -30,34 +30,39 @@ Subject:
   species: Rattus norvegicus
 
 Devices:
-  BehavioralCamera:
-    description: CCTV camera mounted on ceiling above arenas for behavioral recording
-    manufacturer: Example Manufacturer # Example value - actual manufacturer needed
-
-  Arena:
+  - name: Arena
     description: |
       Plastic box identical to home cage base (63x50x30 cm) with white plastic panels
       in frame around sides to total height of 90 cm
     manufacturer: Example Manufacturer # Example value - actual manufacturer needed
-
-  Marbles:
+  - name: Marbles
     description: 20 black shiny glass marbles (25mm diameter, Opal marble)
     manufacturer: House of Marbles UK
 
+Behavior:
+  ExternalVideos:
+    BehavioralVideo:
+      description: |
+        Video recording of the rat's behavior. Recorded using a CCTV camera mounted on the ceiling above the arenas.
+      device:
+        name: BehavioralCamera
+        description: CCTV camera mounted on ceiling above arenas for behavioral recording
+        manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+
 SessionTypes:
-  HabD1:
+  MI_HabD1:
     session_description: |
       Experimental Day 1. Individual habituation.
       Rat placed in arena with woodchip bedding for 20 min.
       No marbles present.
 
-  HabD2:
+  MI_HabD2:
     session_description: |
       Experimental Day 2. Individual habituation.
       Rat placed in arena with woodchip bedding for 20 min.
       No marbles present.
 
-  Test:
+  MI_Test:
     session_description: |
       Experimental Day 3. Marble interaction test.
       Rat placed in arena with woodchip bedding and 20 marbles

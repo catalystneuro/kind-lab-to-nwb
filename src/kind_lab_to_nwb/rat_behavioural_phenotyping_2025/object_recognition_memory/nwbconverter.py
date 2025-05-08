@@ -13,7 +13,7 @@ from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.interfaces import (
 )
 
 
-class ObjectLocationMemoryNWBConverter(NWBConverter):
+class ObjectRecognitionNWBConverter(NWBConverter):
     """Primary conversion class for my extracellular electrophysiology dataset."""
 
     data_interface_classes = dict(

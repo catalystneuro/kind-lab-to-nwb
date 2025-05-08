@@ -1,0 +1,4 @@
+ndx-events==0.2.1
+openpyxl
+neuroconv[video]
+xlrd

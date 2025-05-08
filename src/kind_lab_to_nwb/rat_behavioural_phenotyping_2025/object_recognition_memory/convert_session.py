@@ -10,8 +10,9 @@ from neuroconv.utils import (
     dict_deep_update,
     load_dict_from_file,
 )
-from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.object_location_memory.nwbconverter import (
-    ObjectLocationMemoryNWBConverter,
+
+from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.object_recognition_memory.nwbconverter import (
+    ObjectRecognitionNWBConverter,
 )
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.interfaces import get_observation_ids
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils import (
@@ -74,7 +75,7 @@ def session_to_nwb(
             observation_ids = [
                 obs_id
                 for obs_id in all_observation_ids
-                if str(subject_metadata["animal ID"]) in obs_id and session_id.replace("OLM_", "") in obs_id
+                if str(subject_metadata["animal ID"]) in obs_id and session_id.replace("OR_", "") in obs_id
             ]
             if not observation_ids:
                 print(f"Observation ID not found in BORIS file {boris_file_path}.")
@@ -113,7 +114,7 @@ def session_to_nwb(
         elif len(video_file_paths) > 1:
             raise ValueError(f"Multiple video files found for {subject_id}.")
 
-    converter = ObjectLocationMemoryNWBConverter(source_data=source_data)
+    converter = ObjectRecognitionNWBConverter(source_data=source_data)
 
     # Add datetime to conversion
     metadata = converter.get_metadata()
@@ -139,27 +140,6 @@ def session_to_nwb(
     if "session_start_time" not in metadata["NWBFile"]:
         metadata["NWBFile"]["session_start_time"] = session_start_time
 
-    if "LTM" in session_id:
-        # Find and remove Marbles from devices if it exists
-        for i, device in enumerate(metadata.get("Devices", [])):
-            if device.get("name") == "Arena_STM":
-                metadata["Devices"].pop(i)
-            break
-    elif "STM" in session_id:
-        # Find and remove Marbles from devices if it exists
-        for i, device in enumerate(metadata.get("Devices", [])):
-            if device.get("name") == "Arena_LTM":
-                metadata["Devices"].pop(i)
-            break
-    else:
-        # Remove Arena_LTM and Arena_STM from devices if it exists
-        for i, device in enumerate(metadata.get("Devices", [])):
-            if device.get("name") == "Arena_LTM":
-                metadata["Devices"].pop(i)
-            elif device.get("name") == "Arena_STM":
-                metadata["Devices"].pop(i)
-            break
-
     # Run conversion
     converter.run_conversion(
         metadata=metadata,
@@ -175,17 +155,17 @@ def session_to_nwb(
 if __name__ == "__main__":
 
     # Parameters for conversion
-    data_dir_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/Object Location Memory")
-    output_dir_path = Path("D:/kind_lab_conversion_nwb/object_location_memory")
+    data_dir_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/Object Recognition")
+    output_dir_path = Path("D:/kind_lab_conversion_nwb/object_recognition")
     subjects_metadata_file_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/RAT ID metadata Yunkai.xlsx")
-    task_acronym = "OLM"
+    task_acronym = "OR"
     session_ids = get_session_ids_from_excel(subjects_metadata_file_path, task_acronym)
 
     subjects_metadata = extract_subject_metadata_from_excel(subjects_metadata_file_path)
     subjects_metadata = get_subject_metadata_from_task(subjects_metadata, task_acronym)
 
-    session_id = session_ids[-2]  # Test STM
-    subject_metadata = subjects_metadata[130]  # subject 617Scn2a
+    session_id = session_ids[-1]  # Test
+    subject_metadata = subjects_metadata[137]  # subject 617Scn2a
 
     cohort_folder_path = data_dir_path / subject_metadata["line"] / f"{subject_metadata['cohort ID']}_{task_acronym}"
     if not cohort_folder_path.exists():

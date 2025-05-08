@@ -84,7 +84,7 @@ SessionTypes:
   PC_TestD1:
     session_description: |
       Week 2 Experimental Day 1. Live cricket hunting.
-      4 trials per day, 2 min max duration per trial.
+      4-5 trials per day, 2 min max duration per trial.
       Rat in starting cylinder 15s, live cricket placed in opposite corner.
       The rat was given 2 min to catch the cricket.
       The rat was removed from the arena when the cricket was eaten or if the 2 min trial duration elapsed
@@ -95,7 +95,7 @@ SessionTypes:
   PC_TestD2:
     session_description: |
       Week 2 Experimental Day 2. Live cricket hunting.
-      4 trials per day, 2 min max duration per trial.
+      4-5 trials per day, 2 min max duration per trial.
       Rat in starting cylinder 15s, live cricket placed in opposite corner.
       The rat was given 2 min to catch the cricket.
       The rat was removed from the arena when the cricket was eaten or if the 2 min trial duration elapsed
@@ -106,7 +106,7 @@ SessionTypes:
   PC_TestD3:
     session_description: |
       Week 2 Experimental Day 3. Live cricket hunting.
-      4 trials per day, 2 min max duration per trial.
+      4-5 trials per day, 2 min max duration per trial.
       Rat in starting cylinder 15s, live cricket placed in opposite corner.
       The rat was given 2 min to catch the cricket.
       The rat was removed from the arena when the cricket was eaten or if the 2 min trial duration elapsed
@@ -117,7 +117,7 @@ SessionTypes:
   PC_TestD4:
     session_description: |
       Week 2 Experimental Day 4. Live cricket hunting.
-      4 trials per day, 2 min max duration per trial.
+      4-5 trials per day, 2 min max duration per trial.
       Rat in starting cylinder 15s, live cricket placed in opposite corner.
       The rat was given 2 min to catch the cricket.
       The rat was removed from the arena when the cricket was eaten or if the 2 min trial duration elapsed
@@ -129,11 +129,22 @@ SessionTypes:
   PC_TestD5:
     session_description: |
       Week 2 Experimental Day 5. Live cricket hunting with random locations.
-      4 trials per day, 2 min max duration per trial.
+      4-5 trials per day, 2 min max duration per trial.
       Rat in starting cylinder 15s, live cricket placed in pseudorandom
       starting locations (not always opposite to rat).
       The rat was given 2 min to catch the cricket.
       The rat was removed from the arena when the cricket was eaten or if the 2 min trial duration elapsed
       (whichever happens first). Crickets were not reused.
+      The arena was cleared of all debris and wiped with water between trials.
+      Rats were held in the holding bucket between trials, the intertrial interval was approx. 1-2 min.
+
+  PC_Weeto:
+    session_description: |
+      Live Weetos trials after completion of all test sessions.
+      2 trials per day, 2 min max duration per trial.
+      Rat in starting cylinder 15s, Weeto placed in opposite corner.
+      The rat was given 2 min to catch/retrieve the Weeto.
+      The rat was removed from the arena when the Weeto was eaten or if the 2 min trial duration elapsed
+      (whichever happens first). Weetos were not reused.
       The arena was cleared of all debris and wiped with water between trials.
       Rats were held in the holding bucket between trials, the intertrial interval was approx. 1-2 min.

@@ -115,13 +115,7 @@ def add_electrical_series(
             # z=0.0,
         )
 
-    electrodes = nwbfile.electrodes.create_region(
-        name="electrodes",
-        region=list(range(len(channels_info.items()))),
-        description="electrodes table region",
-    )
-
-    electrical_series = extractor.get_traces()
+    traces = extractor.get_traces()
     time_info = extractor.get_time_info()
     rate = time_info["sampling_frequency"]
     starting_time = time_info["t_start"]
@@ -147,23 +141,42 @@ def add_electrical_series(
         conversion = unique_channel_conversion * micro_to_volts_conversion_factor
         channel_conversion = None
 
-    if extractor.is_filtered():
-        electrical_series_name = "lfp_series"
-    else:
-        electrical_series_name = "eeg_series"
-
-    electrical_series = ElectricalSeries(
-        name=electrical_series_name,
-        data=electrical_series,
-        electrodes=electrodes,
-        rate=rate,
-        starting_time=starting_time,
-        channel_conversion=channel_conversion,
-        conversion=conversion,
-    )
-    if extractor.is_filtered():  # TODO check with lab point person if this is correct way to check for LFP
-        lfp = LFP(electrical_series=electrical_series)
+    lfp_channel_ids = [ch for ch, info in channels_info.items() if "EEG" not in info["location"]]
+    if len(lfp_channel_ids) > 0:
+        lfp_electrodes = nwbfile.electrodes.create_region(
+            name="electrodes",
+            region=lfp_channel_ids,
+            description="lfp electrodes table region",
+        )
+        lfp_traces = traces[:, lfp_channel_ids]
+        lfp_electrical_series = ElectricalSeries(
+            name="lfp_series",
+            data=lfp_traces,
+            electrodes=lfp_electrodes,
+            rate=rate,
+            starting_time=starting_time,
+            channel_conversion=channel_conversion[lfp_channel_ids] if channel_conversion is not None else None,
+            conversion=conversion,
+        )
+        lfp = LFP(electrical_series=lfp_electrical_series)
         ecephys_module = nwbfile.create_processing_module(name="ecephys", description="ecephys module")
         ecephys_module.add(lfp)
-    else:
-        nwbfile.add_acquisition(electrical_series)
+
+    eeg_channel_ids = [ch for ch, info in channels_info.items() if "EEG" in info["location"]]
+    if len(eeg_channel_ids) > 0:
+        eeg_electrodes = nwbfile.electrodes.create_region(
+            name="electrodes",
+            region=eeg_channel_ids,
+            description="eeg electrodes table region",
+        )
+        eeg_traces = traces[:, eeg_channel_ids]
+        eeg_electrical_series = ElectricalSeries(
+            name="eeg_series",
+            data=eeg_traces,
+            electrodes=eeg_electrodes,
+            rate=rate,
+            starting_time=starting_time,
+            channel_conversion=channel_conversion[eeg_channel_ids] if channel_conversion is not None else None,
+            conversion=conversion,
+        )
+        nwbfile.add_acquisition(eeg_electrical_series)

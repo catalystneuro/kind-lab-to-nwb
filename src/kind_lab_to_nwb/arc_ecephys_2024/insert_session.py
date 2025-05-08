@@ -75,6 +75,8 @@ def clean_db_entry(nwbfile_path):
     for camera_name in camera_names:
         if sgc.CameraDevice & {"camera_name": camera_name}:
             (sgc.CameraDevice & {"camera_name": camera_name}).delete()
+    if sgc.SensorData & {"nwb_file_name": nwb_copy_file_name}:
+        (sgc.SensorData & {"nwb_file_name": nwb_copy_file_name}).delete()
 
 
 def print_tables(nwbfile_path):
@@ -112,11 +114,13 @@ def print_tables(nwbfile_path):
         print(sgc.CameraDevice & [{"camera_name": camera_name} for camera_name in camera_names], file=f)
         print("=== Task Epoch ===", file=f)
         print(sgc.TaskEpoch(), file=f)
+        print("=== SensorData ===", file=f)
+        print(sgc.SensorData(), file=f)
 
 
 def main():
     nwbfile_path = Path(
-        "/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/raw/sub_Rat_1716-ses_Baseline_tone_flash_hab.nwb"
+        "/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/raw/sub_Rat_1717-ses_Baseline_tone_flash_hab.nwb"
     )
 
     clean_db_entry(nwbfile_path)

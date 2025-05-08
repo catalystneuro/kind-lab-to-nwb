@@ -1,12 +1,13 @@
 import warnings
-from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Union
 from zoneinfo import ZoneInfo
 
 from pydantic import FilePath
+from pynwb import NWBHDF5IO
 
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.interfaces import (
+    BORISBehavioralEventsInterface,
     get_observation_ids,
 )
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.prey_capture import (
@@ -17,7 +18,9 @@ from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils import (
     extract_subject_metadata_from_excel,
     get_session_ids_from_excel,
     get_subject_metadata_from_task,
+    parse_datetime_from_filename,
 )
+from neuroconv.datainterfaces import ExternalVideoInterface
 from neuroconv.utils import dict_deep_update, load_dict_from_file
 
 
@@ -56,16 +59,35 @@ def session_to_nwb(
     subject_id = f"{subject_metadata['animal ID']}_{subject_metadata['cohort ID']}"
     nwbfile_path = output_dir_path / f"sub-{subject_id}_ses-{session_id}.nwb"
 
-    source_data = dict()
     conversion_options = dict()
 
+    first_video_file_name = Path(video_file_paths[0]).stem
+    session_start_time = parse_datetime_from_filename(first_video_file_name)
+
+    if not any(valid_session_id in session_id for valid_session_id in ["Hab", "Test", "Weeto"]):
+        raise ValueError(f"Session ID '{session_id}' is not valid. It should contain 'Hab', 'Test', or 'Weeto'.")
+
     # Add Behavioral Video
-    if len(video_file_paths) == 1:
-        file_paths = convert_ts_to_mp4(video_file_paths)
-        source_data.update(dict(Video=dict(file_paths=file_paths, video_name="BehavioralVideo")))
-        conversion_options.update(dict(Video=dict()))
-    elif len(video_file_paths) > 1:
-        raise ValueError(f"Multiple video files found for {subject_id}.")
+    data_interfaces = []
+    # Habitation sessions have only one video file
+    if "Hab" in session_id:
+        if len(video_file_paths) == 1:
+            file_paths = convert_ts_to_mp4(video_file_paths)
+            video_interface = ExternalVideoInterface(file_paths=file_paths, video_name="BehavioralVideo")
+            data_interfaces.append(video_interface)
+        elif len(video_file_paths) > 1:
+            raise ValueError(f"Multiple video files found for {subject_id}.")
+    # Test sessions have 4-5 video files, weeto trials have 2 video files
+    else:
+        for i, video_file_path in enumerate(video_file_paths):
+            file_paths = convert_ts_to_mp4([video_file_path])
+            video_name = f"BehavioralVideoTestTrial{i+1}" if "Test" in session_id else f"BehavioralVideoWeetoTrial{i+1}"
+            video_interface = ExternalVideoInterface(file_paths=file_paths, video_name=video_name)
+            video_file_name = Path(video_file_path).stem
+            datetime_from_filename = parse_datetime_from_filename(video_file_name)
+            starting_time = (datetime_from_filename - session_start_time).total_seconds()
+            video_interface._starting_time = starting_time
+            data_interfaces.append(video_interface)
 
     # Add Prey Capture Annotated events from BORIS output
     if boris_file_path is not None and "Test" in session_id:
@@ -73,10 +95,10 @@ def session_to_nwb(
         observation_id = next((obs_id for obs_id in observation_ids if subject_metadata["animal ID"] in obs_id), None)
         if observation_id is None:
             raise ValueError(f"No observation ID found containing subject ID '{subject_id}'")
-        source_data.update(dict(Behavior=dict(file_path=boris_file_path, observation_id=observation_id)))
-        conversion_options.update(dict(Behavior=dict()))
+        boris_interface = BORISBehavioralEventsInterface(file_path=boris_file_path, observation_id=observation_id)
+        data_interfaces.append(boris_interface)
 
-    converter = PreyCaptureNWBConverter(source_data=source_data, verbose=True)
+    converter = PreyCaptureNWBConverter(data_interfaces=data_interfaces, verbose=True)
 
     metadata = converter.get_metadata()
     # Update default metadata with the editable in the corresponding yaml file
@@ -87,6 +109,12 @@ def session_to_nwb(
         editable_metadata,
     )
 
+    videos_metadata = metadata["Behavior"]["ExternalVideos"]
+    if len(videos_metadata) > 1 and "BehavioralVideo" in videos_metadata:
+        default_metadata = videos_metadata.pop("BehavioralVideo")
+        for video_metadata_key, video_metadata in videos_metadata.items():
+            video_metadata.update(description=default_metadata["description"], device=default_metadata["device"])
+
     metadata["Subject"]["subject_id"] = subject_id
     metadata["Subject"]["date_of_birth"] = subject_metadata["DOB (DD/MM/YYYY)"]
     sex = {"male": "M", "female": "F"}.get(subject_metadata["sex"], "U")
@@ -96,16 +124,8 @@ def session_to_nwb(
     metadata["NWBFile"]["session_description"] = metadata["SessionTypes"][session_id]["session_description"]
 
     if "session_start_time" not in metadata["NWBFile"]:
-        video_path = Path(video_file_paths[0])
-        video_date_time_parts = video_path.stem.split("_")[:-1]
-        session_start_time = " ".join(video_date_time_parts)
-        try:
-            # Convert to datetime
-            session_start_time = datetime.strptime(session_start_time, "%Y-%m-%d %H-%M-%S")
-            session_start_time = session_start_time.replace(tzinfo=ZoneInfo("Europe/London"))
-            metadata["NWBFile"]["session_start_time"] = session_start_time
-        except ValueError:
-            warnings.warn(f"Could not parse session start time from video filename {video_path.name}")
+        session_start_time = session_start_time.replace(tzinfo=ZoneInfo("Europe/London"))
+        metadata["NWBFile"].update(session_start_time=session_start_time)
 
     # Run conversion
     converter.run_conversion(
@@ -115,9 +135,9 @@ def session_to_nwb(
         overwrite=overwrite,
     )
 
-    # with NWBHDF5IO(nwbfile_path, mode="r") as io:
-    #     nwbfile_in = io.read()
-    #     print(nwbfile_in.trials.to_dataframe())
+    with NWBHDF5IO(nwbfile_path, mode="r") as io:
+        nwbfile_in = io.read()
+        print(nwbfile_in.trials.to_dataframe())
 
 
 if __name__ == "__main__":
@@ -150,8 +170,6 @@ if __name__ == "__main__":
     # TODO: for HabD1 need to figure out how to match the cage number with the animal ID
     if session_id == "HabD1":
         video_file_paths = list(video_folder_path.glob(f"**"))
-    elif session_id == "Weeto":
-        raise NotImplementedError("Weeto session is not implemented yet")
     else:
         video_file_paths = list(video_folder_path.glob(f"*{subject_metadata['animal ID']}*"))
 

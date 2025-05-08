@@ -4,20 +4,11 @@ from typing import Optional
 from pynwb import NWBFile
 from pynwb.device import Device
 
-from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.interfaces import (
-    BORISBehavioralEventsInterface,
-)
-from neuroconv import NWBConverter
-from neuroconv.datainterfaces import ExternalVideoInterface
+from neuroconv import ConverterPipe
 
 
-class PreyCaptureNWBConverter(NWBConverter):
-    """NWBConverter for the prey capture dataset."""
-
-    data_interface_classes = dict(
-        Video=ExternalVideoInterface,
-        Behavior=BORISBehavioralEventsInterface,
-    )
+class PreyCaptureNWBConverter(ConverterPipe):
+    """ConverterPipe for the prey capture dataset."""
 
     def add_to_nwbfile(self, nwbfile: NWBFile, metadata, conversion_options: Optional[dict] = None):
         for device_metadata in metadata["Devices"]:

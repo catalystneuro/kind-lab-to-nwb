@@ -126,7 +126,6 @@ def main():
     clean_db_entry(nwbfile_path)
 
     sgi.insert_sessions(str(nwbfile_path), rollback_on_fail=True, raise_err=True)
-    sgc.SensorData.populate()
 
     print_tables(nwbfile_path)
 

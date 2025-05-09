@@ -78,13 +78,20 @@ def add_electrical_series(
     )
     channel_names = extractor.get_property("channel_names")
 
-    shanks_electrodes = []
+    eeg_shanks_electrodes = []
+    lfp_shanks_electrodes = []
     for ch, info in channels_info.items():
-        electrode = ShanksElectrode(name=str(ch), rel_x=0.0, rel_y=0.0, rel_z=0.0)
-        shanks_electrodes.append(electrode)
+        if "EEG" in info["location"]:
+            eeg_electrodes = ShanksElectrode(name=str(ch), rel_x=0.0, rel_y=0.0, rel_z=0.0)
+            eeg_shanks_electrodes.append(eeg_electrodes)
+        else:
+            lfp_electrodes = ShanksElectrode(name=str(ch), rel_x=0.0, rel_y=0.0, rel_z=0.0)
+            lfp_shanks_electrodes.append(lfp_electrodes)
 
-    shank = Shank(**metadata["Ecephys"]["Shank"], shanks_electrodes=shanks_electrodes)
-    probe = Probe(**metadata["Ecephys"]["Probe"], shanks=[shank])
+    eeg_shank = Shank(**metadata["Ecephys"]["EEGShank"], shanks_electrodes=eeg_shanks_electrodes)
+    lfp_shank = Shank(**metadata["Ecephys"]["LFPShank"], shanks_electrodes=lfp_shanks_electrodes)
+
+    probe = Probe(**metadata["Ecephys"]["Probe"], shanks=[eeg_shank, lfp_shank])
     nwbfile.add_device(probe)
 
     # add to electrical series
@@ -102,11 +109,16 @@ def add_electrical_series(
         nwbfile.add_electrode_column(name=col, description=f"description for {col}")
 
     for ch, info in channels_info.items():
+        if "EEG" in info["location"]:
+            probe_shank = 0
+        else:
+            probe_shank = 1
+
         nwbfile.add_electrode(
             location=info["location"],  # convert to standard naming
             group=electrode_group,
             channel_name=channel_names[ch],
-            probe_shank=0,
+            probe_shank=probe_shank,
             probe_electrode=ch,
             bad_channel=info["bad_channel"],
             ref_elect_id=ch,
@@ -114,7 +126,6 @@ def add_electrical_series(
             # y=0.0,
             # z=0.0,
         )
-
     traces = extractor.get_traces()
     time_info = extractor.get_time_info()
     rate = time_info["sampling_frequency"]

@@ -60,8 +60,10 @@ Devices:
     manufacturer: "n.a." #TODO ask
 
 Ecephys:
-  Shank:
+  EEGShank:
     name: "0"
+  LFPShank:
+    name: "1"
   Probe:
     name: "probe"
     description: "16-channel digitizing head stage C3334 for EEG recordings."

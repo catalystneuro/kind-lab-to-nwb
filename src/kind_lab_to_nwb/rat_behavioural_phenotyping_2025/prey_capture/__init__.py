@@ -1,1 +1,2 @@
+from .behaviordatainterface import PreyCaptureBehavioralInterface
 from .nwbconverter import PreyCaptureNWBConverter

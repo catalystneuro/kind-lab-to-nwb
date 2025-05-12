@@ -12,6 +12,7 @@ from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.interfaces import (
     get_observation_ids,
 )
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.prey_capture import (
+    PreyCaptureBehavioralInterface,
     PreyCaptureNWBConverter,
 )
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils import (
@@ -32,6 +33,7 @@ def session_to_nwb(
     subject_metadata: dict,
     boris_file_path: Optional[Union[FilePath, str]] = None,
     usv_file_paths: Optional[List[Union[FilePath, str]]] = None,
+    detections_file_paths: Optional[List[Union[FilePath, str]]] = None,
     overwrite: bool = False,
 ):
     """
@@ -51,6 +53,8 @@ def session_to_nwb(
         The path to the BORIS file (.boris) for the session, if available.
     usv_file_paths: Optional[List[Union[FilePath, str]]]
         The list of USV file paths to be converted, if available.
+    detections_file_paths: Optional[List[Union[FilePath, str]]]
+        The list of USV detection file paths to be converted, if available.
     overwrite: bool, optional
         Whether to overwrite the NWB file if it already exists, by default False.
     """
@@ -105,14 +109,13 @@ def session_to_nwb(
     # Add USV files
     if usv_file_paths is not None:
         for usv_file_path in usv_file_paths:
-            # TODO: remove this when fixed in neuroconv
-            old_path = Path(usv_file_path)
-            # Replace "4.1.wav" with "4-1.wav"
-            new_name = old_path.stem.replace(".", "-") + old_path.suffix
-            new_path = old_path.with_name(new_name)
-            old_path.rename(new_path)
             audio_interface = AudioInterface(file_paths=[usv_file_path])
             data_interfaces.append(audio_interface)
+
+    # Add USV detection scores from .mat files
+    if detections_file_paths is not None:
+        behavior_interface = PreyCaptureBehavioralInterface(file_paths=detections_file_paths)
+        data_interfaces.append(behavior_interface)
 
     converter = PreyCaptureNWBConverter(data_interfaces=data_interfaces, verbose=True)
 
@@ -203,6 +206,13 @@ if __name__ == "__main__":
     if len(usv_file_paths) == 0:
         usv_file_paths = None
         warnings.warn(f"No USV file found in {video_folder_path}")
+    # Optional, add USV detections from .mat files
+    detections_file_paths = natsort.natsorted(
+        video_folder_path.rglob(f"*converted/{subject_metadata['animal ID']}*.mat")
+    )
+    if len(detections_file_paths) == 0:
+        detections_file_paths = None
+        warnings.warn(f"No USV detection file found in {video_folder_path}.")
 
     stub_test = False
     # Whether to overwrite the NWB file if it already exists
@@ -214,5 +224,6 @@ if __name__ == "__main__":
         session_id=f"{task_acronym}_{session_id}",
         subject_metadata=subject_metadata,
         usv_file_paths=usv_file_paths,
+        detections_file_paths=detections_file_paths,
         overwrite=overwrite,
     )

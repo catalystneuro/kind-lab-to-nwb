@@ -1,4 +1,5 @@
 import warnings
+from copy import deepcopy
 from pathlib import Path
 from typing import List, Optional, Union
 from zoneinfo import ZoneInfo
@@ -33,6 +34,7 @@ def session_to_nwb(
     subject_metadata: dict,
     boris_file_path: Optional[Union[FilePath, str]] = None,
     usv_file_paths: Optional[List[Union[FilePath, str]]] = None,
+    usv_starting_times: Optional[List[float]] = None,
     detections_file_paths: Optional[List[Union[FilePath, str]]] = None,
     overwrite: bool = False,
 ):
@@ -53,6 +55,8 @@ def session_to_nwb(
         The path to the BORIS file (.boris) for the session, if available.
     usv_file_paths: Optional[List[Union[FilePath, str]]]
         The list of USV file paths to be converted, if available.
+    usv_starting_times: Optional[List[float]]
+        The list of starting times for the USV files, if available.
     detections_file_paths: Optional[List[Union[FilePath, str]]]
         The list of USV detection file paths to be converted, if available.
     overwrite: bool, optional
@@ -65,7 +69,7 @@ def session_to_nwb(
     )
 
     subject_id = f"{subject_metadata['animal ID']}_{subject_metadata['cohort ID']}"
-    nwbfile_path = output_dir_path / f"sub-{subject_id}_ses-{session_id}.nwb"
+    nwbfile_path = output_dir_path / f"sub-{subject_id}_ses-{session_id}new.nwb"
 
     conversion_options = dict()
 
@@ -77,6 +81,7 @@ def session_to_nwb(
 
     # Add Behavioral Video
     data_interfaces = []
+    video_starting_times = []
     # Habitation sessions have only one video file
     if "Hab" in session_id:
         if len(video_file_paths) == 1:
@@ -94,6 +99,7 @@ def session_to_nwb(
             video_file_name = Path(video_file_path).stem
             datetime_from_filename = parse_datetime_from_filename(video_file_name)
             starting_time = (datetime_from_filename - session_start_time).total_seconds()
+            video_starting_times.append(starting_time)
             video_interface._starting_time = starting_time
             data_interfaces.append(video_interface)
 
@@ -108,9 +114,13 @@ def session_to_nwb(
 
     # Add USV files
     if usv_file_paths is not None:
-        for usv_file_path in usv_file_paths:
-            audio_interface = AudioInterface(file_paths=[usv_file_path])
-            data_interfaces.append(audio_interface)
+        audio_interface = AudioInterface(file_paths=usv_file_paths)
+        if usv_starting_times is not None:
+            audio_interface._segment_starting_times = usv_starting_times
+        else:
+            audio_interface._segment_starting_times = video_starting_times
+        data_interfaces.append(audio_interface)
+        conversion_options.update(dict(AudioInterface=dict(stub_test=stub_test, write_as="acquisition")))
 
     # Add USV detection scores from .mat files
     if detections_file_paths is not None:
@@ -133,6 +143,13 @@ def session_to_nwb(
         default_metadata = videos_metadata.pop("BehavioralVideo")
         for video_metadata_key, video_metadata in videos_metadata.items():
             video_metadata.update(description=default_metadata["description"], device=default_metadata["device"])
+    audios_metadata = metadata["Behavior"]["Audio"]
+    if len(audios_metadata) > 1:
+        default_metadata_copy = deepcopy(audios_metadata[0])
+        for i, audio_metadata in enumerate(audios_metadata):
+            audio_metadata.update(
+                name=f"AcousticWaveformSeriesTestTrial{i+1}", description=default_metadata_copy["description"]
+            )
 
     metadata["Subject"]["subject_id"] = subject_id
     metadata["Subject"]["date_of_birth"] = subject_metadata["DOB (DD/MM/YYYY)"]
@@ -154,16 +171,17 @@ def session_to_nwb(
         overwrite=overwrite,
     )
 
-    with NWBHDF5IO(nwbfile_path, mode="r") as io:
-        nwbfile_in = io.read()
-        print(nwbfile_in.trials.to_dataframe())
+    # with NWBHDF5IO(nwbfile_path, mode="r") as io:
+    #     nwbfile_in = io.read()
+    #     print(nwbfile_in.analysis["detections_table"][:])
+    #     print(nwbfile_in.acquisition)
 
 
 if __name__ == "__main__":
 
     # Parameters for conversion
     data_dir_path = Path("/Volumes/T9/Behavioural Pipeline/Prey Capture")
-    output_dir_path = data_dir_path / "nwbfiles"
+    output_dir_path = Path("/Users/weian/data/Kind/nwbfiles")
 
     subjects_metadata_file_path = Path("/Users/weian/data/RAT ID metadata Yunkai copy - updated 12.2.25.xlsx")
     task_acronym = "PC"

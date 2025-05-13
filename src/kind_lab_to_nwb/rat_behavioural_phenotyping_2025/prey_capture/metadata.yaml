@@ -40,6 +40,9 @@ Behavior:
               name: BehavioralCamera
               description: CCTV camera mounted on ceiling above chambers for behavioral recording
               manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+    Audio:
+      - name: AcousticWaveformSeries
+        description: Ultrasonic vocalizations recorded during the trials using a Pettersson M500 USB microphone.
 
 Devices:
   - name: USVMicrophone

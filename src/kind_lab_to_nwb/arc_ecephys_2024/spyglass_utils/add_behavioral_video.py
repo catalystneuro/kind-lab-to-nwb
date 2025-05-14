@@ -71,7 +71,4 @@ def add_behavioral_video(
         device=camera_device,
     )
 
-    behavior_module = nwbfile.create_processing_module(name="behavior", description="behavior module")
-    behavioral_events = BehavioralEvents(name="video")
-    behavioral_events.add_timeseries(image_series)
-    behavior_module.add(behavioral_events)
+    nwbfile.add_acquisition(image_series)

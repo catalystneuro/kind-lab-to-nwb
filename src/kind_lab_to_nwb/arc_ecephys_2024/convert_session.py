@@ -26,6 +26,7 @@ from spyglass_utils import (
     add_behavioral_events,
 )
 import pandas as pd
+from tqdm import tqdm
 
 
 def session_to_nwb(
@@ -159,11 +160,15 @@ if __name__ == "__main__":
 
     stub_test = False
     overwrite = True
-    for metadata in metadata_list[:5]:
-        session_to_nwb(
-            data_dir_path=data_dir_path,
-            output_dir_path=output_dir_path,
-            path_expander_metadata=metadata,
-            stub_test=stub_test,
-            overwrite=overwrite,
-        )
+
+    for metadata in tqdm(metadata_list, desc="Processing sessions"):
+        try:
+            session_to_nwb(
+                data_dir_path=data_dir_path,
+                output_dir_path=output_dir_path,
+                path_expander_metadata=metadata,
+                stub_test=stub_test,
+                overwrite=overwrite,
+            )
+        except Exception as e:
+            print(f"Error processing {metadata['source_data']['OpenEphysRecording']['folder_path']}: {e}")

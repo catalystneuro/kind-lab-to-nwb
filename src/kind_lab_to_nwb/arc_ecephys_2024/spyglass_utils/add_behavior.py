@@ -33,6 +33,14 @@ def add_behavioral_events(nwbfile: NWBFile, folder_path) -> None:
     # Create behavioral events container
     behavioral_events = BehavioralEvents(name="behavioral_events")
 
+    ttl_channel_info = {
+        1: {"name": "TTL_LED_trigger", "description": "TTL signal that drives the LED for the conditioning stimulus"},
+        2: {
+            "name": "TTL_audio_trigger",
+            "description": "TTL signal that drives an audio tune played to the animal as a neutral stimulus",
+        },
+    }
+
     # Process each channel
     for channel, events in event_table.groupby("channel"):
         events = events.sort_values("timestamp")
@@ -46,14 +54,15 @@ def add_behavioral_events(nwbfile: NWBFile, folder_path) -> None:
             timestamp = int(row["timestamp"])
             signal[timestamp:] = row["state"]
 
+        # Create a BehavioralTimeSeries object for the TTL signal
         behavioral_events.add_timeseries(
             TimeSeries(
-                name=f"ttl_channel_{channel}",  # TODO add a more specific name and description for the TTL signal
+                name=ttl_channel_info[channel]["name"],
                 data=signal,
                 rate=rate,
                 starting_time=starting_time,
                 unit="n.a.",
-                description=f"TTL signal from channel {channel}",
+                description=ttl_channel_info[channel]["description"],
             )
         )
 
@@ -93,9 +102,11 @@ def add_behavioral_signals(
     rate = time_info["sampling_frequency"]
     starting_time = time_info["t_start"]
 
-    behavioral_timeseries = BehavioralTimeSeries(name="behavioral_timeseries")
-    behavioral_timeseries.create_timeseries(
-        name="accelerometer_signal",
+    # Create behavioral events container
+    analog_timeseries = BehavioralEvents(name="analog")
+    analog_timeseries.create_timeseries(
+        name="analog",
+        description="AccelerometerXComponent AccelerometerYComponent AccelerometerZComponent",
         unit="volts",
         data=time_series,
         starting_time=starting_time,
@@ -108,4 +119,4 @@ def add_behavioral_signals(
     else:
         behavior_module = nwbfile.create_processing_module(name="behavior", description="behavior module")
 
-    behavior_module.add(behavioral_timeseries)
+    behavior_module.add(analog_timeseries)

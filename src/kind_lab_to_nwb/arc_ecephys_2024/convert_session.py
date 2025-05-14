@@ -140,9 +140,9 @@ if __name__ == "__main__":
 
     # Parameters for conversion
     # data_dir_path = Path("/media/alessandra/HD2/Kind-CN-data-share/neuronal_circuits/fear_conditionning_paradigm")
-    data_dir_path = Path("E:/Kind-CN-data-share/neuronal_circuits/fear_conditionning_paradigm")
+    data_dir_path = Path("D:/Kind-CN-data-share/neuronal_circuits/fear_conditionning_paradigm")
     # output_dir_path = Path("/media/alessandra/HD2/kind_lab_conversion_nwb")
-    output_dir_path = Path("E:/kind_lab_conversion_nwb")
+    output_dir_path = Path("D:/kind_lab_conversion_nwb")
 
     source_data_spec = {
         "OpenEphysRecording": {

@@ -34,18 +34,18 @@ Devices:
   CameraDevice:
     name: "camera_device 0"
     description: "Camera used to record the behavior of the animals during the experiments."
-    manufacturer: "camera_manufacturer" #TODO add
-    meters_per_pixel: 1.0 #TODO add (Spatial resolution of the camera in meters per pixel)
-    model: "camera_model" #TODO add
-    lens: "camera_lens" #TODO add
-    camera_name: "camera_name" #TODO add
+    manufacturer: "Logitech"
+    meters_per_pixel: 0.0004
+    model: "C920"
+    lens: "Carl Zeiss lens with 20-step autofocus"
+    camera_name: "fear_conditioning_camera" #TODO add
   DataAcqDevice:
     name: "data_acq_device"
     description: "16-channel digitizing head stage C3334."
     manufacturer: "Intan Technologies"
-    system: "RHD2000 Evaluation System" #TODO check
-    amplifier: "Intan RHD2132 16-channel digital electrophysiology interface chip" #TODO check
-    adc_circuit: "16-bit SAR ADC, 30 kSps per channel, 2.5V reference voltage" #TODO check
+    system: "EIB 16, Neuralynx"
+    amplifier: "EIB 16, Neuralynx 16-channel digital electronic interface board"
+    adc_circuit: "OpenEphys DAQ"
   habituation_and_recall_box:
     name: "habituation_and_recall_box"
     description: "Experimental box for context habituation and fear response recall testing is a modified Coulbourne Instruments rat Habitest box dimensions 30 cm x 25 cm x 32 cm, containing a curved plastic black and white striped wall insert, smooth plastic grey floor, no electrified grid, scented with 70% ethanol by cleaning between trials."
@@ -73,7 +73,7 @@ Ecephys:
     units: "um"
     probe_description: "0"
     contact_side_numbering: False
-    contact_size: 100.0 #TODO check
+    contact_size: 140.0
   NwbElectrodeGroup:
     name: "electrode_group"
     description: "16-channel electrode group recording LFP and EEG signals."

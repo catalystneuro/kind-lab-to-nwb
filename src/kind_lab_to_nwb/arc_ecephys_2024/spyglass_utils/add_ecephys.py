@@ -107,13 +107,19 @@ def add_electrical_series(
     )
     channel_names = extractor.get_property("channel_names")
 
+    # Extract all unique locations and create electrode groups
+    unique_locations = set(info["location"] for info in channels_info.values())
+    electrode_groups = {}
+    for location in unique_locations:
+        electrode_group = NwbElectrodeGroup(**metadata["Ecephys"][location], device=probe)
+        if not nwbfile.electrode_groups.get(electrode_group.name):
+            nwbfile.add_electrode_group(electrode_group)
+        electrode_groups[location] = electrode_group
+
+    # Add electrodes to the electrode groups
     for ch, info in channels_info.items():
         location = info["location"]
-        electrode_group = NwbElectrodeGroup(**metadata["Ecephys"][location], device=probe)
-        # Before adding the electrode group, check if it already exists
-        if not nwbfile.electrode_groups.get(electrode_group.name):
-            # If it doesn't exist, add it
-            nwbfile.add_electrode_group(electrode_group)
+        electrode_group = electrode_groups[location]
 
         electrode = ShanksElectrode(name=str(ch), rel_x=0.0, rel_y=0.0, rel_z=0.0)
         shank = Shank(name=str(ch), shanks_electrodes=[electrode])

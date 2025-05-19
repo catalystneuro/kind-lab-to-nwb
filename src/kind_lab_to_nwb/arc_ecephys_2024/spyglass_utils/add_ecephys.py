@@ -80,6 +80,16 @@ def add_electrical_series(
     data_acq_device = DataAcqDevice(**metadata["Devices"]["DataAcqDevice"])
     nwbfile.add_device(data_acq_device)
 
+    # Add probe
+    subject_id = metadata["Subject"]["subject_id"]
+    probe = Probe(
+        **metadata["Ecephys"]["Probe"],
+        name=f"sub_{subject_id}_probe",
+        probe_id=probe_id,
+        probe_description=str(probe_id),
+    )
+    nwbfile.add_device(probe)
+
     extra_cols = [
         "channel_name",
         "probe_shank",
@@ -98,45 +108,28 @@ def add_electrical_series(
     channel_names = extractor.get_property("channel_names")
 
     for ch, info in channels_info.items():
-        if "EEG" in info["location"]:
-            probe_shank = 0
-        else:
-            probe_shank = 1
-
-    shanks = []
-    for ch, info in channels_info.items():
         location = info["location"]
-        if "EEG" in location:
-            eeg_electrode = ShanksElectrode(name=location, rel_x=0.0, rel_y=0.0, rel_z=0.0)
-            shank = Shank(**metadata["Ecephys"][location], shanks_electrodes=eeg_electrode)
-            shanks.append(shank)
+        if "EEG" in location or info["bad_channel"]:
+            electrode_group = NwbElectrodeGroup(**metadata["Ecephys"][location], device=probe)
         else:
-            lfp_electrode_left = ShanksElectrode(name=location, rel_x=0.0, rel_y=0.0, rel_z=0.0)
-            lfp_electrode_right = ShanksElectrode(name=location, rel_x=0.0, rel_y=0.0, rel_z=0.0)
-            shank = Shank(
-                **metadata["Ecephys"][location.split("_")[0]],
-                shanks_electrodes=[lfp_electrode_left, lfp_electrode_right],
-            )
-            shanks.append(shank)
+            electrode_group = NwbElectrodeGroup(**metadata["Ecephys"][location.split("_")[0]], device=probe)
+        # Before adding the electrode group, check if it already exists
+        if not nwbfile.electrode_groups.get(electrode_group.name):
+            # If it doesn't exist, add it
+            nwbfile.add_electrode_group(electrode_group)
+
+        electrode = ShanksElectrode(name=str(ch), rel_x=0.0, rel_y=0.0, rel_z=0.0)
+        shank = Shank(name=str(ch), shanks_electrodes=electrode)
+        probe.add_shank(shank)
         nwbfile.add_electrode(
-            location=info["location"],  # convert to standard naming
+            location=electrode_group.location,  # convert to standard naming
             group=electrode_group,
             channel_name=channel_names[ch],
-            probe_shank=probe_shank,
+            probe_shank=str(ch),
             probe_electrode=ch,
             bad_channel=info["bad_channel"],
             ref_elect_id=ch,
-            # x=0.0,
-            # y=0.0,
-            # z=0.0,
         )
-
-    probe = Probe(**metadata["Ecephys"]["Probe"], probe_id=probe_id, probe_description=str(probe_id), shanks=shanks)
-    nwbfile.add_device(probe)
-
-    # Add ElectrodeGroup
-    electrode_group = NwbElectrodeGroup(**metadata["Ecephys"]["NwbElectrodeGroup"], device=probe)
-    nwbfile.add_electrode_group(electrode_group)
 
     # Add to electrical series
     traces = extractor.get_traces()

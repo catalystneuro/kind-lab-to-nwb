@@ -61,7 +61,7 @@ Devices:
 
 Ecephys:
   Olfactory_bulb_EEG:
-    name: "OB_electrode_group"
+    name: "OB_EEG_electrode_group"
     description: "EEG signal recorded from the Olfactory Bulb."
     location: "OB"
     targeted_location: "OB"
@@ -70,7 +70,7 @@ Ecephys:
     targeted_z: 0.0
     units: "um"
   Motor_cortex_EEG:
-    name: "M1_electrode_group"
+    name: "M1_EEG_electrode_group"
     description: "EEG signal recorded from the Motor Cortex."
     location: "M1"
     targeted_location: "M1"
@@ -79,7 +79,7 @@ Ecephys:
     targeted_z: 0.0
     units: "um"
   Hippocampal_EEG:
-    name: "HPC_electrode_group"
+    name: "HPC_EEG_electrode_group"
     description: "EEG signal recorded from the Hippocampus."
     location: "HPC"
     targeted_location: "HPC"
@@ -88,7 +88,7 @@ Ecephys:
     targeted_z: 0.0
     units: "um"
   IrL_1:
-    name: "left_IrL_electrode_group"
+    name: "left_mPFC_LFP_electrode_group"
     description: "LFP signal recorded from the Medial Prefrontal Cortex (Infralimbic cortex, targeted bilaterally)."
     location: "mPFC"
     targeted_location: "mPFC"
@@ -97,7 +97,7 @@ Ecephys:
     targeted_z: 4000.0
     units: "um"
   SC_1:
-    name: "left_SC_electrode_group"
+    name: "left_SC_LFP_electrode_group"
     description: "LFP signal recorded from the Superior Colliculus (targeted bilaterally)."
     location: "SC"
     targeted_location: "SC"
@@ -106,7 +106,7 @@ Ecephys:
     targeted_z: 3000.0
     units: "um"
   LA_1:
-    name: "left_LA_electrode_group"
+    name: "left_LA_LFP_electrode_group"
     description: "LFP signal recorded from the Lateral Amygdala (targeted bilaterally)."
     location: "LA"
     targeted_location: "LA"
@@ -115,7 +115,7 @@ Ecephys:
     targeted_z: 7500.0
     units: "um"
   V1_1:
-    name: "left_V1_electrode_group"
+    name: "left_V1_LFP_electrode_group"
     description: "LFP signal recorded from the Primary Visual Cortex (targeted bilaterally)."
     location: "V1"
     targeted_location: "V1"
@@ -124,7 +124,7 @@ Ecephys:
     targeted_z: 100.0
     units: "um"
   Aud_1:
-    name: "left_Aud_electrode_group"
+    name: "left_Aud_LFP_electrode_group"
     description: "LFP signal recorded from the Auditory Cortex (targeted bilaterally)."
     location: "Aud"
     targeted_location: "Aud"
@@ -133,7 +133,7 @@ Ecephys:
     targeted_z: 0.0 #TO ASK
     units: "um"
   Crus_I_1:
-    name: left_CrusI_electrode_group"
+    name: left_CrusI_LFP_electrode_group"
     description: "LFP signal recorded from the Crus I (targeted bilaterally)."
     location: "Crus I"
     targeted_location: "Crus I"
@@ -142,7 +142,7 @@ Ecephys:
     targeted_z: 0.0 #TO ASK
     units: "um"
   IrL_2:
-    name: "right_mPFC_electrode_group"
+    name: "right_mPFC_LFP_electrode_group"
     description: "LFP signal recorded from the Medial Prefrontal Cortex (Infralimbic cortex, targeted bilaterally)."
     location: "mPFC"
     targeted_location: "mPFC"
@@ -151,7 +151,7 @@ Ecephys:
     targeted_z: 4000.0
     units: "um"
   SC_2:
-    name: "right_SC_electrode_group"
+    name: "right_SC_LFP_electrode_group"
     description: "LFP signal recorded from the Superior Colliculus (targeted bilaterally)."
     location: "SC"
     targeted_location: "SC"
@@ -160,7 +160,7 @@ Ecephys:
     targeted_z: 3000.0
     units: "um"
   LA_2:
-    name: "right_LA_electrode_group"
+    name: "right_LA_LFP_electrode_group"
     description: "LFP signal recorded from the Lateral Amygdala (targeted bilaterally)."
     location: "LA"
     targeted_location: "LA"
@@ -169,7 +169,7 @@ Ecephys:
     targeted_z: 7500.0
     units: "um"
   V1_2:
-    name: "right_V1_electrode_group"
+    name: "right_V1_LFP_electrode_group"
     description: "LFP signal recorded from the Primary Visual Cortex (targeted bilaterally)."
     location: "V1"
     targeted_location: "V1"
@@ -178,7 +178,7 @@ Ecephys:
     targeted_z: 100.0
     units: "um"
   Aud_2:
-    name: "right_Aud_electrode_group"
+    name: "right_Aud_LFP_electrode_group"
     description: "LFP signal recorded from the Auditory Cortex (targeted bilaterally)."
     location: "Aud"
     targeted_location: "Aud"
@@ -187,7 +187,7 @@ Ecephys:
     targeted_z: 0.0 #TO ASK
     units: "um"
   Crus_I_2:
-    name: "right_CrusI_electrode_group"
+    name: "right_CrusI_LFP_electrode_group"
     description: "LFP signal recorded from the Crus I (targeted bilaterally)."
     location: "Crus I"
     targeted_location: "Crus I"
@@ -197,7 +197,7 @@ Ecephys:
     units: "um"
   unknown:
     name: "bad_electrode_group"
-    description: "Bad electrode group."
+    description: "Bad electrodes group."
     location: "unknown"
     targeted_location: "unknown"
     targeted_x: 0.0

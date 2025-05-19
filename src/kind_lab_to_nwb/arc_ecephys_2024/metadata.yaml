@@ -137,15 +137,11 @@ Ecephys:
     targeted_x: [0.0, 0.0] #TO ASK
     targeted_y: [0.0, 0.0] #TO ASK
     targeted_z: [0.0, 0.0] #TO ASK
-  bad:
+  unknown:
     name: "bad_electrode_group"
     description: "Bad electrode group."
-    location: "unkown"
-    targeted_location: "unkown"
-    targeted_x: 0.0
-    targeted_y: 0.0
-    targeted_z: 0.0
-    units: "um"
+    location: "unknown"
+    targeted_location: "unknown"
   Probe:
     description: "16-channel digitizing head stage C3334 for EEG recordings."
     manufacturer: "Intan Technologies"

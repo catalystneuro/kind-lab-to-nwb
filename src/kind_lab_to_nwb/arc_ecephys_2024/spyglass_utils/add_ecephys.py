@@ -84,8 +84,8 @@ def add_electrical_series(
     subject_id = metadata["Subject"]["subject_id"]
     probe = Probe(
         **metadata["Ecephys"]["Probe"],
-        name=f"sub_{subject_id}_probe",
-        probe_id=probe_id,
+        name=f"{subject_id}_probe",
+        id=probe_id,
         probe_description=str(probe_id),
     )
     nwbfile.add_device(probe)
@@ -109,18 +109,16 @@ def add_electrical_series(
 
     for ch, info in channels_info.items():
         location = info["location"]
-        if "EEG" in location or info["bad_channel"]:
-            electrode_group = NwbElectrodeGroup(**metadata["Ecephys"][location], device=probe)
-        else:
-            electrode_group = NwbElectrodeGroup(**metadata["Ecephys"][location.split("_")[0]], device=probe)
+        electrode_group = NwbElectrodeGroup(**metadata["Ecephys"][location], device=probe)
         # Before adding the electrode group, check if it already exists
         if not nwbfile.electrode_groups.get(electrode_group.name):
             # If it doesn't exist, add it
             nwbfile.add_electrode_group(electrode_group)
 
         electrode = ShanksElectrode(name=str(ch), rel_x=0.0, rel_y=0.0, rel_z=0.0)
-        shank = Shank(name=str(ch), shanks_electrodes=electrode)
+        shank = Shank(name=str(ch), shanks_electrodes=[electrode])
         probe.add_shank(shank)
+
         nwbfile.add_electrode(
             location=electrode_group.location,  # convert to standard naming
             group=electrode_group,
@@ -158,7 +156,9 @@ def add_electrical_series(
         conversion = unique_channel_conversion * micro_to_volts_conversion_factor
         channel_conversion = None
 
-    lfp_channel_ids = [ch for ch, info in channels_info.items() if "EEG" not in info["location"]]
+    lfp_channel_ids = [
+        ch for ch, info in channels_info.items() if "EEG" not in info["location"] and not info["bad_channel"]
+    ]
     if len(lfp_channel_ids) > 0:
         lfp_electrodes = nwbfile.electrodes.create_region(
             name="electrodes",
@@ -197,3 +197,22 @@ def add_electrical_series(
             conversion=conversion,
         )
         nwbfile.add_acquisition(eeg_electrical_series)
+
+    bad_channel_ids = [ch for ch, info in channels_info.items() if info["bad_channel"]]
+    if len(bad_channel_ids) > 0:
+        bad_electrodes = nwbfile.electrodes.create_region(
+            name="electrodes",
+            region=bad_channel_ids,
+            description="bad electrodes table region",
+        )
+        bad_traces = traces[:, bad_channel_ids]
+        bad_electrical_series = ElectricalSeries(
+            name="bad_channels_series",
+            data=bad_traces,
+            electrodes=bad_electrodes,
+            rate=rate,
+            starting_time=starting_time,
+            channel_conversion=channel_conversion[bad_channel_ids] if channel_conversion is not None else None,
+            conversion=conversion,
+        )
+        nwbfile.add_acquisition(bad_electrical_series)

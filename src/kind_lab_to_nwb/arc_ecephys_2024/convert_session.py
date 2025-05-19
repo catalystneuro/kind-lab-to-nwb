@@ -163,13 +163,13 @@ if __name__ == "__main__":
     overwrite = True
 
     for metadata in tqdm(metadata_list, desc="Processing sessions"):
-        try:
-            session_to_nwb(
-                data_dir_path=data_dir_path,
-                output_dir_path=output_dir_path,
-                path_expander_metadata=metadata,
-                stub_test=stub_test,
-                overwrite=overwrite,
-            )
-        except Exception as e:
-            print(f"Error processing {metadata['source_data']['OpenEphysRecording']['folder_path']}: {e}")
+        # try:
+        session_to_nwb(
+            data_dir_path=data_dir_path,
+            output_dir_path=output_dir_path,
+            path_expander_metadata=metadata,
+            stub_test=stub_test,
+            overwrite=overwrite,
+        )
+        # except Exception as e:
+        #     print(f"Error processing {metadata['source_data']['OpenEphysRecording']['folder_path']}: {e}")

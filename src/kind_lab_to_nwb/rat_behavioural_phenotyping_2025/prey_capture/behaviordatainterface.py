@@ -16,7 +16,7 @@ class PreyCaptureBehavioralInterface(BaseDataInterface):
         super().__init__(file_paths=file_paths)
 
     def add_to_nwbfile(self, nwbfile: NWBFile, metadata: Optional[dict], **conversion_options) -> None:
-        detections_table = DynamicTable(name="detections_table", description="The USV detections table.")
+        detections_table = DynamicTable(name="USV_detections_table", description="The USV detections table.")
         detections_table.add_column(name="accept", description="Whether the USV was accepted based on manual review")
         detections_table.add_column(name="score", description="The score of the USV detection")
         detections_table.add_column(name="box", description="Bounding box coordinates")  # TODO: ask to confirm

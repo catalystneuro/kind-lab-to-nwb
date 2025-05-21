@@ -215,7 +215,7 @@ if __name__ == "__main__":
         )
     video_file_path = video_file_paths[0]
 
-    freeze_scores_file_paths = list(video_folder_path.glob(f"*.csv"))
+    freeze_scores_file_paths = list(video_folder_path.glob(f"*{subject_metadata['line']}*.csv"))
     if len(freeze_scores_file_paths):
         freeze_scores_file_path = freeze_scores_file_paths[0]
     else:

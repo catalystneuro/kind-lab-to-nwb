@@ -9,14 +9,14 @@ NWBFile:
     - ultrasonic vocalizations
   experiment_description: |
     This experiment is part of the Rat Behavioural Phenotyping Pipeline Methodologies https://sidb.org.uk/facilities/rat-behavioural-phenotyping-pipeline/.
-    As an initial effort to characterize the rat lines, these models are being behaviorally phenotyped at SIDB. 
-    Rat models are phenotyped according to a rigorous pipeline that assesses behaviours relevant to autism with intellectual disability, such as social and motor skills, and learning and sensory processing. 
+    As an initial effort to characterize the rat lines, these models are being behaviorally phenotyped at SIDB.
+    Rat models are phenotyped according to a rigorous pipeline that assesses behaviours relevant to autism with intellectual disability, such as social and motor skills, and learning and sensory processing.
     Different cohorts of rats are run through different subsets of tasks to overcome potential order effects on behaviours and to limit the number of tasks each animal is put through.
-    This experiment investigated prey capture behavior in different rat models 
-    (Arid1b: https://rgd.mcw.edu/rgdweb/report/strain/main.html?id=14394518, 
-    Grin2b: https://rgd.mcw.edu/rgdweb/report/strain/main.html?id=14394515, 
+    This experiment investigated prey capture behavior in different rat models
+    (Arid1b: https://rgd.mcw.edu/rgdweb/report/strain/main.html?id=14394518,
+    Grin2b: https://rgd.mcw.edu/rgdweb/report/strain/main.html?id=14394515,
     Scn2a: https://rgd.mcw.edu/rgdweb/report/strain/main.html?id=25394530) using live crickets.
-    The experimenter, not present in the same room as the rat during any of the trials, watched the trials on a screen from an anti-room. Experimenters were blind to genotype during all experiments and scoring of video trials. 
+    The experimenter, not present in the same room as the rat during any of the trials, watched the trials on a screen from an anti-room. Experimenters were blind to genotype during all experiments and scoring of video trials.
     The task utilized a large square arena (100x100 cm) with white walls and wood-lined floor.
     Rats underwent habituation (5 days), including exposure to dead crickets, followed by
     live cricket hunting trials over 5 days (4 trials per day, 2 min max duration).
@@ -31,104 +31,123 @@ NWBFile:
 Subject:
   species: Rattus norvegicus
 
-Devices:
-  BehavioralCamera:
-    description: CCTV camera fixed above the arena for behavioral recording
-    manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+Behavior:
+    ExternalVideos:
+        BehavioralVideo:
+          description: |
+            Video recording of the rat's behavior. Recorded using a CCTV camera mounted on the ceiling above the chambers.
+          device:
+              name: BehavioralCamera
+              description: CCTV camera mounted on ceiling above chambers for behavioral recording
+              manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+    Audio:
+      - name: AcousticWaveformSeries
+        description: Ultrasonic vocalizations recorded during the trials using a Pettersson M500 USB microphone.
 
-  USVMicrophone:
+Devices:
+  - name: USVMicrophone
     description: M500 USB Pettersson microphone for recording ultrasonic vocalizations, hanging approx. 1m above the arena.
     manufacturer: Pettersson, Wildlife Services UK
-
-  Arena:
+  - name: Arena
     description: Square arena (100x100 cm) with 50cm high white walls and wood-lined floor
     manufacturer: Example Manufacturer # Example value - actual manufacturer needed
 
 SessionTypes:
-  HabD1:
+  PC_HabD1:
     session_description: |
       Week 1 Experimental Day 1. Group habituation.
       Cage mates placed together in arena for 30 min.
 
-  HabD2:
+  PC_HabD2:
     session_description: |
       Week 1 Experimental Day 2. Individual habituation.
       Individual rat placed in arena for 10 min.
 
-  HabD3:
+  PC_HabD3:
     session_description: |
       Week 1 Experimental Day 3. Dead cricket exposure.
       Individual rat placed in starting cylinder for 15s,
       then released with dead cricket in opposite corner.
       10 min duration.
 
-  HabD4:
+  PC_HabD4:
     session_description: |
       Week 1 Experimental Day 4. Dead cricket exposure with 2 min holding period after trial.
       Individual rat placed in starting cylinder for 15s,
       then released with dead cricket in opposite corner.
       10 min duration.
 
-  HabD5:
+  PC_HabD5:
     session_description: |
       Week 1 Experimental Day 5. Dead cricket exposure with 2 min holding period after trial.
       Individual rat placed in starting cylinder for 15s,
       then released with dead cricket in opposite corner.
       10 min duration.
 
-  TestD1:
+  PC_TestD1:
     session_description: |
       Week 2 Experimental Day 1. Live cricket hunting.
-      4 trials per day, 2 min max duration per trial.
+      4-5 trials per day, 2 min max duration per trial.
       Rat in starting cylinder 15s, live cricket placed in opposite corner.
-      The rat was given 2 min to catch the cricket. 
-      The rat was removed from the arena when the cricket was eaten or if the 2 min trial duration elapsed 
-      (whichever happens first). Crickets were not reused. 
-      The arena was cleared of all debris and wiped with water between trials. 
+      The rat was given 2 min to catch the cricket.
+      The rat was removed from the arena when the cricket was eaten or if the 2 min trial duration elapsed
+      (whichever happens first). Crickets were not reused.
+      The arena was cleared of all debris and wiped with water between trials.
       Rats were held in the holding bucket between trials, the intertrial interval was approx. 1-2 min.
 
-  TestD2:
+  PC_TestD2:
     session_description: |
       Week 2 Experimental Day 2. Live cricket hunting.
-      4 trials per day, 2 min max duration per trial.
+      4-5 trials per day, 2 min max duration per trial.
       Rat in starting cylinder 15s, live cricket placed in opposite corner.
-      The rat was given 2 min to catch the cricket. 
-      The rat was removed from the arena when the cricket was eaten or if the 2 min trial duration elapsed 
-      (whichever happens first). Crickets were not reused. 
-      The arena was cleared of all debris and wiped with water between trials. 
+      The rat was given 2 min to catch the cricket.
+      The rat was removed from the arena when the cricket was eaten or if the 2 min trial duration elapsed
+      (whichever happens first). Crickets were not reused.
+      The arena was cleared of all debris and wiped with water between trials.
       Rats were held in the holding bucket between trials, the intertrial interval was approx. 1-2 min.
 
-  TestD3:
+  PC_TestD3:
     session_description: |
       Week 2 Experimental Day 3. Live cricket hunting.
-      4 trials per day, 2 min max duration per trial.
+      4-5 trials per day, 2 min max duration per trial.
       Rat in starting cylinder 15s, live cricket placed in opposite corner.
-      The rat was given 2 min to catch the cricket. 
-      The rat was removed from the arena when the cricket was eaten or if the 2 min trial duration elapsed 
-      (whichever happens first). Crickets were not reused. 
-      The arena was cleared of all debris and wiped with water between trials. 
+      The rat was given 2 min to catch the cricket.
+      The rat was removed from the arena when the cricket was eaten or if the 2 min trial duration elapsed
+      (whichever happens first). Crickets were not reused.
+      The arena was cleared of all debris and wiped with water between trials.
       Rats were held in the holding bucket between trials, the intertrial interval was approx. 1-2 min.
 
-  TestD4:
+  PC_TestD4:
     session_description: |
       Week 2 Experimental Day 4. Live cricket hunting.
-      4 trials per day, 2 min max duration per trial.
+      4-5 trials per day, 2 min max duration per trial.
       Rat in starting cylinder 15s, live cricket placed in opposite corner.
-      The rat was given 2 min to catch the cricket. 
-      The rat was removed from the arena when the cricket was eaten or if the 2 min trial duration elapsed 
-      (whichever happens first). Crickets were not reused. 
-      The arena was cleared of all debris and wiped with water between trials. 
+      The rat was given 2 min to catch the cricket.
+      The rat was removed from the arena when the cricket was eaten or if the 2 min trial duration elapsed
+      (whichever happens first). Crickets were not reused.
+      The arena was cleared of all debris and wiped with water between trials.
       Rats were held in the holding bucket between trials, the intertrial interval was approx. 1-2 min.
       Ultrasonic vocalizations recorded.
 
-  TestD5:
+  PC_TestD5:
     session_description: |
       Week 2 Experimental Day 5. Live cricket hunting with random locations.
-      4 trials per day, 2 min max duration per trial.
+      4-5 trials per day, 2 min max duration per trial.
       Rat in starting cylinder 15s, live cricket placed in pseudorandom
       starting locations (not always opposite to rat).
-      The rat was given 2 min to catch the cricket. 
-      The rat was removed from the arena when the cricket was eaten or if the 2 min trial duration elapsed 
-      (whichever happens first). Crickets were not reused. 
-      The arena was cleared of all debris and wiped with water between trials. 
+      The rat was given 2 min to catch the cricket.
+      The rat was removed from the arena when the cricket was eaten or if the 2 min trial duration elapsed
+      (whichever happens first). Crickets were not reused.
+      The arena was cleared of all debris and wiped with water between trials.
+      Rats were held in the holding bucket between trials, the intertrial interval was approx. 1-2 min.
+
+  PC_Weeto:
+    session_description: |
+      Live Weetos trials after completion of all test sessions.
+      2 trials per day, 2 min max duration per trial.
+      Rat in starting cylinder 15s, Weeto placed in opposite corner.
+      The rat was given 2 min to catch/retrieve the Weeto.
+      The rat was removed from the arena when the Weeto was eaten or if the 2 min trial duration elapsed
+      (whichever happens first). Weetos were not reused.
+      The arena was cleared of all debris and wiped with water between trials.
       Rats were held in the holding bucket between trials, the intertrial interval was approx. 1-2 min.

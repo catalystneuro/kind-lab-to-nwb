@@ -69,7 +69,7 @@ def session_to_nwb(
     )
 
     subject_id = f"{subject_metadata['animal ID']}_{subject_metadata['cohort ID']}"
-    nwbfile_path = output_dir_path / f"sub-{subject_id}_ses-{session_id}new.nwb"
+    nwbfile_path = output_dir_path / f"sub-{subject_id}_ses-{session_id}.nwb"
 
     conversion_options = dict()
 

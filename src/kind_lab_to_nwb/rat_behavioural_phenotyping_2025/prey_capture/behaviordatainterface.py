@@ -6,6 +6,7 @@ from pymatreader import read_mat
 from pynwb import NWBFile
 
 from neuroconv import BaseDataInterface
+from neuroconv.tools import nwb_helpers
 
 
 class PreyCaptureBehavioralInterface(BaseDataInterface):
@@ -31,4 +32,5 @@ class PreyCaptureBehavioralInterface(BaseDataInterface):
                 box=data["Calls"]["Box"],
             )
 
-        nwbfile.add_analysis(detections_table)
+        behavior = nwb_helpers.get_module(nwbfile, name="behavior", description="Contains the USV detection scores.")
+        behavior.add(detections_table)

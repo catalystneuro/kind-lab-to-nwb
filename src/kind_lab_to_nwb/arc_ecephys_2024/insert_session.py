@@ -115,8 +115,7 @@ def insert_lfp(nwbfile_path: Path):
     # get the indices of the electrodes in the electrode table
     electrodes_table = analysis_nwbfile.electrodes.to_dataframe()
     # filter the electrodes table to only include the electrodes used for LFP
-    # (i.e., those with probe_shank == 1)
-    electrodes_table = electrodes_table[electrodes_table["probe_shank"] == 1]
+    electrodes_table = electrodes_table[electrodes_table["group_name"].str.contains("LFP")]
     lfp_electrode_indices = electrodes_table.index.tolist()
 
     electrode_table_region = analysis_nwbfile.create_electrode_table_region(

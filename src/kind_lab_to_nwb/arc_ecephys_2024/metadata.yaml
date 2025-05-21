@@ -34,18 +34,18 @@ Devices:
   CameraDevice:
     name: "camera_device 0"
     description: "Camera used to record the behavior of the animals during the experiments."
-    manufacturer: "camera_manufacturer" #TODO add
-    meters_per_pixel: 1.0 #TODO add (Spatial resolution of the camera in meters per pixel)
-    model: "camera_model" #TODO add
-    lens: "camera_lens" #TODO add
-    camera_name: "camera_name" #TODO add
+    manufacturer: "Logitech"
+    meters_per_pixel: 0.0004
+    model: "C920"
+    lens: "Carl Zeiss lens with 20-step autofocus"
+    camera_name: "fear_conditioning_camera" #TODO add
   DataAcqDevice:
     name: "data_acq_device"
     description: "16-channel digitizing head stage C3334."
     manufacturer: "Intan Technologies"
-    system: "RHD2000 Evaluation System" #TODO check
-    amplifier: "Intan RHD2132 16-channel digital electrophysiology interface chip" #TODO check
-    adc_circuit: "16-bit SAR ADC, 30 kSps per channel, 2.5V reference voltage" #TODO check
+    system: "EIB 16, Neuralynx"
+    amplifier: "EIB 16, Neuralynx 16-channel digital electronic interface board"
+    adc_circuit: "OpenEphys DAQ"
   habituation_and_recall_box:
     name: "habituation_and_recall_box"
     description: "Experimental box for context habituation and fear response recall testing is a modified Coulbourne Instruments rat Habitest box dimensions 30 cm x 25 cm x 32 cm, containing a curved plastic black and white striped wall insert, smooth plastic grey floor, no electrified grid, scented with 70% ethanol by cleaning between trials."
@@ -60,29 +60,157 @@ Devices:
     manufacturer: "n.a." #TODO ask
 
 Ecephys:
-  EEGShank:
-    name: "0"
-  LFPShank:
-    name: "1"
+  Olfactory_bulb_EEG:
+    name: "OB_EEG_electrode_group"
+    description: "EEG signal recorded from the Olfactory Bulb."
+    location: "OB"
+    targeted_location: "OB"
+    targeted_x: 7560.0
+    targeted_y: 1000.0
+    targeted_z: 0.0
+    units: "um"
+  Motor_cortex_EEG:
+    name: "M1_EEG_electrode_group"
+    description: "EEG signal recorded from the Motor Cortex."
+    location: "M1"
+    targeted_location: "M1"
+    targeted_x: 2160.0
+    targeted_y: 3000.0
+    targeted_z: 0.0
+    units: "um"
+  Hippocampal_EEG:
+    name: "HPC_EEG_electrode_group"
+    description: "EEG signal recorded from the Hippocampus."
+    location: "HPC"
+    targeted_location: "HPC"
+    targeted_x: -3240.0
+    targeted_y: 2500.0
+    targeted_z: 0.0
+    units: "um"
+  IrL_1:
+    name: "left_mPFC_LFP_electrode_group"
+    description: "LFP signal recorded from the Medial Prefrontal Cortex (Infralimbic cortex, targeted bilaterally)."
+    location: "mPFC"
+    targeted_location: "mPFC"
+    targeted_x: 3240.0
+    targeted_y: 500.0
+    targeted_z: 4000.0
+    units: "um"
+  SC_1:
+    name: "left_SC_LFP_electrode_group"
+    description: "LFP signal recorded from the Superior Colliculus (targeted bilaterally)."
+    location: "SC"
+    targeted_location: "SC"
+    targeted_x: -6720.0
+    targeted_y: 1500.0
+    targeted_z: 3000.0
+    units: "um"
+  LA_1:
+    name: "left_LA_LFP_electrode_group"
+    description: "LFP signal recorded from the Lateral Amygdala (targeted bilaterally)."
+    location: "LA"
+    targeted_location: "LA"
+    targeted_x: -2400.0
+    targeted_y: 4700.0
+    targeted_z: 7500.0
+    units: "um"
+  V1_1:
+    name: "left_V1_LFP_electrode_group"
+    description: "LFP signal recorded from the Primary Visual Cortex (targeted bilaterally)."
+    location: "V1"
+    targeted_location: "V1"
+    targeted_x: -6240.0
+    targeted_y: 2500.0
+    targeted_z: 100.0
+    units: "um"
+  Aud_1:
+    name: "left_Aud_LFP_electrode_group"
+    description: "LFP signal recorded from the Auditory Cortex (targeted bilaterally)."
+    location: "Aud"
+    targeted_location: "Aud"
+    targeted_x: 0.0 #TO ASK
+    targeted_y: 0.0 #TO ASK
+    targeted_z: 0.0 #TO ASK
+    units: "um"
+  Crus_I_1:
+    name: left_CrusI_LFP_electrode_group"
+    description: "LFP signal recorded from the Crus I (targeted bilaterally)."
+    location: "Crus I"
+    targeted_location: "Crus I"
+    targeted_x: 0.0 #TO ASK
+    targeted_y: 0.0 #TO ASK
+    targeted_z: 0.0 #TO ASK
+    units: "um"
+  IrL_2:
+    name: "right_mPFC_LFP_electrode_group"
+    description: "LFP signal recorded from the Medial Prefrontal Cortex (Infralimbic cortex, targeted bilaterally)."
+    location: "mPFC"
+    targeted_location: "mPFC"
+    targeted_x: 3240.0
+    targeted_y: -500.0
+    targeted_z: 4000.0
+    units: "um"
+  SC_2:
+    name: "right_SC_LFP_electrode_group"
+    description: "LFP signal recorded from the Superior Colliculus (targeted bilaterally)."
+    location: "SC"
+    targeted_location: "SC"
+    targeted_x: -6720.0
+    targeted_y: -1500.0
+    targeted_z: 3000.0
+    units: "um"
+  LA_2:
+    name: "right_LA_LFP_electrode_group"
+    description: "LFP signal recorded from the Lateral Amygdala (targeted bilaterally)."
+    location: "LA"
+    targeted_location: "LA"
+    targeted_x: -2400.0
+    targeted_y: -4700.0
+    targeted_z: 7500.0
+    units: "um"
+  V1_2:
+    name: "right_V1_LFP_electrode_group"
+    description: "LFP signal recorded from the Primary Visual Cortex (targeted bilaterally)."
+    location: "V1"
+    targeted_location: "V1"
+    targeted_x: -6240.0
+    targeted_y: -2500.0
+    targeted_z: 100.0
+    units: "um"
+  Aud_2:
+    name: "right_Aud_LFP_electrode_group"
+    description: "LFP signal recorded from the Auditory Cortex (targeted bilaterally)."
+    location: "Aud"
+    targeted_location: "Aud"
+    targeted_x: 0.0 #TO ASK
+    targeted_y: 0.0 #TO ASK
+    targeted_z: 0.0 #TO ASK
+    units: "um"
+  Crus_I_2:
+    name: "right_CrusI_LFP_electrode_group"
+    description: "LFP signal recorded from the Crus I (targeted bilaterally)."
+    location: "Crus I"
+    targeted_location: "Crus I"
+    targeted_x: 0.0 #TO ASK
+    targeted_y: 0.0 #TO ASK
+    targeted_z: 0.0 #TO ASK
+    units: "um"
+  unknown:
+    name: "bad_electrode_group"
+    description: "Bad electrodes group."
+    location: "unknown"
+    targeted_location: "unknown"
+    targeted_x: 0.0
+    targeted_y: 0.0
+    targeted_z: 0.0
+    units: "um"
   Probe:
-    name: "probe"
     description: "16-channel digitizing head stage C3334 for EEG recordings."
     manufacturer: "Intan Technologies"
-    id: 0
     probe_type: "Intan C3334"
     units: "um"
-    probe_description: "0"
     contact_side_numbering: False
-    contact_size: 100.0 #TODO check
-  NwbElectrodeGroup:
-    name: "electrode_group"
-    description: "16-channel electrode group recording LFP and EEG signals."
-    location: "TDB"
-    targeted_location: "TDB"
-    targeted_x: 0.0 #TODO add
-    targeted_y: 0.0 #TODO add
-    targeted_z: 0.0 #TODO add
-    units: "um"
+    contact_size: 140.0
 
 Tasks:
   Hab_1:

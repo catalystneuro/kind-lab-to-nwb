@@ -107,7 +107,7 @@ def session_to_nwb(
 
     # Add EEG data
     excel_file_path = data_dir_path / "channels_details_v2.xlsx"
-    channels_info = get_channels_info_from_subject_id(
+    channels_info, probe_id = get_channels_info_from_subject_id(
         subject_id=subject_id, excel_file_path=excel_file_path, number_of_channels=16
     )
     folder_path = path_expander_metadata["source_data"]["OpenEphysRecording"]["folder_path"]
@@ -116,6 +116,7 @@ def session_to_nwb(
         nwbfile=nwbfile,
         metadata=metadata,
         channels_info=channels_info,
+        probe_id=probe_id,
         folder_path=folder_path,
         stream_name="Signals CH",
     )
@@ -162,13 +163,13 @@ if __name__ == "__main__":
     overwrite = True
 
     for metadata in tqdm(metadata_list, desc="Processing sessions"):
-        try:
-            session_to_nwb(
-                data_dir_path=data_dir_path,
-                output_dir_path=output_dir_path,
-                path_expander_metadata=metadata,
-                stub_test=stub_test,
-                overwrite=overwrite,
-            )
-        except Exception as e:
-            print(f"Error processing {metadata['source_data']['OpenEphysRecording']['folder_path']}: {e}")
+        # try:
+        session_to_nwb(
+            data_dir_path=data_dir_path,
+            output_dir_path=output_dir_path,
+            path_expander_metadata=metadata,
+            stub_test=stub_test,
+            overwrite=overwrite,
+        )
+        # except Exception as e:
+        #     print(f"Error processing {metadata['source_data']['OpenEphysRecording']['folder_path']}: {e}")

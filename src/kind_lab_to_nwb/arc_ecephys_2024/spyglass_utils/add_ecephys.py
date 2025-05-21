@@ -19,9 +19,11 @@ from spikeinterface.extractors.neoextractors import OpenEphysLegacyRecordingExtr
 from ndx_franklab_novela import DataAcqDevice, Probe, Shank, ShanksElectrode, NwbElectrodeGroup
 
 
-def get_channels_info_from_subject_id(subject_id: str, excel_file_path: FilePath, number_of_channels: int = 16) -> dict:
+def get_channels_info_from_subject_id(
+    subject_id: str, excel_file_path: FilePath, number_of_channels: int = 16
+) -> tuple:
     """
-    Get channels information from an excel file based on the subject ID.
+    Get channels information and probe ID from an excel file based on the subject ID.
 
     Parameters
     ----------
@@ -29,18 +31,24 @@ def get_channels_info_from_subject_id(subject_id: str, excel_file_path: FilePath
         The subject ID corresponding to the "Folder" column in the excel file.
     excel_file_path : FilePath
         The path to the excel file containing channel information.
+    number_of_channels : int, optional
+        The number of channels to extract information for. Default is 16.
 
     Returns
     -------
-    dict
-        A dict containing channels information for the specified subject.
-        Includes channel locations and bad channel indicators.
+    tuple
+        A tuple containing:
+        - dict: Channel information with channel IDs as keys and dicts with 'location' and 'bad_channel' as values
+        - probe_id: The index of the subject in the dataframe, used as probe_id
     """
     # Read the Excel file containing channel information
     df = pd.read_excel(excel_file_path)
 
-    # Filter rows for the specific subject_id
+    # Filter row for the specific subject_id
     subject_df = df[df["Folder"] == subject_id]
+
+    # Get row index for the subject_id to use it as probe_id
+    probe_id = subject_df.index[0]
 
     if subject_df.empty:
         raise ValueError(f"Subject ID '{subject_id}' not found in the Excel file")
@@ -56,13 +64,14 @@ def get_channels_info_from_subject_id(subject_id: str, excel_file_path: FilePath
             channels_info[channel_id] = {"location": location, "bad_channel": bad_channel}
         else:
             raise ValueError(f"Channel {channel_id} not found in the Excel file")
-    return channels_info
+    return channels_info, probe_id
 
 
 def add_electrical_series(
     nwbfile: NWBFile,
     metadata,
     channels_info: dict,
+    probe_id: int,
     folder_path: DirectoryPath,
     stream_name: Optional[str] = "Signals CH",
     block_index: Optional[int] = None,
@@ -71,32 +80,15 @@ def add_electrical_series(
     data_acq_device = DataAcqDevice(**metadata["Devices"]["DataAcqDevice"])
     nwbfile.add_device(data_acq_device)
 
-    extractor = OpenEphysLegacyRecordingExtractor(
-        folder_path=folder_path,
-        stream_name=stream_name,
-        block_index=block_index,
+    # Add probe
+    subject_id = metadata["Subject"]["subject_id"]
+    probe = Probe(
+        **metadata["Ecephys"]["Probe"],
+        name=f"{subject_id}_probe",
+        id=probe_id,
+        probe_description=str(probe_id),
     )
-    channel_names = extractor.get_property("channel_names")
-
-    eeg_shanks_electrodes = []
-    lfp_shanks_electrodes = []
-    for ch, info in channels_info.items():
-        if "EEG" in info["location"]:
-            eeg_electrodes = ShanksElectrode(name=str(ch), rel_x=0.0, rel_y=0.0, rel_z=0.0)
-            eeg_shanks_electrodes.append(eeg_electrodes)
-        else:
-            lfp_electrodes = ShanksElectrode(name=str(ch), rel_x=0.0, rel_y=0.0, rel_z=0.0)
-            lfp_shanks_electrodes.append(lfp_electrodes)
-
-    eeg_shank = Shank(**metadata["Ecephys"]["EEGShank"], shanks_electrodes=eeg_shanks_electrodes)
-    lfp_shank = Shank(**metadata["Ecephys"]["LFPShank"], shanks_electrodes=lfp_shanks_electrodes)
-
-    probe = Probe(**metadata["Ecephys"]["Probe"], shanks=[eeg_shank, lfp_shank])
     nwbfile.add_device(probe)
-
-    # add to electrical series
-    electrode_group = NwbElectrodeGroup(**metadata["Ecephys"]["NwbElectrodeGroup"], device=probe)
-    nwbfile.add_electrode_group(electrode_group)
 
     extra_cols = [
         "channel_name",
@@ -108,24 +100,42 @@ def add_electrical_series(
     for col in extra_cols:
         nwbfile.add_electrode_column(name=col, description=f"description for {col}")
 
+    extractor = OpenEphysLegacyRecordingExtractor(
+        folder_path=folder_path,
+        stream_name=stream_name,
+        block_index=block_index,
+    )
+    channel_names = extractor.get_property("channel_names")
+
+    # Extract all unique locations and create electrode groups
+    unique_locations = set(info["location"] for info in channels_info.values())
+    electrode_groups = {}
+    for location in unique_locations:
+        electrode_group = NwbElectrodeGroup(**metadata["Ecephys"][location], device=probe)
+        if not nwbfile.electrode_groups.get(electrode_group.name):
+            nwbfile.add_electrode_group(electrode_group)
+        electrode_groups[location] = electrode_group
+
+    # Add electrodes to the electrode groups
     for ch, info in channels_info.items():
-        if "EEG" in info["location"]:
-            probe_shank = 0
-        else:
-            probe_shank = 1
+        location = info["location"]
+        electrode_group = electrode_groups[location]
+
+        electrode = ShanksElectrode(name=str(ch), rel_x=0.0, rel_y=0.0, rel_z=0.0)
+        shank = Shank(name=str(ch), shanks_electrodes=[electrode])
+        probe.add_shank(shank)
 
         nwbfile.add_electrode(
-            location=info["location"],  # convert to standard naming
+            location=electrode_group.location,  # convert to standard naming
             group=electrode_group,
             channel_name=channel_names[ch],
-            probe_shank=probe_shank,
+            probe_shank=str(ch),
             probe_electrode=ch,
             bad_channel=info["bad_channel"],
             ref_elect_id=ch,
-            # x=0.0,
-            # y=0.0,
-            # z=0.0,
         )
+
+    # Add to electrical series
     traces = extractor.get_traces()
     time_info = extractor.get_time_info()
     rate = time_info["sampling_frequency"]
@@ -152,7 +162,9 @@ def add_electrical_series(
         conversion = unique_channel_conversion * micro_to_volts_conversion_factor
         channel_conversion = None
 
-    lfp_channel_ids = [ch for ch, info in channels_info.items() if "EEG" not in info["location"]]
+    lfp_channel_ids = [
+        ch for ch, info in channels_info.items() if "EEG" not in info["location"] and not info["bad_channel"]
+    ]
     if len(lfp_channel_ids) > 0:
         lfp_electrodes = nwbfile.electrodes.create_region(
             name="electrodes",
@@ -191,3 +203,22 @@ def add_electrical_series(
             conversion=conversion,
         )
         nwbfile.add_acquisition(eeg_electrical_series)
+
+    bad_channel_ids = [ch for ch, info in channels_info.items() if info["bad_channel"]]
+    if len(bad_channel_ids) > 0:
+        bad_electrodes = nwbfile.electrodes.create_region(
+            name="electrodes",
+            region=bad_channel_ids,
+            description="bad electrodes table region",
+        )
+        bad_traces = traces[:, bad_channel_ids]
+        bad_electrical_series = ElectricalSeries(
+            name="bad_channels_series",
+            data=bad_traces,
+            electrodes=bad_electrodes,
+            rate=rate,
+            starting_time=starting_time,
+            channel_conversion=channel_conversion[bad_channel_ids] if channel_conversion is not None else None,
+            conversion=conversion,
+        )
+        nwbfile.add_acquisition(bad_electrical_series)

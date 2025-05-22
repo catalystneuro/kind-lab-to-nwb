@@ -16,7 +16,7 @@ from neuroconv.tools.nwb_helpers import (
     make_nwbfile_from_metadata,
 )
 from neuroconv.tools.path_expansion import LocalPathExpander
-
+from neuroconv.tools.signal_processing import get_rising_frames_from_ttl
 
 from spyglass_utils import (
     add_behavioral_video,
@@ -81,29 +81,13 @@ def session_to_nwb(
     if subject_genotype == "wt":
         subject_genotype = "WT"
     elif subject_genotype == "het":
-        subject_genotype = "SyngapPlus_DeltaGAP"
+        subject_genotype = "Syngap1+/Delta-GAP"
     else:
         raise ValueError(f"Genotype {subject_genotype} not recognized")
 
     metadata["Subject"]["genotype"] = subject_genotype
 
     nwbfile = make_nwbfile_from_metadata(metadata=metadata)
-
-    # Add behavioral video
-    # video_file_path = next(data_dir_path.glob(f"{subject_id}/{session_id}/*.avi"))
-    video_extensions = ["avi", "mp4", "mkv"]
-    video_file_path = None
-    for ext in video_extensions:
-        video_files = list(data_dir_path.glob(f"{subject_id}/{session_id}/*.{ext}"))
-        if video_files:
-            video_file_path = video_files[0]
-            task_metadata = editable_metadata["Tasks"][session_id]
-            add_behavioral_video(
-                nwbfile=nwbfile, metadata=metadata, video_file_path=video_file_path, task_metadata=task_metadata
-            )
-            break
-    if video_file_path is None:
-        print(f"Warning: No video file found for subject {subject_id}, session {session_id}")
 
     # Add EEG data
     excel_file_path = data_dir_path / "channels_details_v2.xlsx"
@@ -131,6 +115,36 @@ def session_to_nwb(
 
     # Add behavior events
     add_behavioral_events(nwbfile=nwbfile, folder_path=folder_path)
+
+    # video timestamps alignment
+    if "TTL_LED_trigger" in nwbfile.processing["behavior"]["behavioral_events"].time_series:
+        synch_ttl_signal = nwbfile.processing["behavior"]["behavioral_events"]["TTL_LED_trigger"].data[:]
+        first_rising_frame = get_rising_frames_from_ttl(synch_ttl_signal)[0]
+        video_starting_time = nwbfile.processing["behavior"]["behavioral_events"]["TTL_LED_trigger"].get_timestamps()[
+            first_rising_frame
+        ]
+    else:
+        video_starting_time = None  # TODO ask how to align session that does not have ttl synch signal
+    # Add behavioral video
+    # video_file_path = next(data_dir_path.glob(f"{subject_id}/{session_id}/*.avi"))
+    video_extensions = ["avi", "mp4", "mkv"]
+    video_file_path = None
+    for ext in video_extensions:
+        video_files = list(data_dir_path.glob(f"{subject_id}/{session_id}/*.{ext}"))
+        if video_files:
+            video_file_path = video_files[0]
+            task_metadata = editable_metadata["Tasks"][session_id]
+
+            add_behavioral_video(
+                nwbfile=nwbfile,
+                metadata=metadata,
+                video_file_path=video_file_path,
+                task_metadata=task_metadata,
+                aligned_starting_time=video_starting_time,
+            )
+            break
+    if video_file_path is None:
+        print(f"Warning: No video file found for subject {subject_id}, session {session_id}")
 
     if verbose:
         print(f"Write NWB file {nwbfile_path.name}")

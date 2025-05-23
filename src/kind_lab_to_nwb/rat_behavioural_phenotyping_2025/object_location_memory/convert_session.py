@@ -85,24 +85,24 @@ def session_to_nwb(
                     if "sample" in observation_id.lower():
                         source_data.update(
                             dict(
-                                SampleObjectRecognitionBehavior=dict(
+                                SampleObjectLocationMemoryBehavior=dict(
                                     file_path=boris_file_path, observation_id=observation_id
                                 )
                             )
                         )
                         conversion_options.update(
-                            dict(SampleObjectRecognitionBehavior=dict(table_name="SampleTrialBehavioralEvents"))
+                            dict(SampleObjectLocationMemoryBehavior=dict(table_name="SampleTrialBehavioralEvents"))
                         )
                     elif "test" in observation_id.lower():
                         source_data.update(
                             dict(
-                                TestObjectRecognitionBehavior=dict(
+                                TestObjectLocationMemoryBehavior=dict(
                                     file_path=boris_file_path, observation_id=observation_id
                                 )
                             )
                         )
                         conversion_options.update(
-                            dict(TestObjectRecognitionBehavior=dict(table_name="TestTrialBehavioralEvents"))
+                            dict(TestObjectLocationMemoryBehavior=dict(table_name="TestTrialBehavioralEvents"))
                         )
                     else:
                         raise ValueError(f"Observation ID {observation_id} not recognized.")

@@ -22,14 +22,14 @@ class ObjectLocationMemoryNWBConverter(NWBConverter):
         Video=ExternalVideoInterface,
         SampleVideo=ExternalVideoInterface,
         TestVideo=ExternalVideoInterface,
-        TestObjectRecognitionBehavior=BORISBehavioralEventsInterface,
-        SampleObjectRecognitionBehavior=BORISBehavioralEventsInterface,
+        TestObjectLocationMemoryBehavior=BORISBehavioralEventsInterface,
+        SampleObjectLocationMemoryBehavior=BORISBehavioralEventsInterface,
     )
 
     def temporally_align_data_interfaces(self, metadata, conversion_options: Optional[dict] = None):
         if (
-            "TestObjectRecognitionBehavior" in self.data_interface_objects
-            and "SampleObjectRecognitionBehavior" in self.data_interface_objects
+            "TestObjectLocationMemoryBehavior" in self.data_interface_objects
+            and "SampleObjectLocationMemoryBehavior" in self.data_interface_objects
         ):
             video_file_path = self.data_interface_objects["SampleVideo"].source_data["file_paths"][0]
             sample_video_datetime = parse_datetime_from_filename(video_file_path.name)
@@ -40,7 +40,7 @@ class ObjectLocationMemoryNWBConverter(NWBConverter):
             # Align the start time of the test video to the start time of the sample video
 
             aligned_starting_time = (test_video_datetime - sample_video_datetime).total_seconds()
-            self.data_interface_objects["TestObjectRecognitionBehavior"].set_aligned_starting_time(
+            self.data_interface_objects["TestObjectLocationMemoryBehavior"].set_aligned_starting_time(
                 aligned_starting_time
             )
             self.data_interface_objects["TestVideo"].set_aligned_starting_time(aligned_starting_time)

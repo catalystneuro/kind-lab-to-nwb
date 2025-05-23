@@ -67,7 +67,9 @@ def session_to_nwb(
             )
             conversion_options.update(dict(TestVideo=dict(), SampleVideo=dict()))
         else:
-            raise ValueError(f"{len(video_file_paths)} video files found for {subject_id}. Expected 2 video files.")
+            raise ValueError(
+                f"{len(video_file_paths)} video files found for {subject_id}. Expected one video file for the sample trial and one for the test trial."
+            )
         # Add Annotated events from BORIS output
         if boris_file_path is not None:
             all_observation_ids = get_observation_ids(boris_file_path)
@@ -204,8 +206,11 @@ if __name__ == "__main__":
         raise FileNotFoundError(f"Folder {cohort_folder_path} does not exist")
     video_file_paths = list(video_folder_path.glob(f"*{subject_metadata['animal ID']}*"))
 
-    video_path = Path(video_file_paths[0])
-    session_start_time = parse_datetime_from_filename(video_path.name)
+    session_start_times = []
+    for video_file_path in video_file_paths:
+        session_start_times.append(parse_datetime_from_filename(video_file_path.name))
+
+    session_start_time = min(session_start_times)
 
     stub_test = False
     overwrite = True

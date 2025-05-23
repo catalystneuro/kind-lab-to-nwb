@@ -16,7 +16,6 @@ from neuroconv.tools.nwb_helpers import (
     make_nwbfile_from_metadata,
 )
 from neuroconv.tools.path_expansion import LocalPathExpander
-from neuroconv.tools.signal_processing import get_rising_frames_from_ttl
 
 from spyglass_utils import (
     add_behavioral_video,

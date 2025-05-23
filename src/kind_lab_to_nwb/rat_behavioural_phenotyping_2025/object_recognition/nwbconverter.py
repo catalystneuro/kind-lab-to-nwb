@@ -27,6 +27,21 @@ class ObjectRecognitionNWBConverter(NWBConverter):
     )
 
     def temporally_align_data_interfaces(self, metadata, conversion_options: Optional[dict] = None):
+        """
+        Aligns the start times of the test and sample videos based on their filenames.
+
+        This method is invoked during the data conversion process to ensure temporal alignment
+        between the behavioral and video data interfaces. It calculates the time difference
+        between the sample and test video start times (extracted from their filenames) and
+        adjusts the starting times of the corresponding data interfaces accordingly.
+
+        Parameters:
+        ----------
+        metadata : dict
+            Metadata dictionary containing information about the dataset.
+        conversion_options : dict, optional
+            Additional options for the conversion process.
+        """
         if (
             "TestObjectRecognitionBehavior" in self.data_interface_objects
             and "SampleObjectRecognitionBehavior" in self.data_interface_objects

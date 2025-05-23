@@ -4,7 +4,6 @@ NWBFile:
     - morris water maze
     - spatial learning
     - spatial memory
-    - behavioral testing
     - rodent behavior
   experiment_description: |
     This experiment is part of the Rat Behavioural Phenotyping Pipeline Methodologies https://sidb.org.uk/facilities/rat-behavioural-phenotyping-pipeline/.

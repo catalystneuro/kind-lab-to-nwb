@@ -1,11 +1,7 @@
 NWBFile:
   keywords:
     - auditory fear conditioning
-    - behavioral testing
     - rodent behavior
-    - memory assessment
-    - fear learning
-    - fear extinction
   experiment_description: |
     This experiment is part of the Rat Behavioural Phenotyping Pipeline Methodologies https://sidb.org.uk/facilities/rat-behavioural-phenotyping-pipeline/.
     As an initial effort to characterize the rat lines, these models are being behaviorally phenotyped at SIDB.
@@ -29,14 +25,14 @@ Subject:
   species: Rattus norvegicus
 
 Behavior:
-    ExternalVideos:
-        BehavioralVideo:
-          description: |
-            Video recording of the rat's behavior. Recorded using a CCTV camera mounted on the ceiling above the chambers.
-          device:
-              name: BehavioralCamera
-              description: CCTV camera mounted on ceiling above chambers for behavioral recording
-              manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+  ExternalVideos:
+    BehavioralVideo:
+      description: |
+        Video recording of the rat's behavior. Recorded using a CCTV camera mounted on the ceiling above the chambers.
+      device:
+        name: BehavioralCamera
+        description: CCTV camera mounted on ceiling above chambers for behavioral recording
+        manufacturer: Example Manufacturer # Example value - actual manufacturer needed
 
 Devices:
   - name: ChamberA

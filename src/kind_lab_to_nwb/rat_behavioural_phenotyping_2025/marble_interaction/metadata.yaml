@@ -2,16 +2,13 @@ NWBFile:
   keywords:
     - marble interaction
     - object manipulation
-    - behavioral testing
     - rodent behavior
-    - exploratory behavior
-    - motor behavior
   experiment_description: |
     This experiment is part of the Rat Behavioural Phenotyping Pipeline Methodologies https://sidb.org.uk/facilities/rat-behavioural-phenotyping-pipeline/.
     As an initial effort to characterize the rat lines, these models are being behaviorally phenotyped at SIDB. 
     Rat models are phenotyped according to a rigorous pipeline that assesses behaviours relevant to autism with intellectual disability, such as social and motor skills, and learning and sensory processing. 
     Different cohorts of rats are run through different subsets of tasks to overcome potential order effects on behaviours and to limit the number of tasks each animal is put through.
-    This experiment investigated marble interaction behaviorin different rat models 
+    This experiment investigated marble interaction behavior in different rat models 
     (Arid1b: https://rgd.mcw.edu/rgdweb/report/strain/main.html?id=14394518, 
     Grin2b: https://rgd.mcw.edu/rgdweb/report/strain/main.html?id=14394515, 
     Scn2a: https://rgd.mcw.edu/rgdweb/report/strain/main.html?id=25394530)

@@ -17,7 +17,6 @@ from neuroconv.tools.nwb_helpers import (
 )
 from neuroconv.tools.path_expansion import LocalPathExpander
 
-
 from spyglass_utils import (
     add_behavioral_video,
     get_channels_info_from_subject_id,
@@ -81,29 +80,13 @@ def session_to_nwb(
     if subject_genotype == "wt":
         subject_genotype = "WT"
     elif subject_genotype == "het":
-        subject_genotype = "SyngapPlus_DeltaGAP"
+        subject_genotype = "Syngap1+/Delta-GAP"
     else:
         raise ValueError(f"Genotype {subject_genotype} not recognized")
 
     metadata["Subject"]["genotype"] = subject_genotype
 
     nwbfile = make_nwbfile_from_metadata(metadata=metadata)
-
-    # Add behavioral video
-    # video_file_path = next(data_dir_path.glob(f"{subject_id}/{session_id}/*.avi"))
-    video_extensions = ["avi", "mp4", "mkv"]
-    video_file_path = None
-    for ext in video_extensions:
-        video_files = list(data_dir_path.glob(f"{subject_id}/{session_id}/*.{ext}"))
-        if video_files:
-            video_file_path = video_files[0]
-            task_metadata = editable_metadata["Tasks"][session_id]
-            add_behavioral_video(
-                nwbfile=nwbfile, metadata=metadata, video_file_path=video_file_path, task_metadata=task_metadata
-            )
-            break
-    if video_file_path is None:
-        print(f"Warning: No video file found for subject {subject_id}, session {session_id}")
 
     # Add EEG data
     excel_file_path = data_dir_path / "channels_details_v2.xlsx"
@@ -132,6 +115,27 @@ def session_to_nwb(
     # Add behavior events
     add_behavioral_events(nwbfile=nwbfile, folder_path=folder_path)
 
+    # Add behavioral video
+    # video_file_path = next(data_dir_path.glob(f"{subject_id}/{session_id}/*.avi"))
+    video_extensions = ["avi", "mp4", "mkv"]
+    video_file_path = None
+    for ext in video_extensions:
+        video_files = list(data_dir_path.glob(f"{subject_id}/{session_id}/*.{ext}"))
+        if video_files:
+            video_file_path = video_files[0]
+            task_metadata = editable_metadata["Tasks"][session_id]
+
+            add_behavioral_video(
+                nwbfile=nwbfile,
+                metadata=metadata,
+                video_file_path=video_file_path,
+                task_metadata=task_metadata,
+                aligned_starting_time=video_starting_time,
+            )
+            break
+    if video_file_path is None:
+        print(f"Warning: No video file found for subject {subject_id}, session {session_id}")
+
     if verbose:
         print(f"Write NWB file {nwbfile_path.name}")
     with NWBHDF5IO(nwbfile_path, mode="w") as io:
@@ -159,6 +163,8 @@ if __name__ == "__main__":
     # Expand paths and extract metadata
     metadata_list = path_expander.expand_paths(source_data_spec)
 
+    video_starting_time = 0.0  # seconds passed since the start of the TDT recording
+
     stub_test = False
     overwrite = True
 
@@ -170,6 +176,7 @@ if __name__ == "__main__":
             path_expander_metadata=metadata,
             stub_test=stub_test,
             overwrite=overwrite,
+            video_starting_time=video_starting_time,
         )
         # except Exception as e:
         #     print(f"Error processing {metadata['source_data']['OpenEphysRecording']['folder_path']}: {e}")

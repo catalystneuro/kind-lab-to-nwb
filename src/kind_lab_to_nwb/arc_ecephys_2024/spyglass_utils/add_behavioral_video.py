@@ -6,13 +6,11 @@ This file also contains epoch/task data, since it is necessary for the video dat
 
 from typing import Optional, Union
 from pathlib import Path
-import numpy as np
 
 from pynwb import NWBFile
 from pynwb.device import Device
 from pynwb.core import DynamicTable
 from pynwb.image import ImageSeries
-from pynwb.behavior import BehavioralEvents
 
 from ndx_franklab_novela import CameraDevice
 from neuroconv.datainterfaces.behavior.video.video_utils import get_video_timestamps
@@ -23,7 +21,7 @@ def add_behavioral_video(
     metadata,
     video_file_path: Union[Path, str],
     task_metadata: dict,
-    alligned_timestamps: Optional[list[np.ndarray]] = None,
+    aligned_starting_time: Optional[float] = None,
 ) -> None:
 
     camera_device = CameraDevice(**metadata["Devices"]["CameraDevice"])
@@ -53,10 +51,9 @@ def add_behavioral_video(
     )
     tasks_module.add(task_table)
 
-    if alligned_timestamps is not None:
-        timestamps = alligned_timestamps
-    else:
-        timestamps = get_video_timestamps(file_path=video_file_path)
+    timestamps = get_video_timestamps(file_path=video_file_path)
+    if aligned_starting_time is not None:
+        timestamps = timestamps + aligned_starting_time
 
     nwbfile.add_epoch_column(name="task_name", description="Name of the task associated with the epoch.")
     nwbfile.add_epoch(start_time=timestamps[0], stop_time=timestamps[-1], tags=["01"], task_name=task_metadata["name"])

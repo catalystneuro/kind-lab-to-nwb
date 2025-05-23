@@ -116,15 +116,6 @@ def session_to_nwb(
     # Add behavior events
     add_behavioral_events(nwbfile=nwbfile, folder_path=folder_path)
 
-    # video timestamps alignment
-    if "TTL_LED_trigger" in nwbfile.processing["behavior"]["behavioral_events"].time_series:
-        synch_ttl_signal = nwbfile.processing["behavior"]["behavioral_events"]["TTL_LED_trigger"].data[:]
-        first_rising_frame = get_rising_frames_from_ttl(synch_ttl_signal)[0]
-        video_starting_time = nwbfile.processing["behavior"]["behavioral_events"]["TTL_LED_trigger"].get_timestamps()[
-            first_rising_frame
-        ]
-    else:
-        video_starting_time = None  # TODO ask how to align session that does not have ttl synch signal
     # Add behavioral video
     # video_file_path = next(data_dir_path.glob(f"{subject_id}/{session_id}/*.avi"))
     video_extensions = ["avi", "mp4", "mkv"]
@@ -173,6 +164,8 @@ if __name__ == "__main__":
     # Expand paths and extract metadata
     metadata_list = path_expander.expand_paths(source_data_spec)
 
+    video_starting_time = 0.0  # seconds passed since the start of the TDT recording
+
     stub_test = False
     overwrite = True
 
@@ -184,6 +177,7 @@ if __name__ == "__main__":
             path_expander_metadata=metadata,
             stub_test=stub_test,
             overwrite=overwrite,
+            video_starting_time=video_starting_time,
         )
         # except Exception as e:
         #     print(f"Error processing {metadata['source_data']['OpenEphysRecording']['folder_path']}: {e}")

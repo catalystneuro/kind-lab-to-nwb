@@ -1,4 +1,5 @@
 """Primary script to run to convert an entire session for of data using the NWBConverter."""
+
 import subprocess
 import warnings
 from datetime import datetime
@@ -135,6 +136,8 @@ def session_to_nwb(
 
     metadata["Subject"]["subject_id"] = subject_id
     metadata["Subject"]["date_of_birth"] = subject_metadata["DOB (DD/MM/YYYY)"]
+    metadata["Subject"]["genotype"] = subject_metadata["genotype"].upper()
+    metadata["Subject"]["strain"] = subject_metadata["line"]
     sex = {"male": "M", "female": "F"}.get(subject_metadata["sex"], "U")
     metadata["Subject"].update(sex=sex)
     # Add session ID to metadata

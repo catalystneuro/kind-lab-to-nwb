@@ -1,11 +1,8 @@
 NWBFile:
   keywords:
     - prey capture
-    - hunting behavior
     - cricket hunting
-    - behavioral testing
     - rodent behavior
-    - natural behavior
     - ultrasonic vocalizations
   experiment_description: |
     This experiment is part of the Rat Behavioural Phenotyping Pipeline Methodologies https://sidb.org.uk/facilities/rat-behavioural-phenotyping-pipeline/.
@@ -32,17 +29,17 @@ Subject:
   species: Rattus norvegicus
 
 Behavior:
-    ExternalVideos:
-        BehavioralVideo:
-          description: |
-            Video recording of the rat's behavior. Recorded using a CCTV camera mounted on the ceiling above the chambers.
-          device:
-              name: BehavioralCamera
-              description: CCTV camera mounted on ceiling above chambers for behavioral recording
-              manufacturer: Example Manufacturer # Example value - actual manufacturer needed
-    Audio:
-      - name: AcousticWaveformSeries
-        description: Ultrasonic vocalizations recorded during the trials using a Pettersson M500 USB microphone.
+  ExternalVideos:
+    BehavioralVideo:
+      description: |
+        Video recording of the rat's behavior. Recorded using a CCTV camera mounted on the ceiling above the chambers.
+      device:
+        name: BehavioralCamera
+        description: CCTV camera mounted on ceiling above chambers for behavioral recording
+        manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+  Audio:
+    - name: AcousticWaveformSeries
+      description: Ultrasonic vocalizations recorded during the trials using a Pettersson M500 USB microphone.
 
 Devices:
   - name: USVMicrophone

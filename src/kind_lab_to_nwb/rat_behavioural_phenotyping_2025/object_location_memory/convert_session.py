@@ -67,7 +67,9 @@ def session_to_nwb(
             )
             conversion_options.update(dict(TestVideo=dict(), SampleVideo=dict()))
         else:
-            raise ValueError(f"{len(video_file_paths)} video files found for {subject_id}. Expected 2 video files.")
+            raise ValueError(
+                f"{len(video_file_paths)} video files found for {subject_id}. Expected one video file for the sample trial and one for the test trial."
+            )
         # Add Annotated events from BORIS output
         if boris_file_path is not None:
             all_observation_ids = get_observation_ids(boris_file_path)
@@ -83,24 +85,24 @@ def session_to_nwb(
                     if "sample" in observation_id.lower():
                         source_data.update(
                             dict(
-                                SampleObjectRecognitionBehavior=dict(
+                                SampleObjectLocationMemoryBehavior=dict(
                                     file_path=boris_file_path, observation_id=observation_id
                                 )
                             )
                         )
                         conversion_options.update(
-                            dict(SampleObjectRecognitionBehavior=dict(table_name="SampleTrialBehavioralEvents"))
+                            dict(SampleObjectLocationMemoryBehavior=dict(table_name="SampleTrialBehavioralEvents"))
                         )
                     elif "test" in observation_id.lower():
                         source_data.update(
                             dict(
-                                TestObjectRecognitionBehavior=dict(
+                                TestObjectLocationMemoryBehavior=dict(
                                     file_path=boris_file_path, observation_id=observation_id
                                 )
                             )
                         )
                         conversion_options.update(
-                            dict(TestObjectRecognitionBehavior=dict(table_name="TestTrialBehavioralEvents"))
+                            dict(TestObjectLocationMemoryBehavior=dict(table_name="TestTrialBehavioralEvents"))
                         )
                     else:
                         raise ValueError(f"Observation ID {observation_id} not recognized.")
@@ -128,9 +130,10 @@ def session_to_nwb(
 
     metadata["Subject"]["subject_id"] = subject_id
     metadata["Subject"]["date_of_birth"] = subject_metadata["DOB (DD/MM/YYYY)"]
+    metadata["Subject"]["genotype"] = subject_metadata["genotype"].upper()
+    metadata["Subject"]["strain"] = subject_metadata["line"]
     sex = {"male": "M", "female": "F"}.get(subject_metadata["sex"], "U")
     metadata["Subject"].update(sex=sex)
-    # TODO add genotype
 
     metadata["NWBFile"]["session_id"] = session_id
     metadata["NWBFile"]["session_description"] = metadata["SessionTypes"][session_id]["session_description"]
@@ -204,8 +207,11 @@ if __name__ == "__main__":
         raise FileNotFoundError(f"Folder {cohort_folder_path} does not exist")
     video_file_paths = list(video_folder_path.glob(f"*{subject_metadata['animal ID']}*"))
 
-    video_path = Path(video_file_paths[0])
-    session_start_time = parse_datetime_from_filename(video_path.name)
+    session_start_times = []
+    for video_file_path in video_file_paths:
+        session_start_times.append(parse_datetime_from_filename(video_file_path.name))
+
+    session_start_time = min(session_start_times)
 
     stub_test = False
     overwrite = True

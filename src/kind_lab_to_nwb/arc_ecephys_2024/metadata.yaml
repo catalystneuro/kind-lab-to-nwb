@@ -10,7 +10,7 @@ NWBFile:
     - synaptic plasticity
     - learning and memory
   experiment_description:
-    The experiment investigated fear conditioning in male wild-type and Syngap+/∆-GAP rats (n=31, ages 3-6 months).
+    The experiment investigated fear conditioning in male wild-type and Syngap1+/Delta-GAP rats (n=31, ages 3-6 months).
     Recordings included Local Field Potentials (LFP), electroencephalogram (EEG), head-mounted accelerometer data, and behavioral video recordings across five experimental days.
     The protocol involved context habituation, seizure screening, and a fear conditioning paradigm where rats were exposed to blue flashing light (5 Hz, 110 lux) paired with foot shocks.
     Data were collected using OpenEphys software and a 16-channel Intan digitizing head stage.
@@ -24,7 +24,7 @@ NWBFile:
 Subject:
   species: Rattus norvegicus
   description: Subjects were Evans-SGem2/PWC were genotyped by PCR.
-    This study used male rats (n=31, 16 wild-types and 15 Syngap+/∆-GAP) bred in-house and maintained in standard housing on a 12h/12h light dark with ad libitum access to water and food.
+    This study used male rats (n=31, 16 wild-types and 15 Syngap1+/Delta-GAP) bred in-house and maintained in standard housing on a 12h/12h light dark with ad libitum access to water and food.
     Experimental animals were weaned from their dams postnatal day 22 (P22D) and housed with their WT littermates, 2-4 animals per cage.
     Genetically modified males and WT littermates ranging from 3 to 6 months of age were used for all experiments.
   age: P12W/P24W

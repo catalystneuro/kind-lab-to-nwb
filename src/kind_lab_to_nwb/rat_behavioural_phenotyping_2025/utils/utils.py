@@ -1,12 +1,12 @@
-import subprocess
 import re
-from pydantic import FilePath
-from typing import List
-import pandas as pd
+import subprocess
+import uuid
 from datetime import datetime
 from pathlib import Path
-import uuid
+from typing import List, Optional, Union
 
+import pandas as pd
+from pydantic import FilePath
 from pynwb.file import Subject
 
 
@@ -163,6 +163,58 @@ def convert_ts_to_mp4(video_file_paths: List[FilePath]) -> List[FilePath]:
                 print(f"An error occurred: {e}")
 
     return output_file_paths
+
+
+def convert_ffii_to_avi(
+    folder_path: Union[str, Path], convert_ffii_repo_path: Optional[Union[str, Path]] = None, frame_rate: int = 15
+) -> None:
+    """
+    Convert ffii files in a directory to avi format using the convert-ffii tool.
+    This utility function requires ffmpeg (https://ffmpeg.org/download.html) to be installed on the system prior to use.
+
+    Notes
+    -----
+    The video conversion script is forked from https://github.com/jf-lab/convert-ffii.git
+    The converted avi files will be saved in the same directory as the input files.
+
+    This utility function checks if the convert-ffii repository is available,
+    clones it if needed, and runs the conversion script on the specified directory.
+
+    Parameters
+    ----------
+    folder_path : Union[str, Path]
+        Path to the directory containing the ffii files to be converted
+    convert_ffii_repo_path : Optional[Union[str, Path]], optional
+        Path where the convert-ffii repository should be or will be cloned to.
+        If None, will use the current working directory.
+    frame_rate : int, optional
+        Frame rate to use for the video conversion, by default 15 Hz
+
+    """
+    folder_path = Path(folder_path)
+    if not folder_path.exists():
+        raise FileNotFoundError(f"Input directory '{folder_path}' does not exist.")
+
+    convert_ffii_repo_path = Path(convert_ffii_repo_path) if convert_ffii_repo_path else None
+    if convert_ffii_repo_path is None:
+        convert_ffii_repo_path = Path.cwd() / "convert-ffii"
+
+    if not convert_ffii_repo_path.exists():
+        print(f"Cloning convert-ffii repository to {str(convert_ffii_repo_path)}...")
+        subprocess.run(
+            ["git", "clone", "https://github.com/weiglszonja/convert-ffii.git", str(convert_ffii_repo_path)], check=True
+        )
+    else:
+        print(f"Using existing convert-ffii repository at '{str(convert_ffii_repo_path)}'.")
+
+    # Run the conversion script
+    ffii_to_avi_conversion_script = convert_ffii_repo_path / "ffii2avi_recursive.py"
+    if not ffii_to_avi_conversion_script.exists():
+        raise FileNotFoundError(f"Conversion script not found at '{ffii_to_avi_conversion_script}'.")
+
+    subprocess.run(
+        ["python", str(ffii_to_avi_conversion_script), str(folder_path), "--fps", str(frame_rate)], check=True
+    )
 
 
 def parse_datetime_from_filename(filename: str) -> datetime:

@@ -2,7 +2,7 @@
 import warnings
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Union
+from typing import List, Optional, Union
 from zoneinfo import ZoneInfo
 
 import pandas as pd
@@ -16,12 +16,15 @@ from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils import (
     get_session_ids_from_excel,
     get_subject_metadata_from_task,
 )
+from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils.utils import (
+    convert_ffii_files_to_avi,
+)
 from neuroconv.utils import dict_deep_update, load_dict_from_file
 
 
 def session_to_nwb(
     nwbfile_path: Union[str, Path],
-    video_file_path: Union[FilePath, str],
+    video_file_paths: List[Union[FilePath, str]],
     freeze_log_file_path: Union[FilePath, str],
     session_id: str,
     subject_metadata: dict,
@@ -35,7 +38,7 @@ def session_to_nwb(
     ----------
     nwbfile_path : Union[str, Path]
         The path where the NWB file will be saved.
-    video_file_path: Union[FilePath, str]
+    video_file_paths: Union[FilePath, str]
         The path to the video file (.avi) to be converted.
     freeze_log_file_path: Union[FilePath, str]
         The path to the freeze log file.
@@ -60,8 +63,12 @@ def session_to_nwb(
     conversion_options = dict()
 
     # Add Behavioral Video
-    source_data.update(dict(Video=dict(file_paths=[video_file_path], video_name="BehavioralVideo")))
-    conversion_options.update(dict(Video=dict()))
+    if len(video_file_paths) == 1:
+        file_paths = convert_ffii_files_to_avi(video_file_paths)
+        source_data.update(dict(Video=dict(file_paths=file_paths, video_name="BehavioralVideo")))
+        conversion_options.update(dict(Video=dict()))
+    elif len(video_file_paths) > 1:
+        raise ValueError(f"Multiple video files found for {subject_id}.")
 
     if freeze_scores_file_path is not None:
         # Add Freeze Scores as trials
@@ -149,14 +156,13 @@ if __name__ == "__main__":
         raise FileExistsError(
             f"Multiple video files found for animal ID {subject_metadata['animal ID']} in {video_folder_path}."
         )
-    video_file_path = video_file_paths[0]
 
     freeze_scores_file_paths = list(video_folder_path.glob(f"*{subject_metadata['line']}*.csv"))
     if len(freeze_scores_file_paths):
         freeze_scores_file_path = freeze_scores_file_paths[0]
     else:
         freeze_scores_file_path = None
-        warnings.warn(f"No freeze scores file (.csv) found in {video_file_path}.")
+        warnings.warn(f"No freeze scores file (.csv) found in {video_folder_path}.")
 
     # Path to the excel file containing metadata
     freeze_log_file_path = video_folder_path / "Freeze_Log.xls"
@@ -168,7 +174,7 @@ if __name__ == "__main__":
     nwbfile_path = output_dir_path / f"sub-{subject_metadata['animal ID']}_ses-{session_id}.nwb"
     session_to_nwb(
         nwbfile_path=nwbfile_path,
-        video_file_path=video_file_path,
+        video_file_paths=video_file_paths,
         freeze_log_file_path=freeze_log_file_path,
         freeze_scores_file_path=freeze_scores_file_path,
         session_id=f"{task_acronym}_{session_id}",

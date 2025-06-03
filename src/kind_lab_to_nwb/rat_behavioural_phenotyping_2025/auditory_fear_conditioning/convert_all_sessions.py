@@ -6,6 +6,7 @@ import warnings
 from pathlib import Path
 from typing import Union
 
+import pandas as pd
 from tqdm import tqdm
 
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.auditory_fear_conditioning.convert_session import (
@@ -15,9 +16,6 @@ from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils import (
     extract_subject_metadata_from_excel,
     get_session_ids_from_excel,
     get_subject_metadata_from_task,
-)
-from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils.utils import (
-    convert_ffii_to_avi,
 )
 
 # Configure logging
@@ -65,7 +63,9 @@ def dataset_to_nwb(
         data_dir_path=data_dir_path,
         subjects_metadata_file_path=subjects_metadata_file_path,
         task_acronym="AFC",
-    )
+    )[
+        :5
+    ]  # temporary limit to 5 sessions for testing
 
     results = []
 
@@ -77,7 +77,7 @@ def dataset_to_nwb(
     ):
         session_id = session_kwargs["session_id"]
         subject_metadata = session_kwargs["subject_metadata"]
-        video_file_path = session_kwargs["video_file_path"]
+        video_file_paths = session_kwargs["video_file_paths"]
         freeze_log_file_path = session_kwargs["freeze_log_file_path"]
         freeze_scores_file_path = session_kwargs["freeze_scores_file_path"]
 
@@ -93,6 +93,7 @@ def dataset_to_nwb(
                         "status": "skipped",
                         "nwbfile_path": str(nwbfile_path),
                         "error": "",
+                        **session_kwargs,
                     }
                 )
                 continue
@@ -101,11 +102,12 @@ def dataset_to_nwb(
 
             session_to_nwb(
                 nwbfile_path=nwbfile_path,
-                video_file_path=video_file_path,
+                video_file_paths=video_file_paths,
                 freeze_log_file_path=freeze_log_file_path,
                 freeze_scores_file_path=freeze_scores_file_path,
                 session_id=session_id,
                 subject_metadata=subject_metadata,
+                overwrite=overwrite,
             )
             results.append(
                 {
@@ -114,6 +116,7 @@ def dataset_to_nwb(
                     "status": "success",
                     "nwbfile_path": str(nwbfile_path),
                     "error": "",
+                    **session_kwargs,
                 }
             )
         except Exception as e:
@@ -129,13 +132,9 @@ def dataset_to_nwb(
                 }
             )
 
-    results_csv_path = output_dir_path / "conversion_results.csv"
-    with open(results_csv_path, mode="w", newline="") as csvfile:
-        fieldnames = ["session_id", "animal_id", "status", "nwbfile_path", "error"]
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerows(results)
-
+    results_csv_path = output_dir_path / "AFC_conversion_results.csv"
+    results_data = pd.DataFrame(results)
+    results_data.to_csv(results_csv_path, index=False)
     logging.info(f"Conversion completed. Results saved to {results_csv_path}")
 
 
@@ -206,29 +205,22 @@ def get_session_to_nwb_kwargs(data_dir_path, subject_metadata, session_id, task_
     if not video_folder_path.exists():
         raise FileNotFoundError(f"Folder {video_folder_path} does not exist")
 
-    convert_ffii_to_avi(
-        folder_path=video_folder_path,
-        convert_ffii_repo_path="convert-ffii",
-        frame_rate=15,
-    )
-
-    video_file_paths = list(video_folder_path.glob(f"*{subject_metadata['animal ID']}*.avi"))
-    if len(video_file_paths) == 0:
+    ffii_file_paths = list(video_folder_path.glob(f"*{subject_metadata['animal ID']}*.ffii"))
+    if len(ffii_file_paths) == 0:
         raise FileNotFoundError(
             f"No video files found in for animal ID {subject_metadata['animal ID']} in '{video_folder_path}'."
         )
-    elif len(video_file_paths) > 1:
+    elif len(ffii_file_paths) > 1:
         raise FileExistsError(
             f"Multiple video files found for animal ID {subject_metadata['animal ID']} in {video_folder_path}."
         )
-    video_file_path = video_file_paths[0]
 
     freeze_scores_file_paths = list(video_folder_path.glob(f"*{subject_metadata['line']}*.csv"))
     if len(freeze_scores_file_paths):
         freeze_scores_file_path = freeze_scores_file_paths[0]
     else:
         freeze_scores_file_path = None
-        warnings.warn(f"No freeze scores file (.csv) found in {video_file_path}.")
+        warnings.warn(f"No freeze scores file (.csv) found in {video_folder_path}.")
 
     freeze_log_file_path = video_folder_path / "Freeze_Log.xls"
     if not freeze_log_file_path.exists():
@@ -237,7 +229,7 @@ def get_session_to_nwb_kwargs(data_dir_path, subject_metadata, session_id, task_
     return dict(
         session_id=f"{task_acronym}_{session_id}",
         subject_metadata=subject_metadata,
-        video_file_path=video_file_path,
+        video_file_paths=ffii_file_paths,
         freeze_log_file_path=freeze_log_file_path,
         freeze_scores_file_path=freeze_scores_file_path,
     )
@@ -246,8 +238,8 @@ def get_session_to_nwb_kwargs(data_dir_path, subject_metadata, session_id, task_
 if __name__ == "__main__":
 
     # Parameters for conversion
-    data_dir_path = Path("/Users/weian/data/Auditory Fear Conditioning")
-    output_dir_path = data_dir_path / "nwbfiles"
+    data_dir_path = Path("/Volumes/T9/Behavioural Pipeline/Auditory Fear Conditioning")
+    output_dir_path = Path("/Users/weian/data/Kind/nwbfiles")
 
     subjects_metadata_file_path = Path("/Users/weian/data/RAT ID metadata Yunkai copy - updated 12.2.25.xlsx")
 

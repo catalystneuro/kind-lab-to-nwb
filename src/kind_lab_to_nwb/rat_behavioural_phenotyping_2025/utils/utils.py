@@ -1,4 +1,5 @@
 import re
+import struct
 import subprocess
 import uuid
 from datetime import datetime
@@ -165,56 +166,101 @@ def convert_ts_to_mp4(video_file_paths: List[FilePath]) -> List[FilePath]:
     return output_file_paths
 
 
-def convert_ffii_to_avi(
-    folder_path: Union[str, Path], convert_ffii_repo_path: Optional[Union[str, Path]] = None, frame_rate: int = 15
-) -> None:
+def convert_ffii_files_to_avi(ffii_file_paths: List[str], frame_rate: int = 15) -> List[str]:
     """
-    Convert ffii files in a directory to avi format using the convert-ffii tool.
-    This utility function requires ffmpeg (https://ffmpeg.org/download.html) to be installed on the system prior to use.
+    Convert a list of .ffii files to .avi files using ffmpeg.
+    Converted files are saved in a 'converted' subdirectory within the parent directory
+    of the original files. If a file is already in .avi or another supported format,
+    it is skipped. If the output file already exists, conversion is also skipped.
 
-    Notes
-    -----
-    The video conversion script is forked from https://github.com/jf-lab/convert-ffii.git
-    The converted avi files will be saved in the same directory as the input files.
-
-    This utility function checks if the convert-ffii repository is available,
-    clones it if needed, and runs the conversion script on the specified directory.
+    ## Requirements
+        - [ffmpeg](http://ffmpeg.org/download.html)
 
     Parameters
     ----------
-    folder_path : Union[str, Path]
-        Path to the directory containing the ffii files to be converted
-    convert_ffii_repo_path : Optional[Union[str, Path]], optional
-        Path where the convert-ffii repository should be or will be cloned to.
-        If None, will use the current working directory.
+    ffii_file_paths : List[str]
+        List of paths to .ffii files to convert.
     frame_rate : int, optional
-        Frame rate to use for the video conversion, by default 15 Hz
+        Frame rate for the output video, by default 15.
 
+    Returns
+    -------
+    List[str]
+        List of output .avi file paths.
     """
-    folder_path = Path(folder_path)
-    if not folder_path.exists():
-        raise FileNotFoundError(f"Input directory '{folder_path}' does not exist.")
 
-    convert_ffii_repo_path = Path(convert_ffii_repo_path) if convert_ffii_repo_path else None
-    if convert_ffii_repo_path is None:
-        convert_ffii_repo_path = Path.cwd() / "convert-ffii"
-
-    if not convert_ffii_repo_path.exists():
-        print(f"Cloning convert-ffii repository to {str(convert_ffii_repo_path)}...")
-        subprocess.run(
-            ["git", "clone", "https://github.com/weiglszonja/convert-ffii.git", str(convert_ffii_repo_path)], check=True
-        )
-    else:
-        print(f"Using existing convert-ffii repository at '{str(convert_ffii_repo_path)}'.")
-
-    # Run the conversion script
-    ffii_to_avi_conversion_script = convert_ffii_repo_path / "ffii2avi_recursive.py"
-    if not ffii_to_avi_conversion_script.exists():
-        raise FileNotFoundError(f"Conversion script not found at '{ffii_to_avi_conversion_script}'.")
-
-    subprocess.run(
-        ["python", str(ffii_to_avi_conversion_script), str(folder_path), "--fps", str(frame_rate)], check=True
-    )
+    output_file_paths = []
+    for video_file_path in ffii_file_paths:
+        video_file_path = Path(video_file_path)
+        # Check if the input file exists
+        if not video_file_path.is_file():
+            raise FileNotFoundError(f"The file {video_file_path} does not exist.")
+        # Check if the input file is a .ffii file
+        if video_file_path.suffix.lower() != ".ffii":
+            # Check if the file is already in a supported format
+            if video_file_path.suffix.lower() in SUPPORTED_SUFFIXES:
+                print(
+                    f"Skipping conversion: {video_file_path.name} is already in {video_file_path.suffix} format, which is supported by DANDI."
+                )
+                output_file_paths.append(video_file_path)
+                continue
+            else:
+                raise ValueError(
+                    f"Unsupported file format: {video_file_path.name} has extension {video_file_path.suffix}, but only .ts files can be converted."
+                )
+        # Create a subdirectory called "converted"
+        output_dir = Path(video_file_path).parent / "converted"
+        output_dir.mkdir(parents=True, exist_ok=True)
+        # Define the output file path by replacing the extension with .avi
+        output_file_path = output_dir / (video_file_path.stem + ".avi")
+        if output_file_path.exists():
+            print(f"The file {output_file_path} already exists. Skipping conversion.")
+            output_file_paths.append(output_file_path)
+            continue
+        print(f"Converting {video_file_path}...")
+        with open(video_file_path, "rb") as f:
+            m = f.read(8)
+            if len(m) < 8:
+                print(f"File {video_file_path} is too short to contain header, skipping.")
+                continue
+            height, width = struct.unpack(">2I", m)
+            rate = str(frame_rate)
+            cmdstr = (
+                "ffmpeg",
+                "-y",
+                "-r",
+                rate,
+                "-f",
+                "rawvideo",
+                "-pix_fmt",
+                "gray",
+                "-s",
+                f"{width}x{height}",
+                "-i",
+                "-",
+                "-c:v",
+                "ffv1",  # Lossless codec
+                output_file_path,
+            )
+            p = subprocess.Popen(cmdstr, stdin=subprocess.PIPE, shell=False)
+            try:
+                while True:
+                    img = f.read(width * height)
+                    if not img:
+                        break
+                    p.stdin.write(img)
+                    m = f.read(8)
+                    if not m:
+                        break
+                    height, width = struct.unpack(">2I", m)
+                p.stdin.close()
+                p.wait()
+                print(f"Saved in {output_file_path}")
+                output_file_paths.append(output_file_path)
+            except Exception as e:
+                print(f"Error during ffmpeg process for {video_file_path}: {e}")
+                p.kill()
+    return output_file_paths
 
 
 def parse_datetime_from_filename(filename: str) -> datetime:

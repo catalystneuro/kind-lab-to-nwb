@@ -5,6 +5,7 @@ from typing import Union
 from pydantic import FilePath
 import warnings
 from datetime import datetime
+import pandas as pd
 
 from neuroconv.utils import (
     dict_deep_update,
@@ -23,10 +24,90 @@ from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils import (
 )
 
 
+def get_novelty_information_for_the_object_positions(
+    boris_info_file_path: Union[FilePath, str], animal_id: str, session_id: str
+) -> dict:
+    """
+    Extracts novelty information on the objects from the BORIS info file.
+
+    Parameters
+    ----------
+    boris_info_file_path : Union[FilePath, str]
+        Path to the BORIS info file.
+    animal_id : str
+        Animal ID to filter the data.
+    session_id : str
+        Session ID to filter the data.
+
+    Returns
+    -------
+    dict
+        Dictionary containing novelty information on the objects.
+    """
+    if not boris_info_file_path:
+        return {}
+
+    df = pd.read_excel(boris_info_file_path)
+    # select only relevant rows: where animal_id and session_id are contained in the Filename column
+    df = df[df["Filename"].str.contains(animal_id) & df["Filename"].str.contains(session_id)]
+    if df.empty:
+        warnings.warn(f"No novelty information found for animal {animal_id} in session {session_id}.")
+        return {}
+
+    # Initialize the novelty info dictionary
+    novelty_info_dict = {
+        "sample_trial": {
+            "position": [None, None, None, None],
+            "novelty": [None, None, None, None],
+        },
+        "test_trial": {
+            "position": [None, None, None, None],
+            "novelty": [None, None, None, None],
+        },
+    }
+
+    # Process each row in the filtered dataframe
+    for _, row in df.iterrows():
+        filename = row["Filename"]
+
+        # Determine trial type from filename
+        if "sample" in filename.lower():
+            trial_type = "sample_trial"
+        elif "test" in filename.lower():
+            trial_type = "test_trial"
+        else:
+            warnings.warn(f"Could not determine trial type from filename: {filename}")
+            continue
+
+        # Extract object information for each object (A, B, C, D)
+        object_ids = ["A", "B", "C", "D"]
+
+        for i, object_id in enumerate(object_ids):
+            # Get position and novelty information
+            pos_col = f"Obj_{object_id}"
+            nov_col = f"ID_{object_id}"
+
+            position = row.get(pos_col, None)
+            novelty = row.get(nov_col, None)
+
+            # Handle NaN values (convert to None)
+            if pd.isna(position):
+                position = None
+            if pd.isna(novelty):
+                novelty = None
+
+            # Update the dictionary
+            novelty_info_dict[trial_type]["position"][i] = position
+            novelty_info_dict[trial_type]["novelty"][i] = novelty
+
+    return novelty_info_dict
+
+
 def session_to_nwb(
     output_dir_path: Union[str, Path],
     video_file_paths: Union[FilePath, str],
     boris_file_path: Union[FilePath, str],
+    boris_info_file_path: Union[FilePath, str],
     subject_metadata: dict,
     session_id: str,
     session_start_time: datetime,
@@ -163,6 +244,15 @@ def session_to_nwb(
                 metadata["Devices"].pop(i)
             break
 
+    # Add novelty information on the object position
+    if boris_info_file_path is not None:
+        novelty_info = get_novelty_information_for_the_object_positions(
+            boris_info_file_path, str(subject_metadata["animal ID"]), session_id.replace("OLM_", "")
+        )
+        # Add novelty information to metadata if needed
+        # This could be used to store object position and novelty information in the NWB file
+        metadata["NoveltyInformation"] = novelty_info
+
     # Run conversion
     converter.run_conversion(
         metadata=metadata,
@@ -188,7 +278,7 @@ if __name__ == "__main__":
     subjects_metadata = get_subject_metadata_from_task(subjects_metadata, task_acronym)
 
     session_id = session_ids[-2]  # Test STM
-    subject_metadata = subjects_metadata[130]  # subject 617Scn2a
+    subject_metadata = subjects_metadata[132]  # subject 617Scn2a
 
     cohort_folder_path = data_dir_path / subject_metadata["line"] / f"{subject_metadata['cohort ID']}_{task_acronym}"
     if not cohort_folder_path.exists():
@@ -201,6 +291,15 @@ if __name__ == "__main__":
         warnings.warn(f"No BORIS file found in {cohort_folder_path}")
     else:
         boris_file_path = boris_file_paths[0]
+
+    # check if boris info file exists
+    analysis_folder_path = cohort_folder_path / "Analysis"
+    boris_info_file_paths = list(analysis_folder_path.glob("boris_info*.xlsx"))
+    if len(boris_info_file_paths) == 0:
+        boris_info_file_path = None
+        warnings.warn(f"No BORIS info excel file found in {analysis_folder_path}")
+    else:
+        boris_info_file_path = boris_info_file_paths[0]
 
     video_folder_path = cohort_folder_path / session_id
     if not video_folder_path.exists():
@@ -223,6 +322,7 @@ if __name__ == "__main__":
         output_dir_path=output_dir_path,
         video_file_paths=video_file_paths,
         boris_file_path=boris_file_path,
+        boris_info_file_path=boris_info_file_path,
         subject_metadata=subject_metadata,
         session_id=f"{task_acronym}_{session_id}",
         session_start_time=session_start_time,

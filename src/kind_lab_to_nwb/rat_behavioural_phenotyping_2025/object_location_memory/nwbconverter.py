@@ -64,6 +64,9 @@ class ObjectLocationMemoryNWBConverter(NWBConverter):
             for idx, row in test_trial_events_table.iterrows():
                 for position, novelty in zip(test_trial_info["position"], test_trial_info["novelty"]):
                     if position == row["label"]:
+                        nwbfile.processing["events"][test_trial_events_table_name]["event_description"].data[
+                            idx
+                        ] = novelty
                         test_trial_events_table.at[idx, "event_description"] = novelty
                         break
 
@@ -73,7 +76,8 @@ class ObjectLocationMemoryNWBConverter(NWBConverter):
             for idx, row in sample_trial_events_table.iterrows():
                 for position, novelty in zip(sample_trial_info["position"], sample_trial_info["novelty"]):
                     if position == row["label"]:
+                        nwbfile.processing["events"][sample_trial_events_table_name]["event_description"].data[
+                            idx
+                        ] = novelty
                         sample_trial_events_table.at[idx, "event_description"] = novelty
                         break
-
-            # TODO Update the NWB file with the modified tables

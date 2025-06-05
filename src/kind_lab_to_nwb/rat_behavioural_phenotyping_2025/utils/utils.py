@@ -1,14 +1,13 @@
 import re
 import struct
 import subprocess
-import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional, Union
+from shutil import rmtree
+from typing import List
 
 import pandas as pd
-from pydantic import FilePath
-from pynwb.file import Subject
+from pydantic import DirectoryPath, FilePath
 
 
 def extract_subject_metadata_from_excel(subjects_metadata_file_path: FilePath) -> List[dict]:
@@ -38,7 +37,7 @@ def extract_subject_metadata_from_excel(subjects_metadata_file_path: FilePath) -
         if "tasks conducted" in subject and isinstance(subject["tasks conducted"], str):
             subject["tasks conducted"] = [task.strip() for task in subject["tasks conducted"].split(",")]
 
-    # For the fiels "animal ID" and "cohort ID" convert to int
+    # For the fields "animal ID" and "cohort ID" convert to int
     for subject in subjects_metadata:
         subject["animal ID"] = int(subject["animal ID"])
         subject["cohort no."] = int(subject["cohort no."])
@@ -312,3 +311,94 @@ def parse_datetime_from_filename(filename: str) -> datetime:
 
     # If no pattern matches, raise an error
     raise ValueError(f"Filename '{filename}' doesn't match any of the expected datetime formats")
+
+
+def dandi_ember_upload(
+    nwb_folder_path: DirectoryPath,
+    dandiset_folder_path: DirectoryPath,
+    dandiset_id: str,
+    version: str = "draft",
+    files_mode: str = "copy",
+    media_files_mode: str = "copy",
+    cleanup: bool = True,
+):
+    """
+    Upload NWB files to a Dandiset on the DANDI-EMBER archive (https://dandi.emberarchive.org/).
+
+    This function automates the process of uploading NWB files to a DANDI-EMBER archive. It performs the following steps:
+    1. Downloads the specified Dandiset from the DANDI-EMBER archive (metadata only, not assets).
+    2. Organizes the provided NWB files into the downloaded Dandiset folder structure using DANDI's organize utility.
+    3. Uploads the organized NWB files to the DANDI-EMBER instance.
+    4. Cleans up any temporary folders created during the process.
+
+    Parameters
+    ----------
+    nwb_folder_path : DirectoryPath
+        Path to the folder containing the NWB files to be uploaded.
+    dandiset_folder_path : DirectoryPath
+        Path to a folder where the Dandiset will be downloaded and organized. This folder will be created if it does not exist and will be deleted after upload.
+    dandiset_id : str
+        The identifier for the Dandiset to which the NWB files will be uploaded (e.g., "000199").
+    version : str, optional
+        The version of the Dandiset to download from the archive (default is "draft").
+    files_mode : str, optional
+        The file operation mode for organizing files: 'copy' or 'move' (default is 'copy').
+    media_files_mode : str, optional
+        The file operation mode for media files: 'copy' or 'move' (default is 'copy').
+    cleanup : bool, optional
+        Whether to clean up the temporary Dandiset folder and NWB folder after upload (default is True).
+
+    Raises
+    ------
+    AssertionError
+        If the Dandiset download or organization fails.
+    Exception
+        If the upload process encounters an error, it will be logged and the function will proceed to clean up temporary files.
+
+    Notes
+    -----
+    - This function will delete both the dandiset_folder_path and nwb_folder_path after upload, so ensure these are temporary or backed up if needed.
+    - Uses DANDI's Python API for download, organize, and upload operations.
+    - Designed for use with the DANDI-EMBER archive (https://dandi.emberarchive.org/).
+    """
+    from dandi.download import download as dandi_download
+    from dandi.organize import CopyMode, FileOperationMode
+    from dandi.organize import organize as dandi_organize
+    from dandi.upload import upload as dandi_upload
+
+    # Map string to enum
+    files_mode_enum = FileOperationMode.COPY if files_mode.lower() == "copy" else FileOperationMode.MOVE
+    media_files_mode_enum = CopyMode.COPY if media_files_mode.lower() == "copy" else CopyMode.MOVE
+
+    dandiset_folder_path = Path(dandiset_folder_path)
+    dandiset_folder_path.mkdir(parents=True, exist_ok=True)
+
+    dandiset_path = dandiset_folder_path / dandiset_id
+    dandiset_url = f"https://dandi.emberarchive.org/dandiset/{dandiset_id}/{version}"
+    dandi_download(urls=dandiset_url, output_dir=str(dandiset_folder_path), get_metadata=True, get_assets=False)
+    assert dandiset_path.exists(), "DANDI download failed!"
+
+    dandi_organize(
+        paths=str(nwb_folder_path),
+        dandiset_path=str(dandiset_path),
+        devel_debug=True,
+        update_external_file_paths=True,
+        files_mode=files_mode_enum,
+        media_files_mode=media_files_mode_enum,
+    )
+    assert len(list(dandiset_path.iterdir())) > 1, "DANDI organize failed!"
+
+    try:
+        organized_nwbfiles = [str(x) for x in dandiset_path.rglob("*.nwb")]
+        dandi_upload(
+            paths=organized_nwbfiles,
+            dandi_instance="ember",
+        )
+    except Exception as e:
+        print(f"Error during DANDI upload: {e}")
+
+    finally:
+        # Clean up the temporary DANDI folder
+        if cleanup:
+            rmtree(path=dandiset_folder_path)
+            rmtree(path=nwb_folder_path)

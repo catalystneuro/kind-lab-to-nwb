@@ -32,6 +32,7 @@ def session_to_nwb(
     data_dir_path: Union[str, Path],
     output_dir_path: Union[str, Path],
     path_expander_metadata: dict,
+    video_starting_time: float,
     stub_test: bool = False,
     overwrite: bool = False,
     verbose: bool = True,

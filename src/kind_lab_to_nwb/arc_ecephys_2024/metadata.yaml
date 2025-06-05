@@ -65,8 +65,8 @@ Ecephys:
     description: "EEG signal recorded from the Olfactory Bulb."
     location: "OB"
     targeted_location: "OB"
-    targeted_x: 7560.0
-    targeted_y: 1000.0
+    targeted_x: 1000.0
+    targeted_y: 7560.0
     targeted_z: 0.0
     units: "um"
   Motor_cortex_EEG:
@@ -74,8 +74,8 @@ Ecephys:
     description: "EEG signal recorded from the Motor Cortex."
     location: "M1"
     targeted_location: "M1"
-    targeted_x: 2160.0
-    targeted_y: 3000.0
+    targeted_x: 3000.0
+    targeted_y: 2160.0
     targeted_z: 0.0
     units: "um"
   Hippocampal_EEG:
@@ -83,117 +83,117 @@ Ecephys:
     description: "EEG signal recorded from the Hippocampus."
     location: "HPC"
     targeted_location: "HPC"
-    targeted_x: -3240.0
-    targeted_y: 2500.0
+    targeted_x: 2500.0
+    targeted_y: -3240.0
     targeted_z: 0.0
     units: "um"
   IrL_1:
-    name: "left_mPFC_LFP_electrode_group"
-    description: "LFP signal recorded from the Medial Prefrontal Cortex (Infralimbic cortex, targeted bilaterally)."
+    name: "mPFC_LFP_electrode_group"
+    description: "LFP signal recorded from the Medial Prefrontal Cortex (Infralimbic cortex)."
     location: "mPFC"
     targeted_location: "mPFC"
-    targeted_x: 3240.0
-    targeted_y: 500.0
+    targeted_x: 500.0
+    targeted_y: 3240.0
     targeted_z: 4000.0
     units: "um"
   SC_1:
-    name: "left_SC_LFP_electrode_group"
-    description: "LFP signal recorded from the Superior Colliculus (targeted bilaterally)."
+    name: "SC_LFP_electrode_group"
+    description: "LFP signal recorded from the Superior Colliculus."
     location: "SC"
     targeted_location: "SC"
-    targeted_x: -6720.0
-    targeted_y: 1500.0
+    targeted_x: 1500.0
+    targeted_y: -6720.0
     targeted_z: 3000.0
     units: "um"
   LA_1:
-    name: "left_LA_LFP_electrode_group"
-    description: "LFP signal recorded from the Lateral Amygdala (targeted bilaterally)."
+    name: "LA_LFP_electrode_group"
+    description: "LFP signal recorded from the Lateral Amygdala."
     location: "LA"
     targeted_location: "LA"
-    targeted_x: -2400.0
-    targeted_y: 4700.0
+    targeted_x: 4700.0
+    targeted_y: -2400.0
     targeted_z: 7500.0
     units: "um"
   V1_1:
-    name: "left_V1_LFP_electrode_group"
-    description: "LFP signal recorded from the Primary Visual Cortex (targeted bilaterally)."
+    name: "V1_LFP_electrode_group"
+    description: "LFP signal recorded from the Primary Visual Cortex."
     location: "V1"
     targeted_location: "V1"
-    targeted_x: -6240.0
-    targeted_y: 2500.0
+    targeted_x: 2500.0
+    targeted_y: -6240.0
     targeted_z: 100.0
     units: "um"
   Aud_1:
-    name: "left_Aud_LFP_electrode_group"
-    description: "LFP signal recorded from the Auditory Cortex (targeted bilaterally)."
+    name: "Aud_LFP_electrode_group"
+    description: "LFP signal recorded from the Auditory Cortex."
     location: "Aud"
     targeted_location: "Aud"
-    targeted_x: 0.0 #TO ASK
-    targeted_y: 0.0 #TO ASK
-    targeted_z: 0.0 #TO ASK
+    targeted_x: 6000.0
+    targeted_y: -4680.0
+    targeted_z: 2000.0
     units: "um"
   Crus_I_1:
-    name: left_CrusI_LFP_electrode_group"
-    description: "LFP signal recorded from the Crus I (targeted bilaterally)."
+    name: "CrusI_LFP_electrode_group"
+    description: "LFP signal recorded from the Crus I."
     location: "Crus I"
     targeted_location: "Crus I"
-    targeted_x: 0.0 #TO ASK
-    targeted_y: 0.0 #TO ASK
-    targeted_z: 0.0 #TO ASK
+    targeted_x: 3500.0
+    targeted_y: -12240.0
+    targeted_z: 500.0
     units: "um"
   IrL_2:
-    name: "right_mPFC_LFP_electrode_group"
-    description: "LFP signal recorded from the Medial Prefrontal Cortex (Infralimbic cortex, targeted bilaterally)."
+    name: "mPFC_LFP_electrode_group"
+    description: "LFP signal recorded from the Medial Prefrontal Cortex (Infralimbic cortex)."
     location: "mPFC"
     targeted_location: "mPFC"
-    targeted_x: 3240.0
-    targeted_y: -500.0
+    targeted_x: 500.0
+    targeted_y: 3240.0
     targeted_z: 4000.0
     units: "um"
   SC_2:
-    name: "right_SC_LFP_electrode_group"
-    description: "LFP signal recorded from the Superior Colliculus (targeted bilaterally)."
+    name: "SC_LFP_electrode_group"
+    description: "LFP signal recorded from the Superior Colliculus."
     location: "SC"
     targeted_location: "SC"
-    targeted_x: -6720.0
-    targeted_y: -1500.0
+    targeted_x: 1500.0
+    targeted_y: -6720.0
     targeted_z: 3000.0
     units: "um"
   LA_2:
-    name: "right_LA_LFP_electrode_group"
-    description: "LFP signal recorded from the Lateral Amygdala (targeted bilaterally)."
+    name: "LA_LFP_electrode_group"
+    description: "LFP signal recorded from the Lateral Amygdala."
     location: "LA"
     targeted_location: "LA"
-    targeted_x: -2400.0
-    targeted_y: -4700.0
+    targeted_x: 4700.0
+    targeted_y: -2400.0
     targeted_z: 7500.0
     units: "um"
   V1_2:
-    name: "right_V1_LFP_electrode_group"
-    description: "LFP signal recorded from the Primary Visual Cortex (targeted bilaterally)."
+    name: "V1_LFP_electrode_group"
+    description: "LFP signal recorded from the Primary Visual Cortex."
     location: "V1"
     targeted_location: "V1"
-    targeted_x: -6240.0
-    targeted_y: -2500.0
+    targeted_x: 2500.0
+    targeted_y: -6240.0
     targeted_z: 100.0
     units: "um"
   Aud_2:
-    name: "right_Aud_LFP_electrode_group"
-    description: "LFP signal recorded from the Auditory Cortex (targeted bilaterally)."
+    name: "Aud_LFP_electrode_group"
+    description: "LFP signal recorded from the Auditory Cortex."
     location: "Aud"
     targeted_location: "Aud"
-    targeted_x: 0.0 #TO ASK
-    targeted_y: 0.0 #TO ASK
-    targeted_z: 0.0 #TO ASK
+    targeted_x: 6000.0
+    targeted_y: -4680.0
+    targeted_z: 2000.0
     units: "um"
   Crus_I_2:
-    name: "right_CrusI_LFP_electrode_group"
-    description: "LFP signal recorded from the Crus I (targeted bilaterally)."
+    name: "CrusI_LFP_electrode_group"
+    description: "LFP signal recorded from the Crus I."
     location: "Crus I"
     targeted_location: "Crus I"
-    targeted_x: 0.0 #TO ASK
-    targeted_y: 0.0 #TO ASK
-    targeted_z: 0.0 #TO ASK
+    targeted_x: 3500.0
+    targeted_y: -12240.0
+    targeted_z: 500.0
     units: "um"
   unknown:
     name: "bad_electrode_group"

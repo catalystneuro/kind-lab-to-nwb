@@ -36,6 +36,7 @@ def add_trials_to_nwbfile(
     zone_time_column_name = next((col for col in trials.columns if zone_time_column_name_substring in col), None)
     has_zone_data = zone_time_column_name is not None
 
+    has_platform_crossings = "Platform crossings" in trials.columns
     # Add columns for quadrant times (in seconds)
     quadrants = ["NE", "NW", "SW", "SE"]
     if has_quadrant_data:
@@ -44,7 +45,13 @@ def add_trials_to_nwbfile(
         # Find the column index for "Quadrant time (%)"
         quadrant_time_percent_idx = trials.columns.get_loc("Quadrant time (%)")
         # Find the column index for "Time to platform"
-        time_to_platform_idx = trials.columns.get_loc("Time to platform.1")
+        try:
+            time_to_platform_idx = trials.columns.get_loc("Time to platform.1")
+        except KeyError:
+            time_to_platform_idx = trials.columns.get_loc("Time to platform")
+
+        if has_platform_crossings:
+            platform_crossings_idx = trials.columns.get_loc("Platform crossings")
 
         for quadrant in quadrants:
             nwbfile.add_trial_column(
@@ -57,6 +64,11 @@ def add_trials_to_nwbfile(
             nwbfile.add_trial_column(
                 name=f"time_to_platform_{quadrant}", description=f"Time to platform when in {quadrant} quadrant"
             )
+            if has_platform_crossings:
+                nwbfile.add_trial_column(
+                    name=f"platform_crossings_{quadrant}",
+                    description=f"Number of platform crossings when in {quadrant} quadrant",
+                )
 
     # Add columns for zone data if present
     zones = ["NE", "NE_A", "SE", "SE_A", "SW", "SW_A", "NW", "NW_A"]
@@ -91,6 +103,10 @@ def add_trials_to_nwbfile(
 
                 # Time to platform in each quadrant
                 trial_data[f"time_to_platform_{quadrant}"] = float(row.iloc[time_to_platform_idx + i])
+
+                if has_platform_crossings:
+                    # Platform crossings in each quadrant
+                    trial_data[f"platform_crossings_{quadrant}"] = float(row.iloc[platform_crossings_idx + i])
         if has_zone_data:
             for i, zone in enumerate(zones):
                 trial_data[f"zone_percent_time_{zone}"] = float(row.iloc[zone_idx + i])

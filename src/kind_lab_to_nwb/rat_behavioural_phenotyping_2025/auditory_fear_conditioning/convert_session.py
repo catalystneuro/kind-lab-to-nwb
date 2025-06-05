@@ -1,15 +1,12 @@
 """Primary script to run to convert an entire session for of data using the NWBConverter."""
-
-import subprocess
 import warnings
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Union
+from typing import List, Optional, Union
 from zoneinfo import ZoneInfo
 
 import pandas as pd
 from pydantic import FilePath
-from pynwb import NWBHDF5IO
 
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.auditory_fear_conditioning import (
     AuditoryFearConditioningNWBConverter,
@@ -19,64 +16,15 @@ from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils import (
     get_session_ids_from_excel,
     get_subject_metadata_from_task,
 )
+from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils.utils import (
+    convert_ffii_files_to_avi,
+)
 from neuroconv.utils import dict_deep_update, load_dict_from_file
 
 
-def _convert_ffii_to_avi(
-    folder_path: Union[str, Path], convert_ffii_repo_path: Optional[Union[str, Path]] = None, frame_rate: int = 15
-) -> None:
-    """
-    Convert ffii files in a directory to avi format using the convert-ffii tool.
-    This utility function requires ffmpeg (https://ffmpeg.org/download.html) to be installed on the system prior to use.
-
-    Notes
-    -----
-    The video conversion script is forked from https://github.com/jf-lab/convert-ffii.git
-    The converted avi files will be saved in the same directory as the input files.
-
-    This utility function checks if the convert-ffii repository is available,
-    clones it if needed, and runs the conversion script on the specified directory.
-
-    Parameters
-    ----------
-    folder_path : Union[str, Path]
-        Path to the directory containing the ffii files to be converted
-    convert_ffii_repo_path : Optional[Union[str, Path]], optional
-        Path where the convert-ffii repository should be or will be cloned to.
-        If None, will use the current working directory.
-    frame_rate : int, optional
-        Frame rate to use for the video conversion, by default 15 Hz
-
-    """
-    folder_path = Path(folder_path)
-    if not folder_path.exists():
-        raise FileNotFoundError(f"Input directory '{folder_path}' does not exist.")
-
-    convert_ffii_repo_path = Path(convert_ffii_repo_path) if convert_ffii_repo_path else None
-    if convert_ffii_repo_path is None:
-        convert_ffii_repo_path = Path.cwd() / "convert-ffii"
-
-    if not convert_ffii_repo_path.exists():
-        print(f"Cloning convert-ffii repository to {str(convert_ffii_repo_path)}...")
-        subprocess.run(
-            ["git", "clone", "https://github.com/weiglszonja/convert-ffii.git", str(convert_ffii_repo_path)], check=True
-        )
-    else:
-        print(f"Using existing convert-ffii repository at '{str(convert_ffii_repo_path)}'.")
-
-    # Run the conversion script
-    ffii_to_avi_conversion_script = convert_ffii_repo_path / "ffii2avi_recursive.py"
-    if not ffii_to_avi_conversion_script.exists():
-        raise FileNotFoundError(f"Conversion script not found at '{ffii_to_avi_conversion_script}'.")
-
-    subprocess.run(
-        ["python", str(ffii_to_avi_conversion_script), str(folder_path), "--fps", str(frame_rate)], check=True
-    )
-
-
 def session_to_nwb(
-    output_dir_path: Union[str, Path],
-    video_file_path: Union[FilePath, str],
+    nwbfile_path: Union[str, Path],
+    video_file_paths: List[Union[FilePath, str]],
     freeze_log_file_path: Union[FilePath, str],
     session_id: str,
     subject_metadata: dict,
@@ -88,9 +36,9 @@ def session_to_nwb(
 
     Parameters
     ----------
-    output_dir_path : Union[str, Path]
-        The folder path where the NWB file will be saved.
-    video_file_path: Union[FilePath, str]
+    nwbfile_path : Union[str, Path]
+        The path where the NWB file will be saved.
+    video_file_paths: Union[FilePath, str]
         The path to the video file (.avi) to be converted.
     freeze_log_file_path: Union[FilePath, str]
         The path to the freeze log file.
@@ -103,21 +51,24 @@ def session_to_nwb(
     overwrite: bool, optional
         Whether to overwrite the NWB file if it already exists, by default False.
     """
-    output_dir_path = Path(output_dir_path)
-    output_dir_path.mkdir(
+    nwbfile_path = Path(nwbfile_path)
+    nwbfile_path.parent.mkdir(
         parents=True,
         exist_ok=True,
     )
 
     subject_id = f"{subject_metadata['animal ID']}_{subject_metadata['cohort ID']}"
-    nwbfile_path = output_dir_path / f"sub-{subject_id}_ses-{session_id}.nwb"
 
     source_data = dict()
     conversion_options = dict()
 
     # Add Behavioral Video
-    source_data.update(dict(Video=dict(file_paths=[video_file_path], video_name="BehavioralVideo")))
-    conversion_options.update(dict(Video=dict()))
+    if len(video_file_paths) == 1:
+        file_paths = convert_ffii_files_to_avi(video_file_paths)
+        source_data.update(dict(Video=dict(file_paths=file_paths, video_name="BehavioralVideo")))
+        conversion_options.update(dict(Video=dict()))
+    elif len(video_file_paths) > 1:
+        raise ValueError(f"Multiple video files found for {subject_id}.")
 
     if freeze_scores_file_path is not None:
         # Add Freeze Scores as trials
@@ -168,10 +119,6 @@ def session_to_nwb(
         overwrite=overwrite,
     )
 
-    with NWBHDF5IO(nwbfile_path, mode="r") as io:
-        nwbfile_in = io.read()
-        print(nwbfile_in.trials.to_dataframe())
-
 
 if __name__ == "__main__":
 
@@ -198,13 +145,6 @@ if __name__ == "__main__":
 
     video_folder_path = cohort_folder_path / session_id
 
-    # TODO: move this to convert_sessions.py
-    # _convert_ffii_to_avi(
-    #     folder_path=video_folder_path,
-    #     convert_ffii_repo_path="convert-ffii",
-    #     frame_rate=15, # TODO: confirm frame rate
-    # )
-
     if not video_folder_path.exists():
         raise FileNotFoundError(f"Folder {cohort_folder_path} does not exist")
     video_file_paths = list(video_folder_path.glob(f"*{subject_metadata['animal ID']}*.avi"))
@@ -216,14 +156,13 @@ if __name__ == "__main__":
         raise FileExistsError(
             f"Multiple video files found for animal ID {subject_metadata['animal ID']} in {video_folder_path}."
         )
-    video_file_path = video_file_paths[0]
 
     freeze_scores_file_paths = list(video_folder_path.glob(f"*{subject_metadata['line']}*.csv"))
     if len(freeze_scores_file_paths):
         freeze_scores_file_path = freeze_scores_file_paths[0]
     else:
         freeze_scores_file_path = None
-        warnings.warn(f"No freeze scores file (.csv) found in {video_file_path}.")
+        warnings.warn(f"No freeze scores file (.csv) found in {video_folder_path}.")
 
     # Path to the excel file containing metadata
     freeze_log_file_path = video_folder_path / "Freeze_Log.xls"
@@ -232,9 +171,10 @@ if __name__ == "__main__":
     # Whether to overwrite the NWB file if it already exists
     overwrite = True
 
+    nwbfile_path = output_dir_path / f"sub-{subject_metadata['animal ID']}_ses-{session_id}.nwb"
     session_to_nwb(
-        output_dir_path=output_dir_path,
-        video_file_path=video_file_path,
+        nwbfile_path=nwbfile_path,
+        video_file_paths=video_file_paths,
         freeze_log_file_path=freeze_log_file_path,
         freeze_scores_file_path=freeze_scores_file_path,
         session_id=f"{task_acronym}_{session_id}",

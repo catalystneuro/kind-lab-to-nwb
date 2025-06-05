@@ -55,15 +55,13 @@ def get_novelty_information_for_the_object_positions(
         return {}
 
     # Initialize the novelty info dictionary
+# Initialize result structure
+    trial_types = ["sample_trial", "test_trial"]
+    object_ids = ["A", "B", "C", "D"]
+    num_objects = len(object_ids)
     novelty_info_dict = {
-        "sample_trial": {
-            "position": [None, None, None, None],
-            "novelty": [None, None, None, None],
-        },
-        "test_trial": {
-            "position": [None, None, None, None],
-            "novelty": [None, None, None, None],
-        },
+        t: {"position": [None] * num_objects, "novelty": [None] * num_objects}
+        for t in trial_types
     }
 
     # Process each row in the filtered dataframe

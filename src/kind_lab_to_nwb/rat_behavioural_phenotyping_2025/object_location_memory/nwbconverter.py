@@ -47,7 +47,37 @@ class ObjectLocationMemoryNWBConverter(NWBConverter):
 
     def add_to_nwbfile(self, nwbfile: NWBFile, metadata, conversion_options: Optional[dict] = None):
         super().add_to_nwbfile(nwbfile, metadata, conversion_options)
+
         for device_metadata in metadata["Devices"]:
             # Add the device to the NWB file
             device = Device(**device_metadata)
             nwbfile.add_device(device)
+
+        if (
+            "TestObjectLocationMemoryBehavior" in self.data_interface_objects
+            and "SampleObjectLocationMemoryBehavior" in self.data_interface_objects
+            and "NoveltyInformation" in metadata
+        ):
+            test_trial_info = metadata["NoveltyInformation"]["test_trial"]
+            test_trial_events_table_name = conversion_options["TestObjectLocationMemoryBehavior"]["table_name"]
+            test_trial_events_table = nwbfile.processing["events"][test_trial_events_table_name].to_dataframe()
+            for idx, row in test_trial_events_table.iterrows():
+                for position, novelty in zip(test_trial_info["position"], test_trial_info["novelty"]):
+                    if position == row["label"]:
+                        nwbfile.processing["events"][test_trial_events_table_name]["event_description"].data[
+                            idx
+                        ] = novelty
+                        test_trial_events_table.at[idx, "event_description"] = novelty
+                        break
+
+            sample_trial_info = metadata["NoveltyInformation"]["sample_trial"]
+            sample_trial_events_table_name = conversion_options["SampleObjectLocationMemoryBehavior"]["table_name"]
+            sample_trial_events_table = nwbfile.processing["events"][sample_trial_events_table_name].to_dataframe()
+            for idx, row in sample_trial_events_table.iterrows():
+                for position, novelty in zip(sample_trial_info["position"], sample_trial_info["novelty"]):
+                    if position == row["label"]:
+                        nwbfile.processing["events"][sample_trial_events_table_name]["event_description"].data[
+                            idx
+                        ] = novelty
+                        sample_trial_events_table.at[idx, "event_description"] = novelty
+                        break

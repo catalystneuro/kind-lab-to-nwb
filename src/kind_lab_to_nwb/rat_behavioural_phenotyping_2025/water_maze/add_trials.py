@@ -16,11 +16,11 @@ def add_trials_to_nwbfile(
 
     standard_columns = {
         "Platform": ("platform", "Platform location"),
-        "Time to platform": ("time_to_platform", "Time taken to reach the platform in seconds"),
-        "Trial duration": ("trial_duration", "Total duration of the trial in seconds"),
-        "Distance travelled (cm)": ("distance_travelled_cm", "Distance travelled in centimeters"),
-        "Average speed": ("average_speed", "Average swimming speed in cm/s"),
-        "% time near walls": ("percent_time_near_walls", "Percentage of time spent near walls"),
+        "Time to platform": ("time_to_platform", "Time taken to reach the platform in seconds", "float"),
+        "Trial duration": ("trial_duration", "Total duration of the trial in seconds", "float"),
+        "Distance travelled (cm)": ("distance_travelled_cm", "Distance travelled in centimeters", "float"),
+        "Average speed": ("average_speed", "Average swimming speed in cm/s", "float"),
+        "% time near walls": ("percent_time_near_walls", "Percentage of time spent near walls", "float"),
         "Platform Quadrant": ("platform_quadrant", "Quadrant containing the platform (1=NE, 2=NW, 3=SW, 4=SE)", "int"),
     }
 
@@ -91,6 +91,9 @@ def add_trials_to_nwbfile(
                 # Convert to integer if specified
                 if optional_type and optional_type[0] == "int":
                     value = int(float(value))  # Convert through float to handle potential decimal values
+                # Convert to float if specified
+                elif optional_type and optional_type[0] == "float":
+                    value = float(value)
                 trial_data[nwb_col] = value
 
         if has_quadrant_data:
@@ -118,7 +121,7 @@ def add_trials_to_nwbfile(
 
         nwbfile.add_trial(
             start_time=row["start_time"],
-            stop_time=row["start_time"] + row["Trial duration"],
+            stop_time=row["start_time"] + trial_data["trial_duration"],
             **trial_data,
             timeseries=image_series,
         )

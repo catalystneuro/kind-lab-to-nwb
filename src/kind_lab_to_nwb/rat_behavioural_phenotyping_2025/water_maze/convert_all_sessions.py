@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Union
 
 import natsort
+import pandas as pd
 from tqdm import tqdm
 
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils import (
@@ -119,10 +120,11 @@ def dataset_to_nwb(
                 results.append(
                     {
                         "session_id": session_id,
-                        "animal_id": subject_id,
+                        "subject_id": subject_id,
                         "status": "skipped",
                         "nwbfile_path": str(nwbfile_path),
                         "error": "",
+                        **session_kwargs,
                     }
                 )
                 continue
@@ -137,10 +139,11 @@ def dataset_to_nwb(
             results.append(
                 {
                     "session_id": session_id,
-                    "animal_id": subject_id,
+                    "subject_id": subject_id,
                     "status": "success",
                     "nwbfile_path": str(nwbfile_path),
                     "error": "",
+                    **session_kwargs,
                 }
             )
         except Exception as e:
@@ -149,18 +152,16 @@ def dataset_to_nwb(
             results.append(
                 {
                     "session_id": session_id,
-                    "animal_id": subject_id,
+                    "subject_id": subject_id,
                     "status": "failed",
                     "nwbfile_path": str(nwbfile_path),
                     "error": error_message,
+                    **session_kwargs,
                 }
             )
-    results_csv_path = output_dir_path / "conversion_results.csv"
-    with open(results_csv_path, mode="w", newline="") as csvfile:
-        fieldnames = ["session_id", "animal_id", "status", "nwbfile_path", "error"]
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerows(results)
+    results_csv_path = output_dir_path / "WM_conversion_results.csv"
+    results_data = pd.DataFrame(results)
+    results_data.to_csv(results_csv_path, index=False)
     logging.info(f"Conversion completed. Results saved to {results_csv_path}")
 
 

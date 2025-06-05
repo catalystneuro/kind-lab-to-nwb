@@ -91,14 +91,8 @@ def get_novelty_information_for_the_object_positions(
             novelty = row.get(nov_col, None)
 
             # Handle NaN values (convert to None)
-            if pd.isna(position):
-                position = None
-            if pd.isna(novelty):
-                novelty = None
-
-            # Update the dictionary
-            novelty_info_dict[trial_type]["position"][i] = position
-            novelty_info_dict[trial_type]["novelty"][i] = novelty
+            novelty_info_dict[trial_type]["position"][i] = None if pd.isna(position) else position
+            novelty_info_dict[trial_type]["novelty"][i] = None if pd.isna(novelty) else novelty
 
     return novelty_info_dict
 

@@ -111,9 +111,11 @@ def add_electrical_series(
     unique_locations = set(info["location"] for info in channels_info.values())
     electrode_groups = {}
     for location in unique_locations:
-        electrode_group = NwbElectrodeGroup(**metadata["Ecephys"][location], device=probe)
-        if not nwbfile.electrode_groups.get(electrode_group.name):
+        if not metadata["Ecephys"][location]["name"] in nwbfile.electrode_groups:
+            electrode_group = NwbElectrodeGroup(**metadata["Ecephys"][location], device=probe)
             nwbfile.add_electrode_group(electrode_group)
+        else:
+            electrode_group = nwbfile.electrode_groups[metadata["Ecephys"][location]["name"]]
         electrode_groups[location] = electrode_group
 
     # Add electrodes to the electrode groups

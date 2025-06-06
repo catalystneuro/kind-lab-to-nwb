@@ -192,8 +192,8 @@ def parse_datetime_from_filename(filename: str) -> datetime:
     if isinstance(filename, Path):
         filename = filename.name
 
-    # Pattern 1: Date and time separated by space (2024-03-20 10-32-22_...)
-    pattern1 = r"(\d{4}-\d{2}-\d{2} \d{2}-\d{2}-\d{2})_"
+    # Pattern 1: Date and time separated by space (2024-03-20 10-32-22_... or 2024-03-20 10-32-22 ...) 
+    pattern1 = r"(\d{4}-\d{2}-\d{2} \d{2}-\d{2}-\d{2})[_ ]"
     match = re.search(pattern1, filename)
     if match:
         datetime_str = match.group(1)

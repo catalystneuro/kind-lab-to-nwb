@@ -6,7 +6,6 @@ from zoneinfo import ZoneInfo
 
 import natsort
 from pydantic import FilePath
-from pynwb import NWBHDF5IO
 
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.interfaces import (
     BORISBehavioralEventsInterface,
@@ -175,11 +174,6 @@ def session_to_nwb(
         conversion_options=conversion_options,
         overwrite=overwrite,
     )
-
-    # with NWBHDF5IO(nwbfile_path, mode="r") as io:
-    #     nwbfile_in = io.read()
-    #     print(nwbfile_in.analysis["detections_table"][:])
-    #     print(nwbfile_in.acquisition)
 
 
 if __name__ == "__main__":

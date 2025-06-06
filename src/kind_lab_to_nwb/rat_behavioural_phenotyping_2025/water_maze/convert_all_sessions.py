@@ -14,6 +14,9 @@ from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils import (
     get_session_ids_from_excel,
     get_subject_metadata_from_task,
 )
+from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils.utils import (
+    dandi_ember_upload,
+)
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.water_maze.convert_session import (
     process_session,
 )
@@ -97,7 +100,9 @@ def dataset_to_nwb(
         data_dir_path=data_dir_path,
         subjects_metadata_file_path=subjects_metadata_file_path,
         task_acronym="WM",
-    )
+    )[
+        :5
+    ]  # Limit to first 5 sessions for testing; remove this slice for full conversion
 
     results = []
 
@@ -176,4 +181,11 @@ if __name__ == "__main__":
         subjects_metadata_file_path=subjects_metadata_file_path,
         verbose=True,
         overwrite=True,
+    )
+
+    dandiset_folder_path = Path("/Users/weian/data/Kind/tmp")
+    dandi_ember_upload(
+        nwb_folder_path=output_dir_path,
+        dandiset_folder_path=dandiset_folder_path,
+        dandiset_id="000205",
     )

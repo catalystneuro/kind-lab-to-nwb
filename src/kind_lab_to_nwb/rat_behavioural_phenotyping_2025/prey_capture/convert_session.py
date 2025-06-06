@@ -150,6 +150,9 @@ def session_to_nwb(
             audio_metadata.update(
                 name=f"AcousticWaveformSeriesTestTrial{i+1}", description=default_metadata_copy["description"]
             )
+    elif usv_file_paths is None and len(audios_metadata):
+        # If no USV files are provided, remove the audio metadata
+        metadata["Behavior"].pop("Audio")
 
     metadata["Subject"]["subject_id"] = subject_id
     metadata["Subject"]["date_of_birth"] = subject_metadata["DOB (DD/MM/YYYY)"]
@@ -195,8 +198,9 @@ if __name__ == "__main__":
     subjects_metadata = extract_subject_metadata_from_excel(subjects_metadata_file_path)
     subjects_metadata = get_subject_metadata_from_task(subjects_metadata, task_acronym)
 
-    session_id = session_ids[-3]  # HabD2
+    session_id = session_ids[0]  # HabD1
     subject_metadata = subjects_metadata[0]  # subject 408_Arid1b(3)
+    cage_id = 1  # TODO: read this from the Excel table
 
     cohort_folder_path = data_dir_path / subject_metadata["line"] / f"{subject_metadata['cohort ID']}_{task_acronym}"
     if not cohort_folder_path.exists():
@@ -208,7 +212,9 @@ if __name__ == "__main__":
         raise FileNotFoundError(f"Folder {cohort_folder_path} does not exist")
     # TODO: for HabD1 need to figure out how to match the cage number with the animal ID
     if session_id == "HabD1":
-        video_file_paths = natsort.natsorted(video_folder_path.glob(f"**"))
+        video_file_paths = natsort.natsorted(video_folder_path.glob(f"*.mp4"))
+        # Filter video file paths if the cage id is in the file name.
+        video_file_paths = [path for path in video_file_paths if f"cage{cage_id}" in path.name.lower()]
     else:
         video_file_paths = natsort.natsorted(video_folder_path.glob(f"*{subject_metadata['animal ID']}*"))
 

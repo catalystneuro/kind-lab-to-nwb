@@ -26,7 +26,7 @@ from neuroconv.utils import dict_deep_update, load_dict_from_file
 
 
 def session_to_nwb(
-    output_dir_path: Union[str, Path],
+    nwbfile_path: Union[str, Path],
     video_file_paths: List[Union[FilePath, str]],
     session_id: str,
     subject_metadata: dict,
@@ -40,8 +40,8 @@ def session_to_nwb(
 
     Parameters
     ----------
-    output_dir_path : Union[str, Path]
-        The folder path where the NWB file will be saved.
+    nwbfile_path : Union[str, Path]
+        The full path where the NWB file will be saved.
     video_file_paths: List[Union[FilePath, str]]
         The list of video file paths to be converted.
     session_id: str
@@ -57,14 +57,10 @@ def session_to_nwb(
     overwrite: bool, optional
         Whether to overwrite the NWB file if it already exists, by default False.
     """
-    output_dir_path = Path(output_dir_path)
-    output_dir_path.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
+    nwbfile_path = Path(nwbfile_path)
+    nwbfile_path.parent.mkdir(parents=True, exist_ok=True)
 
     subject_id = f"{subject_metadata['animal ID']}_{subject_metadata['cohort ID']}"
-    nwbfile_path = output_dir_path / f"sub-{subject_id}_ses-{session_id}.nwb"
 
     conversion_options = dict()
 
@@ -111,9 +107,11 @@ def session_to_nwb(
     if usv_file_paths is not None:
         audio_interface = AudioInterface(file_paths=usv_file_paths)
         if usv_starting_times is not None:
+            assert len(usv_file_paths) == len(usv_starting_times), (
+                f"Number of USV files ({len(usv_file_paths)}) does not match number of starting times "
+                f"({len(usv_starting_times)})."
+            )
             audio_interface._segment_starting_times = usv_starting_times
-        else:
-            audio_interface._segment_starting_times = video_starting_times
         data_interfaces.append(audio_interface)
         conversion_options.update(dict(AudioInterface=dict(stub_test=stub_test, write_as="acquisition")))
 
@@ -222,8 +220,11 @@ if __name__ == "__main__":
     # Whether to overwrite the NWB file if it already exists
     overwrite = True
 
+    subject_id = f"{subject_metadata['animal ID']}_{subject_metadata['cohort ID']}"
+    nwbfile_path = output_dir_path / f"sub-{subject_id}_ses-{task_acronym}-{session_id}.nwb"
+
     session_to_nwb(
-        output_dir_path=output_dir_path,
+        nwbfile_path=nwbfile_path,
         video_file_paths=video_file_paths,
         session_id=f"{task_acronym}_{session_id}",
         subject_metadata=subject_metadata,

@@ -1,9 +1,9 @@
-"""SpyGlass extension for task LED configuration data.
+"""SpyGlass extension for annotated events data.
 
 This module provides a custom DataJoint table that extends SpyGlass functionality
-to store LED configuration information for behavioral tasks. It extracts LED
-setup details from NWB files and stores them in a structured database format
-for analysis and querying.
+to store annotated events data from behavioral experiments. It extracts event timing,
+descriptions, labels and durations from NWB files and stores them in a structured
+database format for analysis and querying.
 """
 
 import datajoint as dj

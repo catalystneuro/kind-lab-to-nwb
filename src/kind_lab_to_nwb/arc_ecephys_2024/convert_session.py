@@ -17,7 +17,7 @@ from neuroconv.tools.nwb_helpers import (
 )
 from neuroconv.tools.path_expansion import LocalPathExpander
 
-from spyglass_utils import (
+from kind_lab_to_nwb.arc_ecephys_2024.utils import (
     add_behavioral_video,
     get_channels_info_from_subject_id,
     add_electrical_series,

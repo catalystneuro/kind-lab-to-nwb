@@ -8,7 +8,6 @@ database format for analysis and querying.
 
 import datajoint as dj
 from spyglass.utils import SpyglassMixin
-from spyglass.common.common_task import DIOEvents
 from spyglass.common.common_nwbfile import Nwbfile
 from spyglass.utils.nwb_helper_fn import get_nwb_file
 
@@ -16,7 +15,7 @@ schema = dj.schema("annotated_events")
 
 
 @schema
-class AnnotatedEvents(SpyglassMixin, dj.Imported):
+class AnnotatedEvents(SpyglassMixin, dj.Manual):
     """Custom SpyGlass table for storing annotated events data.
 
     This table extends the standard SpyGlass DIOEvents table to include annotated events data
@@ -27,7 +26,6 @@ class AnnotatedEvents(SpyglassMixin, dj.Imported):
     """
 
     definition = """
-    -> DIOEvents # Inherit primary key from DIOEvents
     duration : varchar(32) # string of max length 32
     event_times : varchar(32) # string of max length 32
     event_description : varchar(32) # string of max length 32
@@ -70,9 +68,9 @@ class AnnotatedEvents(SpyglassMixin, dj.Imported):
                     inserts.append(
                         {
                             "duration": duration,
-                            "led_name": led_name,
+                            "label": label,
                             "event_times": event_times,
-                            "led_position": led_position,
+                            "event_description": event_description,
                         }
                     )
         self.insert(inserts, allow_direct_insert=True, skip_duplicates=True)

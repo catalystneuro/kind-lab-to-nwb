@@ -10,7 +10,7 @@ from typing import Union
 # General Spyglass Imports
 from spyglass.utils.nwb_helper_fn import get_nwb_copy_filename
 
-from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.spyglass_utils.events_table import AnnotatedEvents
+from kind_lab_to_nwb.spyglass_utils import AnnotatedEvents
 
 
 def insert_annotated_events(nwbfile_path: Union[str, Path]) -> None:

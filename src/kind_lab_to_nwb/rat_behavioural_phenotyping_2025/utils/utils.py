@@ -92,6 +92,44 @@ def get_session_ids_from_excel(subjects_metadata_file_path: FilePath, task_acron
     return session_ids
 
 
+def get_cage_ids_from_excel_files(pooled_data_folder_path: DirectoryPath) -> pd.DataFrame:
+    """Extract unique cage IDs and their associated metadata from pooled data Excel files.
+
+    Parameters
+    ----------
+    pooled_data_folder_path : DirectoryPath
+        The path to the folder containing the pooled data Excel files.
+
+    Returns
+    -------
+    pd.DataFrame
+        A DataFrame containing the unique cage IDs and their associated metadata.
+    """
+    pooled_data_file_paths = list(Path(pooled_data_folder_path).glob(f"*POOLED*.xlsx"))
+    if not pooled_data_file_paths:
+        raise FileNotFoundError(
+            f"No Excel files containing 'POOLED' in their name found in '{pooled_data_folder_path}'."
+        )
+    cage_id_identifier_columns = ["animal ID", "line", "cohort ID", "cage ID"]
+    dfs = []
+    for pooled_data_file_path in pooled_data_file_paths:
+        # The name of the sheets are not consistent across different versions of the pooled data Excel file, so for now we just use the first sheet
+        df = pd.read_excel(pooled_data_file_path, sheet_name=0)
+        # Remove rows with all NaN values
+        df = df.dropna(how="all")
+        df = df[~(df.apply(lambda row: all(str(row[col]).strip() == col for col in df.columns), axis=1))]
+        df.columns = df.columns.str.strip()  # Strip whitespace from column names
+        df.rename(columns={"Unique animal ID": "animal ID"}, inplace=True)
+
+        for col in cage_id_identifier_columns:
+            if col not in df.columns:
+                raise KeyError(f"Expected column '{col}' is not present in '{pooled_data_file_path}'.")
+        dfs.append(df[cage_id_identifier_columns])
+
+    combined_df = pd.concat(dfs, ignore_index=True).reset_index(drop=True)
+    return combined_df
+
+
 SUPPORTED_SUFFIXES = [".avi", ".mp4", ".wmv", ".mov", ".flx", ".mkv"]  # video file's suffixes supported by DANDI
 
 
@@ -192,7 +230,7 @@ def parse_datetime_from_filename(filename: str) -> datetime:
     if isinstance(filename, Path):
         filename = filename.name
 
-    # Pattern 1: Date and time separated by space (2024-03-20 10-32-22_... or 2024-03-20 10-32-22 ...) 
+    # Pattern 1: Date and time separated by space (2024-03-20 10-32-22_... or 2024-03-20 10-32-22 ...)
     pattern1 = r"(\d{4}-\d{2}-\d{2} \d{2}-\d{2}-\d{2})[_ ]"
     match = re.search(pattern1, filename)
     if match:

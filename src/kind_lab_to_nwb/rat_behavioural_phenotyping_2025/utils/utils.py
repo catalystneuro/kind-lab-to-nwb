@@ -206,8 +206,8 @@ def parse_datetime_from_filename(filename: str) -> datetime:
         datetime_str = match.group(1)
         return datetime.strptime(datetime_str, "%Y-%m-%d_%H-%M-%S")
 
-    # Pattern 2: Only date (2022-08-01_...)
-    pattern2 = r"(\d{4}-\d{2}-\d{2})_"
+    # Pattern 2: Only date (2022-08-01_... or 2022-08-01 ...)
+    pattern2 = r"(\d{4}-\d{2}-\d{2})[_ ]"
     match = re.search(pattern2, filename)
     if match:
         datetime_str = match.group(1)

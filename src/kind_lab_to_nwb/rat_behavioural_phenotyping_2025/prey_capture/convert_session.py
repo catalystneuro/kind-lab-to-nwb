@@ -128,9 +128,9 @@ def session_to_nwb(
             )
             audio_interface._segment_starting_times = usv_starting_times
         data_interfaces.append(audio_interface)
-        conversion_options.update(dict(AudioInterface=dict(stub_test=stub_test, write_as="acquisition")))
+        conversion_options.update(dict(AudioInterface=dict(write_as="acquisition")))  # TODO: stub_test
 
-    converter = PreyCaptureNWBConverter(data_interfaces=data_interfaces, verbose=True)
+    converter = PreyCaptureNWBConverter(data_interfaces=data_interfaces, verbose=False)
 
     metadata = converter.get_metadata()
     # Update default metadata with the editable in the corresponding yaml file

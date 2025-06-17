@@ -204,7 +204,6 @@ if __name__ == "__main__":
 
     if not video_folder_path.exists():
         raise FileNotFoundError(f"Folder {cohort_folder_path} does not exist")
-    # TODO: for HabD1 need to figure out how to match the cage number with the animal ID
     if session_id == "HabD1":
         video_file_paths = natsort.natsorted(video_folder_path.glob(f"*.mp4"))
         # Filter video file paths if the cage id is in the file name.

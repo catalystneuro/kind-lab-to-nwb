@@ -92,44 +92,6 @@ def get_session_ids_from_excel(subjects_metadata_file_path: FilePath, task_acron
     return session_ids
 
 
-def get_cage_ids_from_excel_files(pooled_data_folder_path: DirectoryPath) -> pd.DataFrame:
-    """Extract unique cage IDs and their associated metadata from pooled data Excel files.
-
-    Parameters
-    ----------
-    pooled_data_folder_path : DirectoryPath
-        The path to the folder containing the pooled data Excel files.
-
-    Returns
-    -------
-    pd.DataFrame
-        A DataFrame containing the unique cage IDs and their associated metadata.
-    """
-    pooled_data_file_paths = list(Path(pooled_data_folder_path).glob(f"*POOLED*.xlsx"))
-    if not pooled_data_file_paths:
-        raise FileNotFoundError(
-            f"No Excel files containing 'POOLED' in their name found in '{pooled_data_folder_path}'."
-        )
-    cage_id_identifier_columns = ["animal ID", "line", "cohort ID", "cage ID"]
-    dfs = []
-    for pooled_data_file_path in pooled_data_file_paths:
-        # The name of the sheets are not consistent across different versions of the pooled data Excel file, so for now we just use the first sheet
-        df = pd.read_excel(pooled_data_file_path, sheet_name=0)
-        # Remove rows with all NaN values
-        df = df.dropna(how="all")
-        df = df[~(df.apply(lambda row: all(str(row[col]).strip() == col for col in df.columns), axis=1))]
-        df.columns = df.columns.str.strip()  # Strip whitespace from column names
-        df.rename(columns={"Unique animal ID": "animal ID"}, inplace=True)
-
-        for col in cage_id_identifier_columns:
-            if col not in df.columns:
-                raise KeyError(f"Expected column '{col}' is not present in '{pooled_data_file_path}'.")
-        dfs.append(df[cage_id_identifier_columns])
-
-    combined_df = pd.concat(dfs, ignore_index=True).reset_index(drop=True)
-    return combined_df
-
-
 SUPPORTED_SUFFIXES = [".avi", ".mp4", ".wmv", ".mov", ".flx", ".mkv"]  # video file's suffixes supported by DANDI
 
 
@@ -344,3 +306,70 @@ def dandi_ember_upload(
         if cleanup:
             rmtree(path=dandiset_folder_path)
             rmtree(path=nwb_folder_path)
+
+
+def get_cage_ids_from_excel_files(pooled_data_folder_path: DirectoryPath) -> dict:
+    """
+    Extract a dictionary mapping (animal_id, cohort_id) to cage ID from pooled data Excel files.
+
+    Parameters
+    ----------
+    pooled_data_folder_path : DirectoryPath
+        The path to the folder containing the pooled data Excel files.
+
+    Returns
+    -------
+    dict
+        A dictionary with keys as (animal_id, cohort_id) tuples and values as cage IDs.
+    """
+    pooled_data_file_paths = list(Path(pooled_data_folder_path).glob(f"*POOLED*.xlsx"))
+    if not pooled_data_file_paths:
+        raise FileNotFoundError(
+            f"No Excel files containing 'POOLED' in their name found in '{pooled_data_folder_path}'."
+        )
+    cage_id_identifier_columns = ["animal ID", "cohort ID", "cage ID"]
+    cage_ids = dict()
+    for pooled_data_file_path in pooled_data_file_paths:
+        df = pd.read_excel(pooled_data_file_path, sheet_name=0)
+        df = df.dropna(how="all")
+        df.columns = df.columns.str.strip()
+        df.rename(columns={"Unique animal ID": "animal ID"}, inplace=True)
+        for col in cage_id_identifier_columns:
+            if col not in df.columns:
+                raise KeyError(f"Expected column '{col}' is not present in '{pooled_data_file_path}'.")
+        for _, row in df.iterrows():
+            try:
+                animal_id = int(row["animal ID"])
+                cohort_id = str(row["cohort ID"])
+                cage_id = row["cage ID"]
+                cage_ids[(animal_id, cohort_id)] = cage_id
+            except Exception as e:
+                print(
+                    f"Error processing {pooled_data_file_path.stem} row:\n {row[cage_id_identifier_columns].values}: {e}"
+                )
+                continue  # skip rows with missing or invalid data
+    return cage_ids
+
+
+def update_subjects_metadata_with_cage_ids(subjects_metadata: List[dict], cage_ids: dict) -> List[dict]:
+    """
+    Update the subjects metadata dictionary with the corresponding cage_id from a lookup dict.
+    The lookup dict should use (animal_id, cohort_id) as the key.
+
+    Parameters
+    ----------
+    subjects_metadata : list[dict]
+        List of subject metadata dictionaries.
+    cage_ids : dict
+        Dictionary mapping (animal_id, cohort_id) tuples to cage IDs.
+
+    Returns
+    -------
+    List[dict]
+        The updated list of subject metadata dictionaries with "cage ID" added.
+    """
+    for subject_metadata in subjects_metadata:
+        subject_metadata["cage ID"] = cage_ids.get(
+            (subject_metadata.get("animal ID"), subject_metadata.get("cohort ID")), None
+        )
+    return subjects_metadata

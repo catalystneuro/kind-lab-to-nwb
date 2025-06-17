@@ -80,7 +80,22 @@ def session_to_nwb(
             video_interface = ExternalVideoInterface(file_paths=file_paths, video_name="BehavioralVideo")
             data_interfaces.append(video_interface)
         elif len(video_file_paths) > 1:
-            raise ValueError(f"Multiple video files found for {subject_id}.")
+            # For Scn2a(11) cohort there are two videos per session, one for cricket and one for weeto trial.
+            if subject_metadata["cohort ID"] == "Scn2a(11)":
+                for i, video_file_path in enumerate(video_file_paths):
+                    file_paths = convert_ts_to_mp4([video_file_path])
+                    video_file_name = Path(video_file_path).stem
+                    trial_name = video_file_name.split("_")[-1]
+                    video_name = f"BehavioralVideo{trial_name.capitalize()}"
+                    video_interface = ExternalVideoInterface(file_paths=file_paths, video_name=video_name)
+                    datetime_from_filename = parse_datetime_from_filename(video_file_name)
+                    starting_time = (datetime_from_filename - session_start_time).total_seconds()
+                    video_starting_times.append(starting_time)
+                    video_interface._starting_time = starting_time
+                    data_interfaces.append(video_interface)
+
+            else:
+                raise ValueError(f"Multiple video files found for {subject_id}.")
     # Test sessions have 4-5 video files, weeto trials have 2 video files
     else:
         for i, video_file_path in enumerate(video_file_paths):

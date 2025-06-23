@@ -188,7 +188,7 @@ if __name__ == "__main__":
     # The folder where the pooled data excel files are stored
     pooled_data_folder_path = Path("/Users/weian/data/")
     cage_ids = get_cage_ids_from_excel_files(pooled_data_folder_path)
-    cages_subjects_metadata = update_subjects_metadata_with_cage_ids(
+    subjects_metadata = update_subjects_metadata_with_cage_ids(
         subjects_metadata=subjects_metadata,
         cage_ids=cage_ids,
     )

@@ -17,9 +17,11 @@ from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.prey_capture import (
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils import (
     convert_ts_to_mp4,
     extract_subject_metadata_from_excel,
+    get_cage_ids_from_excel_files,
     get_session_ids_from_excel,
     get_subject_metadata_from_task,
     parse_datetime_from_filename,
+    update_subjects_metadata_with_cage_ids,
 )
 from neuroconv.datainterfaces import AudioInterface, ExternalVideoInterface
 from neuroconv.utils import dict_deep_update, load_dict_from_file
@@ -196,9 +198,16 @@ if __name__ == "__main__":
     subjects_metadata = extract_subject_metadata_from_excel(subjects_metadata_file_path)
     subjects_metadata = get_subject_metadata_from_task(subjects_metadata, task_acronym)
 
+    # The folder where the pooled data excel files are stored
+    pooled_data_folder_path = Path("/Users/weian/data/")
+    cage_ids = get_cage_ids_from_excel_files(pooled_data_folder_path)
+    cages_subjects_metadata = update_subjects_metadata_with_cage_ids(
+        subjects_metadata=subjects_metadata,
+        cage_ids=cage_ids,
+    )
+
     session_id = session_ids[0]  # HabD1
     subject_metadata = subjects_metadata[0]  # subject 408_Arid1b(3)
-    cage_id = 1  # TODO: read this from the Excel table
 
     cohort_folder_path = data_dir_path / subject_metadata["line"] / f"{subject_metadata['cohort ID']}_{task_acronym}"
     if not cohort_folder_path.exists():
@@ -208,10 +217,10 @@ if __name__ == "__main__":
 
     if not video_folder_path.exists():
         raise FileNotFoundError(f"Folder {cohort_folder_path} does not exist")
-    # TODO: for HabD1 need to figure out how to match the cage number with the animal ID
     if session_id == "HabD1":
         video_file_paths = natsort.natsorted(video_folder_path.glob(f"*.mp4"))
         # Filter video file paths if the cage id is in the file name.
+        cage_id = subject_metadata.get("cage ID")
         video_file_paths = [path for path in video_file_paths if f"cage{cage_id}" in path.name.lower()]
     else:
         video_file_paths = natsort.natsorted(video_folder_path.glob(f"*{subject_metadata['animal ID']}*"))

@@ -39,11 +39,11 @@ def add_behavioral_events(
     behavioral_events = BehavioralEvents(name="behavioral_events")
 
     ttl_channel_info = {
-        1: {"name": "TTL_LED_trigger", "description": "TTL signal that drives the LED for the conditioning stimulus"},
-        2: {
+        1: {
             "name": "TTL_audio_trigger",
             "description": "TTL signal that drives an audio tune played to the animal as a neutral stimulus",
         },
+        2: {"name": "TTL_LED_trigger", "description": "TTL signal that drives the LED for the conditioning stimulus"},
     }
 
     # Process each channel

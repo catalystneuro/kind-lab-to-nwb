@@ -20,9 +20,10 @@ def get_first_CS_time(folder_path: DirectoryPath) -> float:
     rate = 2000.0  # Hz
 
     for channel, events in event_table.groupby("channel"):
-        events = events.sort_values("timestamp")
-        first_CS_frame = events["timestamp"][0]
-        return first_CS_frame / rate
+        if channel == 2:  # Assuming channel 2 is the one for CS events
+            events = events.sort_values("timestamp")
+            first_CS_frame = events["timestamp"].to_list()[0]
+            return first_CS_frame / rate
 
 
 def get_first_CS_video_frame(file_path: FilePath, subject_id: str) -> Optional[int]:

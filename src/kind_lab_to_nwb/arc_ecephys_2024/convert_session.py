@@ -108,11 +108,12 @@ def session_to_nwb(
         if first_CS_video_frame is None:
             time_offset = 0.0
             video_time_offset = np.nan
-        first_CS_time = get_first_CS_time(folder_path=TDT_folder_path)
-        time_offset = compute_time_offset(
-            video_file_path=video_file_path, first_CS_time=first_CS_time, first_CS_video_frame=first_CS_video_frame
-        )
-        video_time_offset = time_offset if time_offset > 0 else 0.0
+        else:
+            first_CS_time = get_first_CS_time(folder_path=TDT_folder_path)
+            time_offset = compute_time_offset(
+                video_file_path=video_file_path, first_CS_time=first_CS_time, first_CS_video_frame=first_CS_video_frame
+            )
+            video_time_offset = time_offset if time_offset > 0 else 0.0
     else:
         time_offset = 0.0
         video_time_offset = np.nan
@@ -187,7 +188,7 @@ if __name__ == "__main__":
     metadata_list = path_expander.expand_paths(source_data_spec)
 
     stub_test = False
-    for id in [3, 7, 11, 15, 19, 23, 27, 31, 36, 40, 44, 48, 52, 56, 60, 64, 68, 73, 78, 83, 88, 93, 98]:
+    for id in [31, 36, 40, 44, 48, 52, 56, 60, 64, 68, 73, 78, 83, 88, 93, 98]:
         session_to_nwb(
             data_dir_path=data_dir_path,
             output_dir_path=output_dir_path,

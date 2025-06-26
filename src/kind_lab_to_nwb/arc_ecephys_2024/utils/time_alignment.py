@@ -4,12 +4,13 @@ from typing import Optional
 from neuroconv.datainterfaces.behavior.video.video_utils import get_video_timestamps
 
 
-def get_first_CS_time(folder_path: DirectoryPath) -> float:
+def get_first_CS_time(folder_path: DirectoryPath, rate: float = 2000.0) -> float:
     """
     Get the first CS time.
 
     Args:
         folder_path (DirectoryPath): Path to the TDT files.
+        rate (float): Sampling rate of the TDT files in Hz. Default is 2000.0.
 
     Returns:
         float: The first CS time in seconds.
@@ -17,7 +18,6 @@ def get_first_CS_time(folder_path: DirectoryPath) -> float:
     session = Session(folder_path)
     recording = session.recordings[0]
     event_table = recording.events
-    rate = 2000.0  # Hz
 
     for channel, events in event_table.groupby("channel"):
         if channel == 2:  # Assuming channel 2 is the one for CS events

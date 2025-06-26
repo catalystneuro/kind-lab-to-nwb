@@ -17,24 +17,24 @@ from neuroconv.tools.nwb_helpers import (
 )
 from neuroconv.tools.path_expansion import LocalPathExpander
 
-from spyglass_utils import (
+from kind_lab_to_nwb.arc_ecephys_2024.utils import (
     add_behavioral_video,
     get_channels_info_from_subject_id,
     add_electrical_series,
-    add_behavioral_signals,
     add_behavioral_events,
+    add_behavioral_signals,
+    compute_time_offset,
+    get_first_CS_time,
+    get_first_CS_video_frame,
 )
 import pandas as pd
-from tqdm import tqdm
 
 
 def session_to_nwb(
     data_dir_path: Union[str, Path],
     output_dir_path: Union[str, Path],
     path_expander_metadata: dict,
-    video_starting_time: float,
     stub_test: bool = False,
-    overwrite: bool = False,
     verbose: bool = True,
 ):
 
@@ -89,53 +89,74 @@ def session_to_nwb(
 
     nwbfile = make_nwbfile_from_metadata(metadata=metadata)
 
-    # Add EEG data
-    excel_file_path = data_dir_path / "channels_details_v2.xlsx"
-    channels_info, probe_id = get_channels_info_from_subject_id(
-        subject_id=subject_id, excel_file_path=excel_file_path, number_of_channels=16
-    )
-    folder_path = path_expander_metadata["source_data"]["OpenEphysRecording"]["folder_path"]
+    TDT_folder_path = path_expander_metadata["source_data"]["OpenEphysRecording"]["folder_path"]
 
-    add_electrical_series(
-        nwbfile=nwbfile,
-        metadata=metadata,
-        channels_info=channels_info,
-        probe_id=probe_id,
-        folder_path=folder_path,
-        stream_name="Signals CH",
-    )
-
-    # Add accelerometer data
-    add_behavioral_signals(
-        nwbfile=nwbfile,
-        metadata=metadata,
-        folder_path=folder_path,
-        stream_name="Signals AUX",
-    )
-
-    # Add behavior events
-    add_behavioral_events(nwbfile=nwbfile, folder_path=folder_path)
-
-    # Add behavioral video
-    # video_file_path = next(data_dir_path.glob(f"{subject_id}/{session_id}/*.avi"))
     video_extensions = ["avi", "mp4", "mkv"]
     video_file_path = None
     for ext in video_extensions:
         video_files = list(data_dir_path.glob(f"{subject_id}/{session_id}/*.{ext}"))
         if video_files:
             video_file_path = video_files[0]
-            task_metadata = editable_metadata["Tasks"][session_id]
-
-            add_behavioral_video(
-                nwbfile=nwbfile,
-                metadata=metadata,
-                video_file_path=video_file_path,
-                task_metadata=task_metadata,
-                aligned_starting_time=video_starting_time,
-            )
             break
-    if video_file_path is None:
-        print(f"Warning: No video file found for subject {subject_id}, session {session_id}")
+        else:
+            print(f"Warning: No video file found for subject {subject_id}, session {session_id} with extension {ext}")
+
+    # Time alignment
+    if session_id == "Recall" and video_file_path:
+        CS_video_frames_file = data_dir_path / "cs_video_frames.xlsx"
+        first_CS_video_frame = get_first_CS_video_frame(file_path=CS_video_frames_file, subject_id=subject_id)
+        if first_CS_video_frame is None:
+            time_offset = 0.0
+            video_time_offset = np.nan
+        first_CS_time = get_first_CS_time(folder_path=TDT_folder_path)
+        time_offset = compute_time_offset(
+            video_file_path=video_file_path, first_CS_time=first_CS_time, first_CS_video_frame=first_CS_video_frame
+        )
+        video_time_offset = time_offset if time_offset > 0 else 0.0
+    else:
+        time_offset = 0.0
+        video_time_offset = np.nan
+
+    # Add behavioral video
+    if video_file_path:
+        task_metadata = editable_metadata["Tasks"][session_id]
+        add_behavioral_video(
+            nwbfile=nwbfile,
+            metadata=metadata,
+            video_file_path=video_file_path,
+            task_metadata=task_metadata,
+            time_offset=video_time_offset,
+        )
+
+    # Add EEG data
+    excel_file_path = data_dir_path / "channels_details_v2.xlsx"
+    channels_info, probe_id = get_channels_info_from_subject_id(
+        subject_id=subject_id, excel_file_path=excel_file_path, number_of_channels=16
+    )
+
+    add_electrical_series(
+        nwbfile=nwbfile,
+        metadata=metadata,
+        channels_info=channels_info,
+        probe_id=probe_id,
+        folder_path=TDT_folder_path,
+        stream_name="Signals CH",
+        time_offset=-time_offset if time_offset < 0 else 0.0,
+    )
+
+    # Add accelerometer data
+    add_behavioral_signals(
+        nwbfile=nwbfile,
+        metadata=metadata,
+        folder_path=TDT_folder_path,
+        stream_name="Signals AUX",
+        time_offset=-time_offset if time_offset < 0 else 0.0,
+    )
+
+    # Add behavior events
+    add_behavioral_events(
+        nwbfile=nwbfile, folder_path=TDT_folder_path, starting_time=-time_offset if time_offset < 0 else 0.0
+    )
 
     if verbose:
         print(f"Write NWB file {nwbfile_path.name}")
@@ -144,6 +165,7 @@ def session_to_nwb(
 
 
 if __name__ == "__main__":
+    import numpy as np
 
     # Parameters for conversion
     # data_dir_path = Path("/media/alessandra/HD2/Kind-CN-data-share/neuronal_circuits/fear_conditionning_paradigm")
@@ -164,20 +186,11 @@ if __name__ == "__main__":
     # Expand paths and extract metadata
     metadata_list = path_expander.expand_paths(source_data_spec)
 
-    video_starting_time = 0.0  # seconds passed since the start of the TDT recording
-
     stub_test = False
-    overwrite = True
-
-    for metadata in tqdm(metadata_list, desc="Processing sessions"):
-        # try:
+    for id in [3, 7, 11, 15, 19, 23, 27, 31, 36, 40, 44, 48, 52, 56, 60, 64, 68, 73, 78, 83, 88, 93, 98]:
         session_to_nwb(
             data_dir_path=data_dir_path,
             output_dir_path=output_dir_path,
-            path_expander_metadata=metadata,
+            path_expander_metadata=metadata_list[id],
             stub_test=stub_test,
-            overwrite=overwrite,
-            video_starting_time=video_starting_time,
         )
-        # except Exception as e:
-        #     print(f"Error processing {metadata['source_data']['OpenEphysRecording']['folder_path']}: {e}")

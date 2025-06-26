@@ -21,14 +21,19 @@ from open_ephys.analysis import Session
 import numpy as np
 
 
-def add_behavioral_events(nwbfile: NWBFile, folder_path) -> None:
+def add_behavioral_events(
+    nwbfile: NWBFile, folder_path: DirectoryPath, rate: float = 2000.0, starting_time: float = 0.0
+) -> None:
+    """Add behavioral events from Open Ephys recordings to an NWB file.
+    Args:
+        nwbfile (NWBFile): The NWB file to which the behavioral events will be added.
+        folder_path (DirectoryPath): Path to the Open Ephys recordings folder.
+        rate (float): Sampling rate of the behavioral events. Default is 2000.0
+        starting_time (float): Starting time for the behavioral events. Default is 0.0
+    """
     session = Session(folder_path)
     recording = session.recordings[0]
     event_table = recording.events
-
-    # Constants and setup
-    rate = 2000.0  # Hz
-    starting_time = 0.0  # seconds
 
     # Create behavioral events container
     behavioral_events = BehavioralEvents(name="behavioral_events")
@@ -82,7 +87,19 @@ def add_behavioral_signals(
     folder_path: DirectoryPath,
     stream_name: Optional[str] = "Signals AUX",
     block_index: Optional[int] = None,
+    time_offset: Optional[float] = 0.0,
 ) -> None:
+    """Add behavioral signals (e.g., accelerometer data) from Open Ephys recordings to an NWB file.
+    Args:
+        nwbfile (NWBFile): The NWB file to which the behavioral signals will be added.
+        metadata (dict): Metadata containing device information.
+        folder_path (DirectoryPath): Path to the Open Ephys recordings folder.
+        stream_name (str, optional): Name of the stream to extract data from. Default is
+            "Signals AUX".
+        block_index (int, optional): Index of the block to extract data from. Default is None.
+        time_offset (float, optional): Time offset to apply to the starting time of the data
+            in seconds. Default is 0.0.
+    """
     # Check if DataAcqDevice already exists in the NWBFile
     device_name = metadata["Devices"]["DataAcqDevice"].get("name")
     if device_name in nwbfile.devices:
@@ -100,7 +117,7 @@ def add_behavioral_signals(
     time_series = extractor.get_traces()
     time_info = extractor.get_time_info()
     rate = time_info["sampling_frequency"]
-    starting_time = time_info["t_start"]
+    starting_time = time_info["t_start"] + time_offset
 
     # Create behavioral events container
     analog_timeseries = BehavioralEvents(name="analog")

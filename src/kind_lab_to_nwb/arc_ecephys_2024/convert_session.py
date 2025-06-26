@@ -4,6 +4,7 @@ import datetime
 from pathlib import Path
 from typing import Union
 from zoneinfo import ZoneInfo
+import numpy as np
 
 from pynwb import NWBHDF5IO
 
@@ -35,7 +36,7 @@ def session_to_nwb(
     output_dir_path: Union[str, Path],
     path_expander_metadata: dict,
     stub_test: bool = False,
-    verbose: bool = True,
+    verbose: bool = False,
 ):
 
     data_dir_path = Path(data_dir_path)
@@ -48,7 +49,7 @@ def session_to_nwb(
     )
     subject_id = path_expander_metadata["metadata"]["Subject"]["subject_id"]
     session_id = path_expander_metadata["metadata"]["NWBFile"]["session_id"]
-    nwbfile_path = output_dir_path / f"sub_{subject_id}-ses_{session_id}.nwb"
+    nwbfile_path = output_dir_path / f"sub-{subject_id}_ses-{session_id}.nwb"
 
     # Get default metadata
     metadata = get_default_nwbfile_metadata()
@@ -166,8 +167,6 @@ def session_to_nwb(
 
 
 if __name__ == "__main__":
-    import numpy as np
-
     # Parameters for conversion
     # data_dir_path = Path("/media/alessandra/HD2/Kind-CN-data-share/neuronal_circuits/fear_conditionning_paradigm")
     data_dir_path = Path("D:/Kind-CN-data-share/neuronal_circuits/fear_conditionning_paradigm")

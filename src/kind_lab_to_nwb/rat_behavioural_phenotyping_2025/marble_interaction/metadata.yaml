@@ -42,9 +42,12 @@ Behavior:
       description: |
         Video recording of the rat's behavior. Recorded using a CCTV camera mounted on the ceiling above the arenas.
       device:
-        name: BehavioralCamera
+        name: "camera_device 0"
         description: CCTV camera mounted on ceiling above arenas for behavioral recording
-        manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+        meters_per_pixel: 0.0004
+        model: "C920"
+        lens: "Carl Zeiss lens with 20-step autofocus"
+        camera_name: "BehavioralCamera"
 
 SessionTypes:
   MI_HabD1:
@@ -52,15 +55,31 @@ SessionTypes:
       Experimental Day 1. Individual habituation.
       Rat placed in arena with woodchip bedding for 20 min.
       No marbles present.
-
+    name: individual_habituation_1
+    environment: Arena
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
   MI_HabD2:
     session_description: |
       Experimental Day 2. Individual habituation.
       Rat placed in arena with woodchip bedding for 20 min.
       No marbles present.
-
+    name: individual_habituation_2
+    environment: Arena
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
   MI_Test:
     session_description: |
       Experimental Day 3. Marble interaction test.
       Rat placed in arena with woodchip bedding and 20 marbles
       arranged in 4x5 grid for 20 min test period.
+    name: marble_interaction_test
+    environment: Arena
+    camera_id:
+      - 0
+    task_epochs:
+      - 1

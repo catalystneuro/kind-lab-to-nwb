@@ -23,7 +23,7 @@ This study used male rats (n=31, 16 wild-types and 15 Syngap+/∆-GAP) bred in-h
 * Video recordings were captured using either Debut (NCH software) or OBS Studio (GPL-2.0-or-later open-source licence) softwares.
 
 ### 5. Temporal Alignment
-Time synchronization between the electrophysiology, the accelerometer signals and the CS presentations are done using the TTL events timepoints of each LED pulse, aligned in real time to the data streams. Time synchronization between video recording and electrophysiology is done by aligning the first video frame where the CS is presented to the first TTL pulse event.
+Time synchronization between the electrophysiology, the accelerometer signals and the CS presentations are done using the TTL events timepoints of each LED pulse, aligned in real time to the data streams. Time synchronization between video recording and electrophysiology is done by aligning the first video frame where the CS is presented to the first TTL pulse event (only for Recall session).
 
 ### 6. Additional Contextual Information
 The data analysis for this project is still a work in progress, github repository and preprint or publication will be added when ready.

@@ -9,7 +9,10 @@ from pynwb.image import ImageSeries
 
 from neuroconv.datainterfaces import ExternalVideoInterface
 from neuroconv.tools.nwb_helpers import get_module
-
+from neuroconv.utils import (
+    get_base_schema,
+    get_schema_from_hdmf_class,
+)
 from ndx_franklab_novela import CameraDevice
 
 
@@ -42,6 +45,27 @@ class SpyglassVideoInterface(ExternalVideoInterface):
     ):
         super().__init__(file_paths=file_paths, video_name=video_name, verbose=verbose)
         self._default_device_name = "camera_device 0"
+
+    def get_metadata_schema(self):
+        metadata_schema = super().get_metadata_schema()
+        image_series_metadata_schema = get_schema_from_hdmf_class(ImageSeries)
+        # TODO: in future PR, add 'exclude' option to get_schema_from_hdmf_class to bypass this popping
+        exclude = ["format", "conversion", "starting_time", "rate", "name"]
+        for key in exclude:
+            image_series_metadata_schema["properties"].pop(key)
+            if key in image_series_metadata_schema["required"]:
+                image_series_metadata_schema["required"].remove(key)
+        device_metadata_schema = get_schema_from_hdmf_class(CameraDevice)
+        image_series_metadata_schema["properties"]["device"] = device_metadata_schema
+        metadata_schema["properties"]["Behavior"] = get_base_schema(tag="Behavior")
+        metadata_schema["properties"]["Behavior"]["required"].append("ExternalVideos")
+        metadata_schema["properties"]["Behavior"]["properties"]["ExternalVideos"] = {
+            "type": "object",
+            "properties": {self.video_name: image_series_metadata_schema},
+            "required": [self.video_name],
+            "additionalProperties": True,
+        }
+        return metadata_schema
 
     def add_to_nwbfile(
         self,
@@ -113,8 +137,12 @@ class SpyglassVideoInterface(ExternalVideoInterface):
         tasks_module.add(task_table)
 
         # Alway write timestamps for spyglass compatibility
-        timestamps = self.get_timestamps()
-        image_series_kwargs.update(timestamps=np.concatenate(timestamps))
+        if self._timestamps is None:
+            timestamps = self.get_timestamps()
+            timestamps = np.concatenate(timestamps)
+        else:
+            timestamps = self._timestamps
+        image_series_kwargs.update(timestamps=timestamps)
 
         nwbfile.add_epoch_column(name="task_name", description="Name of the task associated with the epoch.")
         nwbfile.add_epoch(

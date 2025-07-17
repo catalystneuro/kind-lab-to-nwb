@@ -116,17 +116,21 @@ class SpyglassVideoInterface(ExternalVideoInterface):
 
         # Add a custom processing module for tasks
         # This is necessary for the video data to be compatible with spyglass.
-        tasks_module = nwbfile.create_processing_module(name="tasks", description="tasks module")
+        tasks_module = get_module(nwbfile=nwbfile, name="tasks", description="tasks module")
 
-        task_table = DynamicTable(
-            name="task_table",
-            description="The task table is needed for the video data to be compatible with spyglass. ",
-        )
-        task_table.add_column(name="task_name", description="Name of the task.")
-        task_table.add_column(name="task_description", description="Description of the task.")
-        task_table.add_column(name="camera_id", description="Camera ID.")
-        task_table.add_column(name="task_epochs", description="Task epochs.")
-        task_table.add_column(name="environment", description="Environment where the task is carried out.")
+        # Check if task_table already exists, if not create it
+        if "task_table" in tasks_module.data_interfaces:
+            task_table = tasks_module["task_table"]
+        else:
+            task_table = DynamicTable(
+                name="task_table",
+                description="The task table is needed for the video data to be compatible with spyglass. ",
+            )
+            task_table.add_column(name="task_name", description="Name of the task.")
+            task_table.add_column(name="task_description", description="Description of the task.")
+            task_table.add_column(name="camera_id", description="Camera ID.")
+            task_table.add_column(name="task_epochs", description="Task epochs.")
+            task_table.add_column(name="environment", description="Environment where the task is carried out.")
         task_table.add_row(
             task_name=task_metadata["name"],
             task_description=task_metadata["session_description"],
@@ -134,7 +138,9 @@ class SpyglassVideoInterface(ExternalVideoInterface):
             task_epochs=task_metadata["task_epochs"],
             environment=task_metadata["environment"],
         )
-        tasks_module.add(task_table)
+
+        if "task_table" not in tasks_module.data_interfaces:
+            tasks_module.add(task_table)
 
         # Alway write timestamps for spyglass compatibility
         if self._timestamps is None:
@@ -144,7 +150,9 @@ class SpyglassVideoInterface(ExternalVideoInterface):
             timestamps = self._timestamps
         image_series_kwargs.update(timestamps=timestamps)
 
-        nwbfile.add_epoch_column(name="task_name", description="Name of the task associated with the epoch.")
+        if nwbfile.epochs is None:
+            nwbfile.add_epoch_column(name="task_name", description="Name of the task associated with the epoch.")
+
         nwbfile.add_epoch(
             start_time=timestamps[0], stop_time=timestamps[-1], tags=["01"], task_name=task_metadata["name"]
         )

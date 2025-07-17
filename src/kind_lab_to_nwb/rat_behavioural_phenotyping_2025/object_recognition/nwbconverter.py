@@ -6,10 +6,10 @@ from pynwb import NWBFile
 from pynwb.device import Device
 
 from neuroconv import NWBConverter
-from neuroconv.datainterfaces import ExternalVideoInterface
 
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.interfaces import (
     BORISBehavioralEventsInterface,
+    SpyglassVideoInterface,
 )
 
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils import parse_datetime_from_filename
@@ -19,9 +19,9 @@ class ObjectRecognitionNWBConverter(NWBConverter):
     """Primary conversion class for my extracellular electrophysiology dataset."""
 
     data_interface_classes = dict(
-        Video=ExternalVideoInterface,
-        SampleVideo=ExternalVideoInterface,
-        TestVideo=ExternalVideoInterface,
+        Video=SpyglassVideoInterface,
+        SampleVideo=SpyglassVideoInterface,
+        TestVideo=SpyglassVideoInterface,
         TestObjectRecognitionBehavior=BORISBehavioralEventsInterface,
         SampleObjectRecognitionBehavior=BORISBehavioralEventsInterface,
     )

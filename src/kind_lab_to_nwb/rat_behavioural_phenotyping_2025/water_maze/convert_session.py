@@ -55,6 +55,11 @@ def session_to_nwb(
     source_data = dict()
     conversion_options = dict()
 
+    # Update default metadata with the editable in the corresponding yaml file
+    editable_metadata_path = Path(__file__).parent / "metadata.yaml"
+    editable_metadata = load_dict_from_file(editable_metadata_path)
+    task_metadata = editable_metadata["SessionTypes"][session_id]
+
     # Add Behavioral Video
     sorted_video_file_paths = natsort.natsorted(video_file_paths)
     if len(sorted_video_file_paths) != 4:
@@ -62,18 +67,16 @@ def session_to_nwb(
     for video_index, video_file_path in enumerate(sorted_video_file_paths):
         video_name = f"BehavioralVideoTrial{video_index + 1}"
         source_data.update({f"VideoTrial{video_index + 1}": dict(file_paths=[video_file_path], video_name=video_name)})
+        conversion_options.update({f"VideoTrial{video_index + 1}": dict(task_metadata=task_metadata)})
 
     converter = WaterMazeNWBConverter(source_data=source_data, verbose=True)
 
     # Update starting time of videos
     for i in range(1, len(video_timestamps)):
         video_starting_time = (video_timestamps.iloc[i] - video_timestamps.iloc[0]).total_seconds()
-        converter.data_interface_objects[f"VideoTrial{i + 1}"]._starting_time = video_starting_time
+        converter.data_interface_objects[f"VideoTrial{i}"].set_aligned_starting_time(video_starting_time)
 
     metadata = converter.get_metadata()
-    # Update default metadata with the editable in the corresponding yaml file
-    editable_metadata_path = Path(__file__).parent / "metadata.yaml"
-    editable_metadata = load_dict_from_file(editable_metadata_path)
     metadata = dict_deep_update(
         metadata,
         editable_metadata,

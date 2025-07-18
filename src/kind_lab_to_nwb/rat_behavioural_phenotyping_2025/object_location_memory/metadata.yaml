@@ -67,7 +67,6 @@ Behavior:
       description: |
         Video recording of the rat's behavior during the sample trial. Recorded using a CCTV camera mounted on the ceiling above the arenas.
       device:
-      device:
         name: "camera_device 0"
         description: CCTV camera mounted on ceiling above arenas for behavioral recording
         meters_per_pixel: 0.0004
@@ -95,7 +94,7 @@ SessionTypes:
       - 0
     task_epochs:
       - 1
-  
+
   OLM_HabD3:
     session_description: |
       Experimental Day 3. Individual rat placed in arena for 10 min habituation
@@ -105,7 +104,7 @@ SessionTypes:
       - 0
     task_epochs:
       - 1
-      
+
   OLM_STM:
     session_description: |
       Experimental Day 5. Short-term memory test. 

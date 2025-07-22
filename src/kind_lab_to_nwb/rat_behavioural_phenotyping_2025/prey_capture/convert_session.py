@@ -104,7 +104,10 @@ def session_to_nwb(
             starting_time = (datetime_from_filename - session_start_time).total_seconds()
             video_starting_times.append(starting_time)
             data_interfaces.append(video_interface)
-            conversion_options.update({f"SpyglassVideoInterface00{i+1}": dict(task_metadata=task_metadata)})
+            test_task_metadata = task_metadata.copy()
+            test_task_metadata["name"] = task_metadata["name"] + "_trial" + str(i + 1)
+            test_task_metadata["task_epochs"] = [i + 1]
+            conversion_options.update({f"SpyglassVideoInterface00{i+1}": dict(task_metadata=test_task_metadata)})
 
     # Add Prey Capture Annotated events from BORIS output
     if boris_file_path is not None and "Test" in session_id:

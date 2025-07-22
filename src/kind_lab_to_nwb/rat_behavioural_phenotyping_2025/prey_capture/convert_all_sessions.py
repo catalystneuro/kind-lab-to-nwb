@@ -19,6 +19,8 @@ from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils import (
 )
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils.utils import (
     dandi_ember_upload,
+    get_cage_ids_from_excel_files,
+    update_subjects_metadata_with_cage_ids,
 )
 
 # Configure logging
@@ -37,6 +39,15 @@ def get_session_to_nwb_kwargs_per_session(
     )
     subjects_metadata = extract_subject_metadata_from_excel(subjects_metadata_file_path)
     subjects_metadata = get_subject_metadata_from_task(subjects_metadata, task_acronym)
+
+    # The folder where the pooled data excel files are stored
+    pooled_data_folder_path = Path("/Users/weian/data/")
+    cage_ids = get_cage_ids_from_excel_files(pooled_data_folder_path)
+    subjects_metadata = update_subjects_metadata_with_cage_ids(
+        subjects_metadata=subjects_metadata,
+        cage_ids=cage_ids,
+    )
+
     session_to_nwb_kwargs = []
     for subject_metadata in subjects_metadata:
         subject_id = subject_metadata["animal ID"]
@@ -49,7 +60,7 @@ def get_session_to_nwb_kwargs_per_session(
         for session_id in session_ids:
             video_folder_path = cohort_folder_path / session_id
             if session_id == "HabD1":
-                cage_id = 1  # TODO: read this from excel metadata
+                cage_id = subject_metadata.get("cage ID")
                 video_file_paths = natsort.natsorted(video_folder_path.glob(f"*.mp4"))
                 # Filter video file paths if the cage id is in the file name.
                 video_file_paths = [path for path in video_file_paths if f"cage{cage_id}" in path.name.lower()]

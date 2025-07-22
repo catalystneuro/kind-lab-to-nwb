@@ -148,6 +148,17 @@ class SpyglassVideoInterface(ExternalVideoInterface):
             timestamps = np.concatenate(timestamps)
         else:
             timestamps = self._timestamps
+            # Ensure timestamps is a numpy array if it's a list of arrays
+            if isinstance(timestamps, list):
+                timestamps = np.concatenate(timestamps)
+
+        if timestamps[0] < 0:
+            offset = abs(timestamps[0])
+            timestamps = timestamps + offset
+
+        if self._starting_time:
+            timestamps = timestamps + self._starting_time
+
         image_series_kwargs.update(timestamps=timestamps)
 
         if nwbfile.epochs is None:

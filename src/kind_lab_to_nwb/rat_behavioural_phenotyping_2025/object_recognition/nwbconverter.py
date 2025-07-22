@@ -2,6 +2,8 @@
 
 from typing import Optional
 
+import numpy as np
+
 from pynwb import NWBFile
 from pynwb.device import Device
 

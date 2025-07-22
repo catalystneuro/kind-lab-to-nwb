@@ -1,4 +1,5 @@
 """Primary NWBConverter class for this dataset."""
+
 from datetime import timedelta
 from typing import Optional
 from warnings import warn
@@ -28,7 +29,7 @@ class PreyCaptureNWBConverter(ConverterPipe):
             if datetime_from_filename.tzinfo is None and session_start_time.tzinfo is not None:
                 datetime_from_filename = datetime_from_filename.replace(tzinfo=session_start_time.tzinfo)
             aligned_starting_time = (datetime_from_filename - session_start_time).total_seconds()
-            video_timestamps = video_interface.get_timestamps()
+            video_timestamps = video_interface.get_timestamps(stub_test=True)
             video_timestamps = np.concatenate(video_timestamps)
             if video_timestamps[0] < 0:
                 if aligned_starting_time == 0.0:

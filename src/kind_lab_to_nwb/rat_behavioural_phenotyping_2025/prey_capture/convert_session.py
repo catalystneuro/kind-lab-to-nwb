@@ -9,6 +9,7 @@ from pydantic import FilePath
 
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.interfaces import (
     BORISBehavioralEventsInterface,
+    SpyglassVideoInterface,
     get_observation_ids,
 )
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.prey_capture import (
@@ -23,7 +24,7 @@ from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils import (
     parse_datetime_from_filename,
     update_subjects_metadata_with_cage_ids,
 )
-from neuroconv.datainterfaces import AudioInterface, ExternalVideoInterface
+from neuroconv.datainterfaces import AudioInterface
 from neuroconv.utils import dict_deep_update, load_dict_from_file
 
 
@@ -76,6 +77,10 @@ def session_to_nwb(
     if not any(valid_session_id in session_id for valid_session_id in ["Hab", "Test", "Weeto"]):
         raise ValueError(f"Session ID '{session_id}' is not valid. It should contain 'Hab', 'Test', or 'Weeto'.")
 
+    editable_metadata_path = Path(__file__).parent / "metadata.yaml"
+    editable_metadata = load_dict_from_file(editable_metadata_path)
+    task_metadata = editable_metadata["SessionTypes"][session_id]
+
     # Add Behavioral Video
     data_interfaces = []
     video_starting_times = []
@@ -83,8 +88,9 @@ def session_to_nwb(
     if "Hab" in session_id:
         if len(video_file_paths) == 1:
             file_paths = convert_ts_to_mp4(video_file_paths)
-            video_interface = ExternalVideoInterface(file_paths=file_paths, video_name="BehavioralVideo")
+            video_interface = SpyglassVideoInterface(file_paths=file_paths, video_name="BehavioralVideo")
             data_interfaces.append(video_interface)
+            conversion_options.update(dict(SpyglassVideoInterface=dict(task_metadata=task_metadata)))
         elif len(video_file_paths) > 1:
             raise ValueError(f"Multiple video files found for {subject_id}.")
     # Test sessions have 4-5 video files, weeto trials have 2 video files
@@ -92,13 +98,13 @@ def session_to_nwb(
         for i, video_file_path in enumerate(video_file_paths):
             file_paths = convert_ts_to_mp4([video_file_path])
             video_name = f"BehavioralVideoTestTrial{i+1}" if "Test" in session_id else f"BehavioralVideoWeetoTrial{i+1}"
-            video_interface = ExternalVideoInterface(file_paths=file_paths, video_name=video_name)
+            video_interface = SpyglassVideoInterface(file_paths=file_paths, video_name=video_name)
             video_file_name = Path(video_file_path).stem
             datetime_from_filename = parse_datetime_from_filename(video_file_name)
             starting_time = (datetime_from_filename - session_start_time).total_seconds()
             video_starting_times.append(starting_time)
-            video_interface._starting_time = starting_time
             data_interfaces.append(video_interface)
+            conversion_options.update({f"SpyglassVideoInterface00{i+1}": dict(task_metadata=task_metadata)})
 
     # Add Prey Capture Annotated events from BORIS output
     if boris_file_path is not None and "Test" in session_id:

@@ -58,7 +58,11 @@ def session_to_nwb(
     # Update default metadata with the editable in the corresponding yaml file
     editable_metadata_path = Path(__file__).parent / "metadata.yaml"
     editable_metadata = load_dict_from_file(editable_metadata_path)
-    task_metadata = editable_metadata["SessionTypes"][session_id]
+    if "Day" in session_id:
+        session_key = "_".join(session_id.split("_")[:-1])
+    else:
+        session_key = session_id
+    task_metadata = editable_metadata["SessionTypes"][session_key]
 
     # Add Behavioral Video
     sorted_video_file_paths = natsort.natsorted(video_file_paths)
@@ -90,10 +94,6 @@ def session_to_nwb(
     metadata["Subject"].update(sex=sex)
     # Add session ID to metadata
     metadata["NWBFile"]["session_id"] = session_id
-    if "Day" in session_id:
-        session_key = "_".join(session_id.split("_")[:-1])
-    else:
-        session_key = session_id
     metadata["NWBFile"]["session_description"] = metadata["SessionTypes"][session_key]["session_description"]
 
     session_start_time = video_timestamps.iloc[0]

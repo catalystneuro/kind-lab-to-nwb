@@ -17,6 +17,7 @@ classifiers = [
 dependencies = [
   "neuroconv",
   "nwbinspector",
+  "ndx_franklab_novela==0.2.1",
 ]
 
 [project.urls]

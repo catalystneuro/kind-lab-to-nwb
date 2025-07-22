@@ -71,14 +71,19 @@ def session_to_nwb(
     for video_index, video_file_path in enumerate(sorted_video_file_paths):
         video_name = f"BehavioralVideoTrial{video_index + 1}"
         source_data.update({f"VideoTrial{video_index + 1}": dict(file_paths=[video_file_path], video_name=video_name)})
-        conversion_options.update({f"VideoTrial{video_index + 1}": dict(task_metadata=task_metadata)})
+        test_task_metadata = task_metadata.copy()
+        test_task_metadata["name"] = task_metadata["name"] + "_trial" + str(video_index + 1)
+        test_task_metadata["task_epochs"] = [video_index + 1]
+        conversion_options.update({f"VideoTrial{video_index + 1}": dict(task_metadata=test_task_metadata)})
 
     converter = WaterMazeNWBConverter(source_data=source_data, verbose=True)
 
     # Update starting time of videos
     for i in range(1, len(video_timestamps)):
         video_starting_time = (video_timestamps.iloc[i] - video_timestamps.iloc[0]).total_seconds()
-        converter.data_interface_objects[f"VideoTrial{i}"].set_aligned_starting_time(video_starting_time)
+        video_interface = converter.data_interface_objects[f"VideoTrial{i}"]
+        video_timestamps = video_interface.get_timestamps()
+        video_interface.set_aligned_timestamps(aligned_timestamps=video_timestamps + video_starting_time)
 
     metadata = converter.get_metadata()
     metadata = dict_deep_update(

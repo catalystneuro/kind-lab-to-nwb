@@ -82,8 +82,7 @@ def session_to_nwb(
     for i in range(1, len(video_timestamps)):
         video_starting_time = (video_timestamps.iloc[i] - video_timestamps.iloc[0]).total_seconds()
         video_interface = converter.data_interface_objects[f"VideoTrial{i}"]
-        video_timestamps = video_interface.get_timestamps()
-        video_interface.set_aligned_timestamps(aligned_timestamps=video_timestamps + video_starting_time)
+        video_interface._starting_time = video_starting_time
 
     metadata = converter.get_metadata()
     metadata = dict_deep_update(

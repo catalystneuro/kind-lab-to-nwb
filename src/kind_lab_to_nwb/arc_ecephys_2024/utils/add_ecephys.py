@@ -75,8 +75,26 @@ def add_electrical_series(
     folder_path: DirectoryPath,
     stream_name: Optional[str] = "Signals CH",
     block_index: Optional[int] = None,
+    time_offset: Optional[float] = 0.0,
 ) -> None:
-
+    """
+    Add electrical series (LFP and EEG) to an NWB file from Open Ephys
+    recordings. This function extracts data from the specified stream and
+    block index, and organizes the data into electrodes and electrical series.
+    It also handles the creation of electrode groups based on unique locations.
+    Args:
+        nwbfile (NWBFile): The NWB file to which the electrical series will be added.
+        metadata (dict): Metadata containing device and probe information.
+        channels_info (dict): Dictionary containing channel information with channel IDs as keys
+            and dicts with 'location' and 'bad_channel' as values.
+        probe_id (int): The index of the probe in the metadata.
+        folder_path (DirectoryPath): Path to the Open Ephys recordings folder.
+        stream_name (str, optional): Name of the stream to extract data from. Default is "Signals CH".
+        block_index (int, optional): Index of the block to extract data from. Default is
+            None, which means the first block will be used.
+        time_offset (float, optional): Time offset to apply to the starting time of the data
+            in seconds. Default is 0.0.
+    """
     data_acq_device = DataAcqDevice(**metadata["Devices"]["DataAcqDevice"])
     nwbfile.add_device(data_acq_device)
 
@@ -141,7 +159,7 @@ def add_electrical_series(
     traces = extractor.get_traces()
     time_info = extractor.get_time_info()
     rate = time_info["sampling_frequency"]
-    starting_time = time_info["t_start"]
+    starting_time = time_info["t_start"] + time_offset
 
     channel_conversion = extractor.get_channel_gains()
     channel_offsets = extractor.get_channel_offsets()

@@ -21,7 +21,7 @@ def add_behavioral_video(
     metadata,
     video_file_path: Union[Path, str],
     task_metadata: dict,
-    aligned_starting_time: Optional[float] = None,
+    time_offset: Optional[float] = None,
 ) -> None:
 
     camera_device = CameraDevice(**metadata["Devices"]["CameraDevice"])
@@ -52,8 +52,8 @@ def add_behavioral_video(
     tasks_module.add(task_table)
 
     timestamps = get_video_timestamps(file_path=video_file_path)
-    if aligned_starting_time is not None:
-        timestamps = timestamps + aligned_starting_time
+    if time_offset is not None:
+        timestamps = timestamps + time_offset
 
     nwbfile.add_epoch_column(name="task_name", description="Name of the task associated with the epoch.")
     nwbfile.add_epoch(start_time=timestamps[0], stop_time=timestamps[-1], tags=["01"], task_name=task_metadata["name"])

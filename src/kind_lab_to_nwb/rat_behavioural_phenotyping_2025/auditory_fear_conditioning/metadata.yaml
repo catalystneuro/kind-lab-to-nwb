@@ -30,9 +30,12 @@ Behavior:
       description: |
         Video recording of the rat's behavior. Recorded using a CCTV camera mounted on the ceiling above the chambers.
       device:
-        name: BehavioralCamera
-        description: CCTV camera mounted on ceiling above chambers for behavioral recording
-        manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+        name: "camera_device 0"
+        description: CCTV camera mounted on ceiling above arenas for behavioral recording
+        meters_per_pixel: 0.0004
+        model: "C920"
+        lens: "Carl Zeiss lens with 20-step autofocus"
+        camera_name: "BehavioralCamera"
 
 Devices:
   - name: ChamberA
@@ -57,11 +60,23 @@ SessionTypes:
     session_description: |
       Experimental Day 1. Habituation to context A.
       20 min exposure to context A, no tones or shocks.
+    name: habituation_1
+    environment: ChamberA
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
 
   AFC_2_HabD2:
     session_description: |
       Experimental Day 2. Habituation to context A.
       20 min exposure to context A, no tones or shocks.
+    name: habituation_2
+    environment: ChamberA
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
 
   AFC_3_Conditioning:
     session_description: |
@@ -70,6 +85,12 @@ SessionTypes:
       co-terminating with foot shock (0.7mA, 1s).
       Inter-tone interval 1 min.
       The subject remained for a further 2 min before being removed and placed in a holding cage.
+    name: conditioning
+    environment: ChamberB
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
 
   AFC_4_RecallD1:
     session_description: |
@@ -77,6 +98,12 @@ SessionTypes:
       2 min baseline, then 13 tone presentations (30s, 5kHz, 75-80dB).
       No foot shocks delivered. Inter-tone interval 30s.
       The subject remained for a further 2 min before being removed and placed in a holding cage.
+    name: recall_1
+    environment: ChamberA
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
 
   AFC_5_RecallD2:
     session_description: |
@@ -84,3 +111,9 @@ SessionTypes:
       2 min baseline, then 13 tone presentations (30s, 5kHz, 75-80dB).
       No foot shocks delivered. Inter-tone interval 30s.
       The subject remained for a further 2 min before being removed and placed in a holding cage.
+    name: recall_2
+    environment: ChamberA
+    camera_id:
+      - 0
+    task_epochs:
+      - 1

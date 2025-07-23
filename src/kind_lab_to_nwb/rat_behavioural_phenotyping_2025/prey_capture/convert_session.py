@@ -9,6 +9,7 @@ from pydantic import FilePath
 
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.interfaces import (
     BORISBehavioralEventsInterface,
+    SpyglassVideoInterface,
     get_observation_ids,
 )
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.prey_capture import (
@@ -17,11 +18,13 @@ from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.prey_capture import (
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils import (
     convert_ts_to_mp4,
     extract_subject_metadata_from_excel,
+    get_cage_ids_from_excel_files,
     get_session_ids_from_excel,
     get_subject_metadata_from_task,
     parse_datetime_from_filename,
+    update_subjects_metadata_with_cage_ids,
 )
-from neuroconv.datainterfaces import AudioInterface, ExternalVideoInterface
+from neuroconv.datainterfaces import AudioInterface
 from neuroconv.utils import dict_deep_update, load_dict_from_file
 
 
@@ -74,6 +77,10 @@ def session_to_nwb(
     if not any(valid_session_id in session_id for valid_session_id in ["Hab", "Test", "Weeto"]):
         raise ValueError(f"Session ID '{session_id}' is not valid. It should contain 'Hab', 'Test', or 'Weeto'.")
 
+    editable_metadata_path = Path(__file__).parent / "metadata.yaml"
+    editable_metadata = load_dict_from_file(editable_metadata_path)
+    task_metadata = editable_metadata["SessionTypes"][session_id]
+
     # Add Behavioral Video
     data_interfaces = []
     video_starting_times = []
@@ -81,8 +88,9 @@ def session_to_nwb(
     if "Hab" in session_id:
         if len(video_file_paths) == 1:
             file_paths = convert_ts_to_mp4(video_file_paths)
-            video_interface = ExternalVideoInterface(file_paths=file_paths, video_name="BehavioralVideo")
+            video_interface = SpyglassVideoInterface(file_paths=file_paths, video_name="BehavioralVideo")
             data_interfaces.append(video_interface)
+            conversion_options.update(dict(SpyglassVideoInterface=dict(task_metadata=task_metadata)))
         elif len(video_file_paths) > 1:
             raise ValueError(f"Multiple video files found for {subject_id}.")
     # Test sessions have 4-5 video files, weeto trials have 2 video files
@@ -90,13 +98,17 @@ def session_to_nwb(
         for i, video_file_path in enumerate(video_file_paths):
             file_paths = convert_ts_to_mp4([video_file_path])
             video_name = f"BehavioralVideoTestTrial{i+1}" if "Test" in session_id else f"BehavioralVideoWeetoTrial{i+1}"
-            video_interface = ExternalVideoInterface(file_paths=file_paths, video_name=video_name)
+            video_interface = SpyglassVideoInterface(file_paths=file_paths, video_name=video_name)
             video_file_name = Path(video_file_path).stem
             datetime_from_filename = parse_datetime_from_filename(video_file_name)
             starting_time = (datetime_from_filename - session_start_time).total_seconds()
             video_starting_times.append(starting_time)
             video_interface._starting_time = starting_time
             data_interfaces.append(video_interface)
+            test_task_metadata = task_metadata.copy()
+            test_task_metadata["name"] = task_metadata["name"] + "_trial" + str(i + 1)
+            test_task_metadata["task_epochs"] = [i + 1]
+            conversion_options.update({f"SpyglassVideoInterface00{i+1}": dict(task_metadata=test_task_metadata)})
 
     # Add Prey Capture Annotated events from BORIS output
     if boris_file_path is not None and "Test" in session_id:
@@ -140,6 +152,9 @@ def session_to_nwb(
             audio_metadata.update(
                 name=f"AcousticWaveformSeriesTestTrial{i+1}", description=default_metadata_copy["description"]
             )
+    elif usv_file_paths is None and len(audios_metadata):
+        # If no USV files are provided, remove the audio metadata
+        metadata["Behavior"].pop("Audio")
 
     metadata["Subject"]["subject_id"] = subject_id
     metadata["Subject"]["date_of_birth"] = subject_metadata["DOB (DD/MM/YYYY)"]
@@ -180,7 +195,15 @@ if __name__ == "__main__":
     subjects_metadata = extract_subject_metadata_from_excel(subjects_metadata_file_path)
     subjects_metadata = get_subject_metadata_from_task(subjects_metadata, task_acronym)
 
-    session_id = session_ids[-3]  # HabD2
+    # The folder where the pooled data excel files are stored
+    pooled_data_folder_path = Path("/Users/weian/data/")
+    cage_ids = get_cage_ids_from_excel_files(pooled_data_folder_path)
+    subjects_metadata = update_subjects_metadata_with_cage_ids(
+        subjects_metadata=subjects_metadata,
+        cage_ids=cage_ids,
+    )
+
+    session_id = session_ids[-2]  # HabD1
     subject_metadata = subjects_metadata[0]  # subject 408_Arid1b(3)
 
     cohort_folder_path = data_dir_path / subject_metadata["line"] / f"{subject_metadata['cohort ID']}_{task_acronym}"
@@ -191,9 +214,11 @@ if __name__ == "__main__":
 
     if not video_folder_path.exists():
         raise FileNotFoundError(f"Folder {cohort_folder_path} does not exist")
-    # TODO: for HabD1 need to figure out how to match the cage number with the animal ID
     if session_id == "HabD1":
-        video_file_paths = natsort.natsorted(video_folder_path.glob(f"**"))
+        video_file_paths = natsort.natsorted(video_folder_path.glob(f"*.mp4"))
+        # Filter video file paths if the cage id is in the file name.
+        cage_id = subject_metadata.get("cage ID")
+        video_file_paths = [path for path in video_file_paths if f"cage{cage_id}" in path.name.lower()]
     else:
         video_file_paths = natsort.natsorted(video_folder_path.glob(f"*{subject_metadata['animal ID']}*"))
 

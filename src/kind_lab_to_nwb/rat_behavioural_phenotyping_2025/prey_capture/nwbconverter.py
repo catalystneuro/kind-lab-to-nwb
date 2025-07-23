@@ -22,6 +22,8 @@ class PreyCaptureNWBConverter(ConverterPipe):
             interface_name for interface_name in self.data_interface_objects if "Video" in interface_name
         ]
         session_start_time = metadata["NWBFile"]["session_start_time"]
+
+        # Pushes the session start time forward to align with the video timestamps
         for interface_name in video_interfaces:
             video_interface = self.data_interface_objects[interface_name]
             video_file_path = video_interface.source_data["file_paths"][0]
@@ -34,12 +36,13 @@ class PreyCaptureNWBConverter(ConverterPipe):
             if video_timestamps[0] < 0:
                 if aligned_starting_time == 0.0:
                     # push the session start time forward to align with the video timestamps
+                    warn(
+                        f"The timestamps for {video_file_path} start before the session start time. "
+                        "Pushing the session start time forward to align with the video timestamps."
+                    )
                     metadata["NWBFile"].update(
                         session_start_time=session_start_time + timedelta(seconds=abs(video_timestamps[0])),
                     )
-                aligned_starting_time = abs(video_timestamps[0]) + aligned_starting_time
-
-            video_interface.set_aligned_timestamps(aligned_timestamps=video_timestamps + aligned_starting_time)
 
     def add_to_nwbfile(self, nwbfile: NWBFile, metadata, conversion_options: Optional[dict] = None):
         for device_metadata in metadata["Devices"]:

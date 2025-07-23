@@ -103,6 +103,7 @@ def session_to_nwb(
             datetime_from_filename = parse_datetime_from_filename(video_file_name)
             starting_time = (datetime_from_filename - session_start_time).total_seconds()
             video_starting_times.append(starting_time)
+            video_interface._starting_time = starting_time
             data_interfaces.append(video_interface)
             test_task_metadata = task_metadata.copy()
             test_task_metadata["name"] = task_metadata["name"] + "_trial" + str(i + 1)
@@ -202,7 +203,7 @@ if __name__ == "__main__":
         cage_ids=cage_ids,
     )
 
-    session_id = session_ids[0]  # HabD1
+    session_id = session_ids[-2]  # HabD1
     subject_metadata = subjects_metadata[0]  # subject 408_Arid1b(3)
 
     cohort_folder_path = data_dir_path / subject_metadata["line"] / f"{subject_metadata['cohort ID']}_{task_acronym}"

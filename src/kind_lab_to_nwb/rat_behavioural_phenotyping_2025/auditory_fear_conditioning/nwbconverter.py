@@ -1,4 +1,5 @@
 """Primary NWBConverter class for this dataset."""
+
 from typing import Optional
 
 from pynwb import NWBFile
@@ -7,15 +8,16 @@ from pynwb.device import Device
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.auditory_fear_conditioning.behaviordatainterface import (
     AuditoryFearConditioningBehavioralInterface,
 )
+from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.interfaces import SpyglassVideoInterface
+
 from neuroconv import NWBConverter
-from neuroconv.datainterfaces import ExternalVideoInterface
 
 
 class AuditoryFearConditioningNWBConverter(NWBConverter):
     """NWBConverter for the auditory fear conditioning dataset."""
 
     data_interface_classes = dict(
-        Video=ExternalVideoInterface,
+        Video=SpyglassVideoInterface,
         Behavior=AuditoryFearConditioningBehavioralInterface,
     )
 

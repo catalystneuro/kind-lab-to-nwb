@@ -1,15 +1,16 @@
 """Primary NWBConverter class for this dataset."""
 
+import numpy as np
 from typing import Optional
-
+from datetime import timedelta
 from pynwb import NWBFile
 from pynwb.device import Device
 
 from neuroconv import NWBConverter
-from neuroconv.datainterfaces import ExternalVideoInterface
 
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.interfaces import (
     BORISBehavioralEventsInterface,
+    SpyglassVideoInterface,
 )
 
 
@@ -18,7 +19,7 @@ class MarbleInteractionNWBConverter(NWBConverter):
 
     data_interface_classes = dict(
         MarbleInteractionBehavior=BORISBehavioralEventsInterface,
-        Video=ExternalVideoInterface,
+        Video=SpyglassVideoInterface,
     )
 
     def add_to_nwbfile(self, nwbfile: NWBFile, metadata, conversion_options: Optional[dict] = None):

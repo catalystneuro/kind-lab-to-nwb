@@ -122,8 +122,8 @@ if __name__ == "__main__":
 
     # Parameters for conversion
     data_dir_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/Marble Interaction")
-    output_dir_path = Path("D:/kind_lab_conversion_nwb/marble_interaction")
-    subjects_metadata_file_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/RAT ID metadata Yunkai.xlsx")
+    output_dir_path = Path("D:/kind_lab_conversion_nwb/behavioural_pipeline/marble_interaction")
+    subjects_metadata_file_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/general_metadata.xlsx")
     task_acronym = "MI"
     session_ids = get_session_ids_from_excel(subjects_metadata_file_path, task_acronym)
 

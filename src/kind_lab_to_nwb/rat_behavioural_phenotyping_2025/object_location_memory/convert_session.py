@@ -104,7 +104,7 @@ def session_to_nwb(
     stub_test: bool = False,
     overwrite: bool = False,
 ):
-    subject_id = f"{subject_metadata['animal ID']}_{subject_metadata['cohort ID']}"
+    subject_id = f"{subject_metadata['animal ID']}-{subject_metadata['cohort ID']}"
 
     if not video_file_paths:
         warnings.warn(
@@ -120,7 +120,7 @@ def session_to_nwb(
         exist_ok=True,
     )
 
-    nwbfile_path = output_dir_path / f"sub-{subject_id}_ses-{session_id}.nwb"
+    nwbfile_path = output_dir_path / f"sub-{subject_id}_ses-{session_id}-{session_start_time.strftime('%Y-%m-%d')}.nwb"
 
     source_data = dict()
     conversion_options = dict()
@@ -214,16 +214,17 @@ def session_to_nwb(
     metadata["Subject"]["subject_id"] = subject_id
     metadata["Subject"][
         "description"
-    ] = f"Subject housed in {subject_metadata['housing']} housing conditions. Genotype composition: {subject_metadata['mixed genotype']}. Cage identifier: {subject_metadata['cage ID']}."
+    ] = f"Subject housed in {subject_metadata['housing']} housing conditions. Cage identifier: {subject_metadata['cage ID']}."
     metadata["Subject"]["date_of_birth"] = subject_metadata["DOB (DD/MM/YYYY)"]
     metadata["Subject"]["genotype"] = subject_metadata["genotype"].upper()
     metadata["Subject"]["strain"] = subject_metadata["line"]
     sex = {"male": "M", "female": "F"}.get(subject_metadata["sex"], "U")
     metadata["Subject"].update(sex=sex)
 
-    metadata["NWBFile"]["session_id"] = session_id
+    metadata["NWBFile"]["session_id"] = f"{session_id}-{session_start_time.strftime('%Y-%m-%d')}"
     metadata["NWBFile"]["session_description"] = metadata["SessionTypes"][session_id]["session_description"]
     experimenters = []
+    task_acronym = session_id.split("_")[0]
     if subject_metadata[f"{task_acronym} exp"] is not np.nan:
         experimenters.append(subject_metadata[f"{task_acronym} exp"])
     if subject_metadata[f"{task_acronym} sco"] is not np.nan:

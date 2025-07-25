@@ -5,7 +5,6 @@ from pathlib import Path
 from pprint import pformat
 from typing import Union
 from tqdm import tqdm
-import warnings
 
 
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.marble_interaction.convert_session import (

@@ -22,8 +22,6 @@ NWBFile:
     Object exploration was recorded via CCTV camera and manually scored using BORIS software.
   institution: University of Edinburgh
   lab: Kind
-  experimenter:
-    - Example, Researcher # Example value - actual experimenter name needed
 
 Subject:
   species: Rattus norvegicus

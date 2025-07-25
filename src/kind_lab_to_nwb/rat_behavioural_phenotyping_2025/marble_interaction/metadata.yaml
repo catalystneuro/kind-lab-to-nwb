@@ -20,8 +20,6 @@ NWBFile:
     The experimental setup included two side-by-side arenas separated by a wooden panel, with CCTV camera recording and controlled lighting conditions (~20 lx).
   institution: University of Edinburgh
   lab: Kind
-  experimenter:
-    - Example, Researcher # Example value - actual experimenter name needed
 
 Subject:
   species: Rattus norvegicus

@@ -5,6 +5,7 @@ from typing import Union
 from pydantic import FilePath
 import warnings
 from datetime import datetime
+import numpy as np
 
 from neuroconv.utils import (
     dict_deep_update,
@@ -84,6 +85,9 @@ def session_to_nwb(
     )
 
     metadata["Subject"]["subject_id"] = subject_id
+    metadata["Subject"][
+        "description"
+    ] = f"Subject housed in {subject_metadata['housing']} housing conditions. Genotype composition: {subject_metadata['mixed genotype']}. Cage identifier: {subject_metadata['cage ID']}."
     metadata["Subject"]["date_of_birth"] = subject_metadata["DOB (DD/MM/YYYY)"]
     metadata["Subject"]["genotype"] = subject_metadata["genotype"].upper()
     metadata["Subject"]["strain"] = subject_metadata["line"]
@@ -92,6 +96,12 @@ def session_to_nwb(
 
     metadata["NWBFile"]["session_id"] = session_id
     metadata["NWBFile"]["session_description"] = metadata["SessionTypes"][session_id]["session_description"]
+    experimenters = []
+    if subject_metadata[f"{task_acronym} exp"] is not np.nan:
+        experimenters.append(subject_metadata[f"{task_acronym} exp"])
+    if subject_metadata[f"{task_acronym} sco"] is not np.nan:
+        experimenters.append(subject_metadata[f"{task_acronym} sco"])
+    metadata["NWBFile"]["experimenter"] = experimenters
 
     # Check if session_start_time exists in metadata
     if "session_start_time" not in metadata["NWBFile"]:

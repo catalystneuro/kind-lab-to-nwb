@@ -150,11 +150,8 @@ def get_session_to_nwb_kwargs_per_session(
                 # warnings.warn(f"No BORIS file found in {cohort_folder_path}")
                 # with open(exception_file_path, mode="a") as f:
                 #     f.write(f"No BORIS file found in {cohort_folder_path} for session {session_id}\n\n")
-            else:
-                boris_file_path = boris_file_paths[0]
             # check if boris info file exists
-            analysis_folder_path = cohort_folder_path / "Analysis"
-            boris_info_file_paths = list(analysis_folder_path.glob("boris_info*.xlsx"))
+            boris_info_file_paths = list(data_dir_path.glob(f"{subject_metadata['cohort ID']}_OL_borris_info.xlsx"))
             if len(boris_info_file_paths) == 0:
                 boris_info_file_path = None
                 # warnings.warn(f"No BORIS info excel file found in {analysis_folder_path}")
@@ -181,27 +178,71 @@ def get_session_to_nwb_kwargs_per_session(
 
             video_file_paths = list(video_folder_path.glob(f"*{subject_metadata['animal ID']}*"))
 
-            session_start_times = []
-            for video_file_path in video_file_paths:
-                session_start_times.append(parse_datetime_from_filename(video_file_path.name))
+            session_start_times_dict = {}
+            if "LTM" in session_id:
+                # In the long term memory sessions the sample and the test trial happens on consecutive days
+                # we have to group the video files when they are from consecutive days (date_str difference is 1 day)
+                session_start_times = []
+                for video_file_path in video_file_paths:
+                    session_start_times.append(parse_datetime_from_filename(video_file_path.name))
+                session_start_times.sort()
+                for i in range(len(session_start_times) - 1):
+                    if (session_start_times[i + 1].day - session_start_times[i].day) == 1:
+                        # consecutive days
+                        date_str = session_start_times[i].strftime("%Y-%m-%d")
+                        if date_str not in session_start_times_dict:
+                            session_start_times_dict[date_str] = []
+                        session_start_times_dict[date_str].append((video_file_paths[i], session_start_times[i]))
+                        session_start_times_dict[date_str].append((video_file_paths[i + 1], session_start_times[i + 1]))
 
-            session_start_time = min(session_start_times)
-            # TODO add timezone information
+            else:
+                for video_file_path in video_file_paths:
+                    session_start_time = parse_datetime_from_filename(video_file_path.name)
+                    date_str = session_start_time.strftime("%Y-%m-%d")
+                    if date_str not in session_start_times_dict:
+                        session_start_times_dict[date_str] = []
+                    session_start_times_dict[date_str].append((video_file_path, session_start_time))
 
-            if "Test" in session_id:
-                session_id = f"{session_id.split(' ')[1]}"
+            for date_str, video_start_times in session_start_times_dict.items():
+                if "Test" in session_id:
+                    if len(video_start_times) != 2:
+                        with open(exception_file_path, mode="a") as f:
+                            f.write(f"Session {session_id}\n")
+                            f.write(f"Expected 2 video files on {date_str} found {len(video_start_times)}\n")
+                        continue
+                    # We have both sample and test videos for this date
+                    sample_video_path, sample_start_time = video_start_times[0]
+                    test_video_path, test_start_time = video_start_times[1]
+                    session_kwargs = {
+                        "video_file_paths": [sample_video_path, test_video_path],
+                        "boris_file_path": boris_file_path,
+                        "boris_info_file_path": boris_info_file_path,
+                        "subject_metadata": subject_metadata,
+                        "session_id": f"{task_acronym}_{session_id.split(' ')[1]}",
+                        "session_start_time": min(sample_start_time, test_start_time),
+                    }
+                    session_to_nwb_kwargs_per_session.append(session_kwargs)
 
-            session_kwargs = {
-                "video_file_paths": video_file_paths,
-                "boris_file_path": boris_file_path,
-                "boris_info_file_path": boris_info_file_path,
-                "subject_metadata": subject_metadata,
-                "session_id": f"{task_acronym}_{session_id}",
-                "session_start_time": session_start_time,
-            }
-            session_to_nwb_kwargs_per_session.append(session_kwargs)
+                elif "Hab" in session_id:
+                    if len(video_start_times) != 1:
+                        with open(exception_file_path, mode="a") as f:
+                            f.write(f"Session {session_id}\n")
+                            f.write(f"Expected 1 video file on {date_str} found {len(video_start_times)}\n")
+                        continue
+                    video_file_path, session_start_time = video_start_times[0]
+                    session_kwargs = {
+                        "video_file_paths": [video_file_path],
+                        "boris_file_path": None,
+                        "boris_info_file_path": None,
+                        "subject_metadata": subject_metadata,
+                        "session_id": f"{task_acronym}_{session_id}",
+                        "session_start_time": session_start_time,
+                    }
+                    session_to_nwb_kwargs_per_session.append(session_kwargs)
+
         with open(exception_file_path, mode="a") as f:
             f.write(f"------------------------------------------------------------\n\n")
+
     return session_to_nwb_kwargs_per_session
 
 

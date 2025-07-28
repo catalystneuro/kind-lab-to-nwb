@@ -227,7 +227,10 @@ def session_to_nwb(
     task_acronym = session_id.split("_")[0]
     if subject_metadata[f"{task_acronym} exp"] is not np.nan:
         experimenters.append(subject_metadata[f"{task_acronym} exp"])
-    if subject_metadata[f"{task_acronym} sco"] is not np.nan:
+    if (
+        subject_metadata[f"{task_acronym} sco"] is not np.nan
+        and subject_metadata[f"{task_acronym} sco"] != subject_metadata[f"{task_acronym} exp"]
+    ):
         experimenters.append(subject_metadata[f"{task_acronym} sco"])
     metadata["NWBFile"]["experimenter"] = experimenters
 

@@ -305,11 +305,10 @@ if __name__ == "__main__":
         boris_file_path = boris_file_paths[0]
 
     # check if boris info file exists
-    analysis_folder_path = cohort_folder_path / "Analysis"
-    boris_info_file_paths = list(analysis_folder_path.glob("boris_info*.xlsx"))
+    boris_info_file_paths = list(data_dir_path.glob(f"{subject_metadata['cohort ID']}_OL_borris_info.xlsx"))
     if len(boris_info_file_paths) == 0:
         boris_info_file_path = None
-        warnings.warn(f"No BORIS info excel file found in {analysis_folder_path}")
+        warnings.warn(f"No BORIS info excel file found in {data_dir_path}")
     else:
         boris_info_file_path = boris_info_file_paths[0]
 

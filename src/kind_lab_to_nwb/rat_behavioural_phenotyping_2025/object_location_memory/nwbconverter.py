@@ -59,11 +59,11 @@ class ObjectLocationMemoryNWBConverter(NWBConverter):
         ):
             test_trial_info = metadata["NoveltyInformation"]["test_trial"]
             test_trial_events_table_name = conversion_options["TestObjectLocationMemoryBehavior"]["table_name"]
-            test_trial_events_table = nwbfile.processing["events"][test_trial_events_table_name].to_dataframe()
+            test_trial_events_table = nwbfile.processing["behavior"][test_trial_events_table_name].to_dataframe()
             for idx, row in test_trial_events_table.iterrows():
                 for position, novelty in zip(test_trial_info["position"], test_trial_info["novelty"]):
                     if position == row["label"]:
-                        nwbfile.processing["events"][test_trial_events_table_name]["event_description"].data[
+                        nwbfile.processing["behavior"][test_trial_events_table_name]["event_description"].data[
                             idx
                         ] = novelty
                         test_trial_events_table.at[idx, "event_description"] = novelty
@@ -71,11 +71,11 @@ class ObjectLocationMemoryNWBConverter(NWBConverter):
 
             sample_trial_info = metadata["NoveltyInformation"]["sample_trial"]
             sample_trial_events_table_name = conversion_options["SampleObjectLocationMemoryBehavior"]["table_name"]
-            sample_trial_events_table = nwbfile.processing["events"][sample_trial_events_table_name].to_dataframe()
+            sample_trial_events_table = nwbfile.processing["behavior"][sample_trial_events_table_name].to_dataframe()
             for idx, row in sample_trial_events_table.iterrows():
                 for position, novelty in zip(sample_trial_info["position"], sample_trial_info["novelty"]):
                     if position == row["label"]:
-                        nwbfile.processing["events"][sample_trial_events_table_name]["event_description"].data[
+                        nwbfile.processing["behavior"][sample_trial_events_table_name]["event_description"].data[
                             idx
                         ] = novelty
                         sample_trial_events_table.at[idx, "event_description"] = novelty

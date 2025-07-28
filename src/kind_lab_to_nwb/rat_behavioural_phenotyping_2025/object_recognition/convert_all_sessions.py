@@ -172,8 +172,7 @@ def get_session_to_nwb_kwargs_per_session(
                 if not np.isnan(cage_id):
                     cage_id = int(cage_id)
                     video_file_paths = list(video_folder_path.glob(f"*cage{cage_id}*"))
-                elif np.isnan(cage_id) or len(video_file_paths) == 0:
-                    # raise FileNotFoundError(f"No video files found in {video_folder_path} for session {session_id}")
+                if len(video_file_paths) == 0:
                     with open(exception_file_path, mode="a") as f:
                         f.write(f"Session {session_id}\n")
                         f.write(f"No video files found in {video_folder_path} for session {session_id}\n\n")

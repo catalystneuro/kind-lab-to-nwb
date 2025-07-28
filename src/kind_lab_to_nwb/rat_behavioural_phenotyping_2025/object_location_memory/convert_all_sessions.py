@@ -179,8 +179,6 @@ def get_session_to_nwb_kwargs_per_session(
                         f.write(f"No video files found in {video_folder_path} for session {session_id}\n\n")
                     continue
 
-            video_file_paths = list(video_folder_path.glob(f"*{subject_metadata['animal ID']}*"))
-
             session_start_times_dict = {}
             if "LTM" in session_id:
                 # In the long term memory sessions the sample and the test trial happens on consecutive days

@@ -5,6 +5,7 @@ from pathlib import Path
 from pprint import pformat
 from typing import Union
 from tqdm import tqdm
+import numpy as np
 
 
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.object_location_memory.convert_session import (
@@ -131,18 +132,17 @@ def get_session_to_nwb_kwargs_per_session(
     for subject_metadata in subjects_metadata:
         with open(exception_file_path, mode="a") as f:
             f.write(f"Subject {subject_metadata['cohort ID']}_{subject_metadata['animal ID']}\n")
+
+        cohort_folder_path = (
+            data_dir_path / subject_metadata["line"] / f"{subject_metadata['cohort ID']}_{task_acronym}"
+        )
+        if not cohort_folder_path.exists():
+            # raise FileNotFoundError(f"Folder {cohort_folder_path} does not exist")
+            with open(exception_file_path, mode="a") as f:
+                f.write(f"Folder {cohort_folder_path} does not exist\n\n")
+            continue
+
         for session_id in session_ids:
-
-            cohort_folder_path = (
-                data_dir_path / subject_metadata["line"] / f"{subject_metadata['cohort ID']}_{task_acronym}"
-            )
-            if not cohort_folder_path.exists():
-                # raise FileNotFoundError(f"Folder {cohort_folder_path} does not exist")
-                with open(exception_file_path, mode="a") as f:
-                    f.write(f"Session {session_id}\n")
-                    f.write(f"Folder {cohort_folder_path} does not exist\n\n")
-                continue
-
             # check if boris file exists on the cohort folder
             boris_file_paths = list(cohort_folder_path.glob("*.boris"))
             if len(boris_file_paths) == 0:
@@ -168,13 +168,16 @@ def get_session_to_nwb_kwargs_per_session(
 
             video_file_paths = list(video_folder_path.glob(f"*{subject_metadata['animal ID']}*"))
             if len(video_file_paths) == 0:
-                video_file_paths = list(video_folder_path.glob(f"*cage{subject_metadata['cage ID']}*"))
-                if len(video_file_paths) == 0:
+                cage_id = subject_metadata["cage ID"]
+                if not np.isnan(cage_id):
+                    cage_id = int(cage_id)
+                    video_file_paths = list(video_folder_path.glob(f"*cage{cage_id}*"))
+                elif np.isnan(cage_id) or len(video_file_paths) == 0:
                     # raise FileNotFoundError(f"No video files found in {video_folder_path} for session {session_id}")
                     with open(exception_file_path, mode="a") as f:
                         f.write(f"Session {session_id}\n")
                         f.write(f"No video files found in {video_folder_path} for session {session_id}\n\n")
-                continue
+                    continue
 
             video_file_paths = list(video_folder_path.glob(f"*{subject_metadata['animal ID']}*"))
 

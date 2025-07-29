@@ -78,23 +78,59 @@ class ObjectRecognitionNWBConverter(NWBConverter):
             test_trial_info = metadata["NoveltyInformation"]["test_trial"]
             test_trial_events_table_name = conversion_options["TestObjectRecognitionBehavior"]["table_name"]
             test_trial_events_table = nwbfile.processing["behavior"][test_trial_events_table_name].to_dataframe()
+            # add columns for object names, novelty, and positions
+            object_names = []
+            novelty_info = []
+            positions = []
             for idx, row in test_trial_events_table.iterrows():
-                for position, novelty in zip(test_trial_info["position"], test_trial_info["novelty"]):
-                    if position == row["label"]:
-                        nwbfile.processing["behavior"][test_trial_events_table_name]["event_description"].data[
-                            idx
-                        ] = novelty
-                        test_trial_events_table.at[idx, "event_description"] = novelty
-                        break
+                for i, boris_label in enumerate(test_trial_info["boris_label"]):
+                    if boris_label == row["label"]:
+                        object_names.append(test_trial_info["object"][i])
+                        novelty_info.append(test_trial_info["novelty"][i])
+                        positions.append(test_trial_info["position"][i])
+
+            nwbfile.processing["behavior"][test_trial_events_table_name].add_column(
+                name="object_name",
+                description="Name of the object in the test trial",
+                data=object_names,
+            )
+            nwbfile.processing["behavior"][test_trial_events_table_name].add_column(
+                name="novelty",
+                description="Novelty of the object in the test trial",
+                data=novelty_info,
+            )
+            nwbfile.processing["behavior"][test_trial_events_table_name].add_column(
+                name="position",
+                description="Position of the object in the test trial",
+                data=positions,
+            )
 
             sample_trial_info = metadata["NoveltyInformation"]["sample_trial"]
             sample_trial_events_table_name = conversion_options["SampleObjectRecognitionBehavior"]["table_name"]
             sample_trial_events_table = nwbfile.processing["behavior"][sample_trial_events_table_name].to_dataframe()
+            # add columns for object names, novelty, and positions
+            object_names = []
+            novelty_info = []
+            positions = []
             for idx, row in sample_trial_events_table.iterrows():
-                for position, novelty in zip(sample_trial_info["position"], sample_trial_info["novelty"]):
-                    if position == row["label"]:
-                        nwbfile.processing["behavior"][sample_trial_events_table_name]["event_description"].data[
-                            idx
-                        ] = novelty
-                        sample_trial_events_table.at[idx, "event_description"] = novelty
-                        break
+                for i, boris_label in enumerate(sample_trial_info["boris_label"]):
+                    if boris_label == row["label"]:
+                        object_names.append(sample_trial_info["object"][i])
+                        novelty_info.append(sample_trial_info["novelty"][i])
+                        positions.append(sample_trial_info["position"][i])
+
+            nwbfile.processing["behavior"][sample_trial_events_table_name].add_column(
+                name="object_name",
+                description="Name of the object in the sample trial",
+                data=object_names,
+            )
+            nwbfile.processing["behavior"][sample_trial_events_table_name].add_column(
+                name="novelty",
+                description="Novelty of the object in the sample trial",
+                data=novelty_info,
+            )
+            nwbfile.processing["behavior"][sample_trial_events_table_name].add_column(
+                name="position",
+                description="Position of the object in the sample trial",
+                data=positions,
+            )

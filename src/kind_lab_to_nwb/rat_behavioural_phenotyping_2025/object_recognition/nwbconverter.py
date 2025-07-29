@@ -54,6 +54,10 @@ class ObjectRecognitionNWBConverter(NWBConverter):
             # Align the start time of the test video to the start time of the sample video
 
             aligned_starting_time = (test_video_datetime - sample_video_datetime).total_seconds()
+            if "STM" in metadata["NWBFile"]["session_id"] and aligned_starting_time == 0:
+                # If the session is STM and the aligned starting time is 0, set it to a default value of 5 minutes
+                aligned_starting_time = 20 * 60  # 15 min of sample video + 5 min of pause as described in the protocol
+
             if "TestObjectRecognitionBehavior" in self.data_interface_objects:
                 self.data_interface_objects["TestObjectRecognitionBehavior"].set_aligned_starting_time(
                     aligned_starting_time

@@ -45,6 +45,26 @@ Behavior:
         model: "C920"
         lens: "Carl Zeiss lens with 20-step autofocus"
         camera_name: "BehavioralCamera"
+    BehavioralVideoHabD1Trial1:
+      description: |
+        Video recording of the rat's behavior. Recorded using a CCTV camera mounted on the ceiling above the arenas.
+      device:
+        name: "camera_device 0"
+        description: CCTV camera mounted on ceiling above arenas for behavioral recording
+        meters_per_pixel: 0.0004
+        model: "C920"
+        lens: "Carl Zeiss lens with 20-step autofocus"
+        camera_name: "BehavioralCamera"
+    BehavioralVideoHabD1Trial2:
+      description: |
+        Video recording of the rat's behavior. Recorded using a CCTV camera mounted on the ceiling above the arenas.
+      device:
+        name: "camera_device 0"
+        description: CCTV camera mounted on ceiling above arenas for behavioral recording
+        meters_per_pixel: 0.0004
+        model: "C920"
+        lens: "Carl Zeiss lens with 20-step autofocus"
+        camera_name: "BehavioralCamera"
 
 SessionTypes:
   1TS_HabD1:

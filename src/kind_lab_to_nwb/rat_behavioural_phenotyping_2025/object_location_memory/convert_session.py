@@ -39,6 +39,7 @@ def get_novelty_information_for_the_object_positions(
         Animal ID to filter the data.
     session_id : str
         Session ID to filter the data.
+        If the session_id is in the format "OR_LTM" or "OR_STM", it will extract the novelty information
 
     Returns
     -------
@@ -49,8 +50,8 @@ def get_novelty_information_for_the_object_positions(
         return {}
 
     df = pd.read_excel(boris_info_file_path)
-    # select only relevant rows: where animal_id and session_id are contained in the Filename column
-    df = df[df["Filename"].str.contains(animal_id) & df["Filename"].str.contains(session_id)]
+    # select only relevant rows: the Filename column should contain the animal_id "LTM" or "STM" (depending on the session_id)
+    df = df[df["Filename"].str.contains(animal_id) & df["test"].str.contains(session_id.split("_")[1])]
     if df.empty:
         warnings.warn(f"No novelty information found for animal {animal_id} in session {session_id}.")
         return {}
@@ -60,19 +61,27 @@ def get_novelty_information_for_the_object_positions(
     trial_types = ["sample_trial", "test_trial"]
     object_ids = ["A", "B", "C", "D"]
     num_objects = len(object_ids)
-    novelty_info_dict = {t: {"position": [None] * num_objects, "novelty": [None] * num_objects} for t in trial_types}
+    novelty_info_dict = {
+        t: {
+            "boris_label": [None] * num_objects,
+            "position": [None] * num_objects,
+            "novelty": [None] * num_objects,
+            "object": [None] * num_objects,
+        }
+        for t in trial_types
+    }
 
     # Process each row in the filtered dataframe
     for _, row in df.iterrows():
-        filename = row["Filename"]
+        trial = row["trial"]
 
         # Determine trial type from filename
-        if "sample" in filename.lower():
+        if "sample" in trial.lower():
             trial_type = "sample_trial"
-        elif "test" in filename.lower():
+        elif "test" in trial.lower():
             trial_type = "test_trial"
         else:
-            warnings.warn(f"Could not determine trial type from filename: {filename}")
+            warnings.warn(f"Could not determine trial type: {trial}")
             continue
 
         # Extract object information for each object (A, B, C, D)
@@ -80,15 +89,21 @@ def get_novelty_information_for_the_object_positions(
 
         for i, object_id in enumerate(object_ids):
             # Get position and novelty information
-            pos_col = f"Obj_{object_id}"
+            boris_label = f"Obj_{object_id}"
+            pos_col = f"Pos_{object_id}"
             nov_col = f"ID_{object_id}"
+            obj_col = f"ObjName_{object_id}"
 
+            boris_label = row.get(boris_label, None)
             position = row.get(pos_col, None)
             novelty = row.get(nov_col, None)
+            object_name = row.get(obj_col, None)
 
             # Handle NaN values (convert to None)
+            novelty_info_dict[trial_type]["boris_label"][i] = None if pd.isna(boris_label) else boris_label
             novelty_info_dict[trial_type]["position"][i] = None if pd.isna(position) else position
             novelty_info_dict[trial_type]["novelty"][i] = None if pd.isna(novelty) else novelty
+            novelty_info_dict[trial_type]["object"][i] = None if pd.isna(object_name) else object_name
 
     return novelty_info_dict
 
@@ -161,7 +176,7 @@ def session_to_nwb(
             observation_ids = [
                 obs_id
                 for obs_id in all_observation_ids
-                if str(subject_metadata["animal ID"]) in obs_id and session_id.replace("OLM_", "") in obs_id
+                if str(subject_metadata["animal ID"]) in obs_id and session_id.split("_")[1] in obs_id
             ]
             if not observation_ids:
                 print(f"Observation ID not found in BORIS file {boris_file_path}.")
@@ -262,7 +277,7 @@ def session_to_nwb(
     # Add novelty information on the object position
     if boris_info_file_path is not None:
         novelty_info = get_novelty_information_for_the_object_positions(
-            boris_info_file_path, str(subject_metadata["animal ID"]), session_id.replace("OLM_", "")
+            boris_info_file_path, str(subject_metadata["animal ID"]), session_id
         )
         # Add novelty information to metadata if needed
         # This could be used to store object position and novelty information in the NWB file

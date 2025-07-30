@@ -64,10 +64,10 @@ def one_trial_social_dataset_to_nwb(
 
         exception_file_path = output_dir_path / f"ERROR_sub_{subject_id}-ses_{session_id}.txt"
 
-        # safe_session_to_nwb(
-        #     session_to_nwb_kwargs=session_to_nwb_kwargs,
-        #     exception_file_path=exception_file_path,
-        # )
+        safe_session_to_nwb(
+            session_to_nwb_kwargs=session_to_nwb_kwargs,
+            exception_file_path=exception_file_path,
+        )
 
 
 def safe_session_to_nwb(
@@ -173,13 +173,7 @@ def get_session_to_nwb_kwargs_per_session(
                         f.write(f"Session {session_id}\n")
                         f.write(f"No video files found in {video_folder_path} for session {session_id}\n\n")
                     continue
-            if len(video_file_paths) > 1:
-                with open(exception_file_path, mode="a") as f:
-                    f.write(f"Session {session_id}\n")
-                    f.write(
-                        f"Multiple video files found in {video_folder_path} for session {session_id}: {video_file_paths}\n\n"
-                    )
-                continue
+
             video_path = Path(video_file_paths[0])
             session_start_time = parse_datetime_from_filename(video_path.name)
             # TODO add timezone information

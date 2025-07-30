@@ -87,7 +87,7 @@ def session_to_nwb(
     metadata["Subject"]["subject_id"] = subject_id
     metadata["Subject"][
         "description"
-    ] = f"Subject housed in {subject_metadata['housing']} housing conditions. Genotype composition: {subject_metadata['mixed genotype']}. Cage identifier: {subject_metadata['cage ID']}."
+    ] = f"Subject housed in {subject_metadata['housing']} housing conditions. Cage identifier: {subject_metadata['cage ID']}."
     metadata["Subject"]["date_of_birth"] = subject_metadata["DOB (DD/MM/YYYY)"]
     metadata["Subject"]["genotype"] = subject_metadata["genotype"].upper()
     metadata["Subject"]["strain"] = subject_metadata["line"]

@@ -21,8 +21,6 @@ NWBFile:
     Videos were scored using BORIS software to manually quantify the time that the test rat spent engaged in social exploration of the stimulus rat (nose within whisking distance, grooming, climbing on, placing paws on, boxing with, following closely or pinning the stimulus rat). Activity was tracked using ANYmaze to generate distance moved and % time in different zones of the arena (e.g. center and outer periphery during the habituation trials when the other rat was not present).
   institution: University of Edinburgh
   lab: Kind
-  experimenter:
-    - Example, Researcher # Example value - actual experimenter name needed
 
 Subject:
   species: Rattus norvegicus

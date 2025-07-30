@@ -78,17 +78,21 @@ class ObjectRecognitionNWBConverter(NWBConverter):
             test_trial_info = metadata["NoveltyInformation"]["test_trial"]
             test_trial_events_table_name = conversion_options["TestObjectRecognitionBehavior"]["table_name"]
             test_trial_events_table = nwbfile.processing["behavior"][test_trial_events_table_name].to_dataframe()
-            # add columns for object names, novelty, and positions
-            object_names = []
-            novelty_info = []
-            positions = []
+
+            # Prepare data arrays with correct values before adding columns
+            object_names = ["" for _ in range(len(test_trial_events_table))]
+            novelty_info = ["" for _ in range(len(test_trial_events_table))]
+            positions = ["" for _ in range(len(test_trial_events_table))]
+
+            # Fill the arrays with the correct values
             for idx, row in test_trial_events_table.iterrows():
                 for i, boris_label in enumerate(test_trial_info["boris_label"]):
                     if boris_label == row["label"]:
-                        object_names.append(test_trial_info["object"][i])
-                        novelty_info.append(test_trial_info["novelty"][i])
-                        positions.append(test_trial_info["position"][i])
+                        object_names[idx] = test_trial_info["object"][i]
+                        novelty_info[idx] = test_trial_info["novelty"][i]
+                        positions[idx] = test_trial_info["position"][i]
 
+            # Add columns with the populated data
             nwbfile.processing["behavior"][test_trial_events_table_name].add_column(
                 name="object_name",
                 description="Name of the object in the test trial",
@@ -108,17 +112,21 @@ class ObjectRecognitionNWBConverter(NWBConverter):
             sample_trial_info = metadata["NoveltyInformation"]["sample_trial"]
             sample_trial_events_table_name = conversion_options["SampleObjectRecognitionBehavior"]["table_name"]
             sample_trial_events_table = nwbfile.processing["behavior"][sample_trial_events_table_name].to_dataframe()
-            # add columns for object names, novelty, and positions
-            object_names = []
-            novelty_info = []
-            positions = []
+
+            # Prepare data arrays with correct values before adding columns
+            object_names = ["" for _ in range(len(sample_trial_events_table))]
+            novelty_info = ["" for _ in range(len(sample_trial_events_table))]
+            positions = ["" for _ in range(len(sample_trial_events_table))]
+
+            # Fill the arrays with the correct values
             for idx, row in sample_trial_events_table.iterrows():
                 for i, boris_label in enumerate(sample_trial_info["boris_label"]):
                     if boris_label == row["label"]:
-                        object_names.append(sample_trial_info["object"][i])
-                        novelty_info.append(sample_trial_info["novelty"][i])
-                        positions.append(sample_trial_info["position"][i])
+                        object_names[idx] = sample_trial_info["object"][i]
+                        novelty_info[idx] = sample_trial_info["novelty"][i]
+                        positions[idx] = sample_trial_info["position"][i]
 
+            # Add columns with the populated data
             nwbfile.processing["behavior"][sample_trial_events_table_name].add_column(
                 name="object_name",
                 description="Name of the object in the sample trial",

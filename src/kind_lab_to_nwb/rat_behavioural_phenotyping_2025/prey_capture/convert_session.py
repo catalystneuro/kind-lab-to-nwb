@@ -3,6 +3,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import List, Optional, Union
 from zoneinfo import ZoneInfo
+import numpy as np
 
 import natsort
 from pydantic import FilePath
@@ -17,11 +18,9 @@ from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.prey_capture import (
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils import (
     convert_ts_to_mp4,
     extract_subject_metadata_from_excel,
-    get_cage_ids_from_excel_files,
     get_session_ids_from_excel,
     get_subject_metadata_from_task,
     parse_datetime_from_filename,
-    update_subjects_metadata_with_cage_ids,
 )
 from neuroconv.datainterfaces import AudioInterface, ExternalVideoInterface
 from neuroconv.utils import dict_deep_update, load_dict_from_file
@@ -136,8 +135,6 @@ def session_to_nwb(
 
     metadata = converter.get_metadata()
     # Update default metadata with the editable in the corresponding yaml file
-    editable_metadata_path = Path(__file__).parent / "metadata.yaml"
-    editable_metadata = load_dict_from_file(editable_metadata_path)
     metadata = dict_deep_update(
         metadata,
         editable_metadata,
@@ -160,6 +157,9 @@ def session_to_nwb(
         metadata["Behavior"].pop("Audio")
 
     metadata["Subject"]["subject_id"] = subject_id
+    metadata["Subject"][
+        "description"
+    ] = f"Subject housed in {subject_metadata['housing']} housing conditions. Cage identifier: {subject_metadata['cage ID']}."
     metadata["Subject"]["date_of_birth"] = subject_metadata["DOB (DD/MM/YYYY)"]
     metadata["Subject"]["genotype"] = subject_metadata["genotype"].upper()
     metadata["Subject"]["strain"] = subject_metadata["line"]
@@ -168,6 +168,17 @@ def session_to_nwb(
     # Add session ID to metadata
     metadata["NWBFile"]["session_id"] = session_id
     metadata["NWBFile"]["session_description"] = metadata["SessionTypes"][session_id]["session_description"]
+    metadata["NWBFile"]["session_description"] = metadata["SessionTypes"][session_id]["session_description"]
+    experimenters = []
+    task_acronym = session_id.split("_")[0]
+    if subject_metadata[f"{task_acronym} exp"] is not np.nan:
+        experimenters.append(subject_metadata[f"{task_acronym} exp"])
+    if (
+        subject_metadata[f"{task_acronym} sco"] is not np.nan
+        and subject_metadata[f"{task_acronym} sco"] != subject_metadata[f"{task_acronym} exp"]
+    ):
+        experimenters.append(subject_metadata[f"{task_acronym} sco"])
+    metadata["NWBFile"]["experimenter"] = experimenters
 
     if "session_start_time" not in metadata["NWBFile"]:
         session_start_time = session_start_time.replace(tzinfo=ZoneInfo("Europe/London"))
@@ -181,14 +192,16 @@ def session_to_nwb(
         overwrite=overwrite,
     )
 
+    print(f"Conversion completed for {subject_id} session {session_id}.")
+    print(f"NWB file saved to {nwbfile_path}.")
+
 
 if __name__ == "__main__":
 
     # Parameters for conversion
-    data_dir_path = Path("/Volumes/T9/Behavioural Pipeline/Prey Capture")
-    output_dir_path = Path("/Users/weian/data/Kind/nwbfiles")
-
-    subjects_metadata_file_path = Path("/Users/weian/data/RAT ID metadata Yunkai copy - updated 12.2.25.xlsx")
+    data_dir_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/1 Trial Social")
+    output_dir_path = Path("D:/kind_lab_conversion_nwb/behavioural_pipeline/1_trial_social")
+    subjects_metadata_file_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/general_metadata.xlsx")
     task_acronym = "PC"
     session_ids = get_session_ids_from_excel(
         subjects_metadata_file_path=subjects_metadata_file_path,
@@ -198,14 +211,6 @@ if __name__ == "__main__":
     subjects_metadata = extract_subject_metadata_from_excel(subjects_metadata_file_path)
     subjects_metadata = get_subject_metadata_from_task(subjects_metadata, task_acronym)
 
-    # The folder where the pooled data excel files are stored
-    pooled_data_folder_path = Path("/Users/weian/data/")
-    cage_ids = get_cage_ids_from_excel_files(pooled_data_folder_path)
-    cages_subjects_metadata = update_subjects_metadata_with_cage_ids(
-        subjects_metadata=subjects_metadata,
-        cage_ids=cage_ids,
-    )
-
     session_id = session_ids[0]  # HabD1
     subject_metadata = subjects_metadata[0]  # subject 408_Arid1b(3)
 
@@ -213,19 +218,7 @@ if __name__ == "__main__":
     if not cohort_folder_path.exists():
         raise FileNotFoundError(f"Folder {cohort_folder_path} does not exist")
 
-    video_folder_path = cohort_folder_path / session_id
-
-    if not video_folder_path.exists():
-        raise FileNotFoundError(f"Folder {cohort_folder_path} does not exist")
-    if session_id == "HabD1":
-        video_file_paths = natsort.natsorted(video_folder_path.glob(f"*.mp4"))
-        # Filter video file paths if the cage id is in the file name.
-        cage_id = subject_metadata.get("cage ID")
-        video_file_paths = [path for path in video_file_paths if f"cage{cage_id}" in path.name.lower()]
-    else:
-        video_file_paths = natsort.natsorted(video_folder_path.glob(f"*{subject_metadata['animal ID']}*"))
-
-    # If the data has been scored, the cohort folder would contain BORIS files (.boris) of the behaviors of interest
+    # check if boris file exists on the cohort folder
     # TODO: there are no example boris files for PC shared yet
     boris_file_paths = list(cohort_folder_path.glob("*.boris"))
     if len(boris_file_paths) == 0:
@@ -233,6 +226,16 @@ if __name__ == "__main__":
         warnings.warn(f"No BORIS file found in {cohort_folder_path}")
     else:
         boris_file_path = boris_file_paths[0]
+
+    video_folder_path = cohort_folder_path / session_id
+    if not video_folder_path.exists():
+        raise FileNotFoundError(f"Folder {cohort_folder_path} does not exist")
+    video_file_paths = natsort.natsorted(video_folder_path.glob(f"*{subject_metadata['animal ID']}*"))
+    if len(video_file_paths) == 0:
+        cage_id = subject_metadata["cage ID"]
+        if not np.isnan(cage_id):
+            cage_id = int(cage_id)
+            video_file_paths = natsort.natsorted(video_folder_path.glob(f"*cage{cage_id}*"))
 
     # Optional, add USV files
     usv_file_paths = natsort.natsorted(video_folder_path.rglob(f"*{subject_metadata['animal ID']}*.wav"))

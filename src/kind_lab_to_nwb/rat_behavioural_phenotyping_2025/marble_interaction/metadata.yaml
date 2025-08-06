@@ -29,7 +29,6 @@ Devices:
     description: |
       Plastic box identical to home cage base (63x50x30 cm) with white plastic panels
       in frame around sides to total height of 90 cm
-    manufacturer: Example Manufacturer # Example value - actual manufacturer needed
   - name: Marbles
     description: 20 black shiny glass marbles (25mm diameter, Opal marble)
     manufacturer: House of Marbles UK

@@ -258,7 +258,7 @@ def session_to_nwb(
     # Add novelty information on the object position
     if boris_info_file_path is not None:
         novelty_info = get_novelty_information_for_the_object_positions(
-            boris_info_file_path, str(subject_metadata["animal ID"]), session_id.replace("OLM_", "")
+            boris_info_file_path, str(subject_metadata["animal ID"]), session_id
         )
         # Add novelty information to metadata if needed
         # This could be used to store object position and novelty information in the NWB file

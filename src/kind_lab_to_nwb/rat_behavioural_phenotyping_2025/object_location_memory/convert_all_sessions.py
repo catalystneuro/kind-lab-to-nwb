@@ -142,21 +142,26 @@ def get_session_to_nwb_kwargs_per_session(
                 f.write(f"Folder {cohort_folder_path} does not exist\n\n")
             continue
 
+        # check if boris file exists on the cohort folder
+        boris_file_paths = list(cohort_folder_path.glob("*.boris"))
+        if len(boris_file_paths) == 0:
+            boris_file_path = None
+            # warnings.warn(f"No BORIS file found in {cohort_folder_path}")
+            # with open(exception_file_path, mode="a") as f:
+            #     f.write(f"No BORIS file found in {cohort_folder_path} for session {session_id}\n\n")
+            continue
+        else:
+            boris_file_path = boris_file_paths[0]
+
+        # check if boris info file exists
+        boris_info_file_paths = list(data_dir_path.glob(f"{subject_metadata['cohort ID']}_OL_borris_info.xlsx"))
+        if len(boris_info_file_paths) == 0:
+            boris_info_file_path = None
+            # warnings.warn(f"No BORIS info excel file found in {analysis_folder_path}")
+        else:
+            boris_info_file_path = boris_info_file_paths[0]
+
         for session_id in session_ids:
-            # check if boris file exists on the cohort folder
-            boris_file_paths = list(cohort_folder_path.glob("*.boris"))
-            if len(boris_file_paths) == 0:
-                boris_file_path = None
-                # warnings.warn(f"No BORIS file found in {cohort_folder_path}")
-                # with open(exception_file_path, mode="a") as f:
-                #     f.write(f"No BORIS file found in {cohort_folder_path} for session {session_id}\n\n")
-            # check if boris info file exists
-            boris_info_file_paths = list(data_dir_path.glob(f"{subject_metadata['cohort ID']}_OL_borris_info.xlsx"))
-            if len(boris_info_file_paths) == 0:
-                boris_info_file_path = None
-                # warnings.warn(f"No BORIS info excel file found in {analysis_folder_path}")
-            else:
-                boris_info_file_path = boris_info_file_paths[0]
 
             video_folder_path = cohort_folder_path / session_id
             if not video_folder_path.exists():

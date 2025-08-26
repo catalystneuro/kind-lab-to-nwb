@@ -69,6 +69,8 @@ def session_to_nwb(
         conversion_options.update(dict(SpyglassVideoInterface=dict(task_metadata=task_metadata)))
     elif len(video_file_paths) > 1:
         if "HabD1" in session_id:
+        # remove videos of stimulus subjects
+            video_file_paths = [video_file_path  if "stim" not in str(video_file_path).lower for video_file_path  in video_file_paths]
             for i, video_file_path in enumerate(video_file_paths):
                 file_paths = convert_ts_to_mp4([video_file_path])
                 video_name = f"BehavioralVideoHabD1Trial{i+1}"

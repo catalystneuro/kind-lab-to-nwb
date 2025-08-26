@@ -37,30 +37,42 @@ Behavior:
       description: |
         Video recording of the rat's behavior during the first swim of the day. Recorded using a CCTV camera mounted on the ceiling above the arenas.
       device:
-        name: BehavioralCamera
+        name: "camera_device 0"
         description: CCTV camera mounted on ceiling above arenas for behavioral recording
-        manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+        meters_per_pixel: 0.0004
+        model: "C920"
+        lens: "Carl Zeiss lens with 20-step autofocus"
+        camera_name: "BehavioralCamera"
     BehavioralVideoTrial2:
       description: |
         Video recording of the rat's behavior during the second swim of the day. Recorded using a CCTV camera mounted on the ceiling above the arenas.
       device:
-        name: BehavioralCamera
+        name: "camera_device 0"
         description: CCTV camera mounted on ceiling above arenas for behavioral recording
-        manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+        meters_per_pixel: 0.0004
+        model: "C920"
+        lens: "Carl Zeiss lens with 20-step autofocus"
+        camera_name: "BehavioralCamera"
     BehavioralVideoTrial3:
       description: |
         Video recording of the rat's behavior during the third swim of the day. Recorded using a CCTV camera mounted on the ceiling above the arenas.
       device:
-        name: BehavioralCamera
+        name: "camera_device 0"
         description: CCTV camera mounted on ceiling above arenas for behavioral recording
-        manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+        meters_per_pixel: 0.0004
+        model: "C920"
+        lens: "Carl Zeiss lens with 20-step autofocus"
+        camera_name: "BehavioralCamera"
     BehavioralVideoTrial4:
       description: |
         Video recording of the rat's behavior during the fourth swim of the day. Recorded using a CCTV camera mounted on the ceiling above the arenas.
       device:
-        name: BehavioralCamera
+        name: "camera_device 0"
         description: CCTV camera mounted on ceiling above arenas for behavioral recording
-        manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+        meters_per_pixel: 0.0004
+        model: "C920"
+        lens: "Carl Zeiss lens with 20-step autofocus"
+        camera_name: "BehavioralCamera"
 
 Devices:
   - name: WaterMaze
@@ -85,6 +97,12 @@ SessionTypes:
       After the rat found the platform, it was left for 20 s before being carefully lifted,
       towel dried and returned to its home cage.
       If the subject did not find the platform was guided to it and left on it for 20 s.
+    name: visible_platform
+    environment: WaterMaze
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
 
   WM_2_Reference:
     session_description: |
@@ -92,9 +110,21 @@ SessionTypes:
       In long term spatial memory testing the platform remained in the same location over days and was 1-2 cm below water level.
       Spatial cues were available.
       In the first swim of each day the platform only became available after 1 min.
+    name: long_term_memory
+    environment: WaterMaze
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
 
   WM_3_Reversal:
     session_description: |
       Reversal learning assessment.
       In reversal learning trials the location of platform was moved to the opposite quadrant compared to prior trials.
       In the first swim of each day the platform only became available after 1 min.
+    name: reversal_learning
+    environment: WaterMaze
+    camera_id:
+      - 0
+    task_epochs:
+      - 1

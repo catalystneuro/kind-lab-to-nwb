@@ -6,10 +6,11 @@ from pynwb import NWBFile
 from pynwb.device import Device
 
 from neuroconv import NWBConverter
-from neuroconv.datainterfaces import ExternalVideoInterface, AudioInterface
+from neuroconv.datainterfaces import AudioInterface
 
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.interfaces import (
     BORISBehavioralEventsInterface,
+    SpyglassVideoInterface,
 )
 
 
@@ -18,7 +19,7 @@ class OneTrialSocialNWBConverter(NWBConverter):
 
     data_interface_classes = dict(
         OneTrialSocialBehavior=BORISBehavioralEventsInterface,
-        Video=ExternalVideoInterface,
+        Video=SpyglassVideoInterface,
         Audio=AudioInterface,
     )
 

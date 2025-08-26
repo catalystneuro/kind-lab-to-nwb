@@ -115,9 +115,13 @@ def session_to_nwb(
     source_data = dict()
     conversion_options = dict()
 
+    editable_metadata_path = Path(__file__).parent / "metadata.yaml"
+    editable_metadata = load_dict_from_file(editable_metadata_path)
+    task_metadata = editable_metadata["SessionTypes"][session_id]
+
     # Add Behavioral Video
     source_data.update(dict(Video=dict(file_paths=[video_file_path], video_name="BehavioralVideo")))
-    conversion_options.update(dict(Video=dict()))
+    conversion_options.update(dict(Video=dict(task_metadata=task_metadata)))
 
     if freeze_scores_file_path is not None:
         # Add Freeze Scores as trials

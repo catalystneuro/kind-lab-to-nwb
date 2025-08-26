@@ -47,36 +47,63 @@ Behavior:
       description: |
         Video recording of the rat's behavior. Recorded using a CCTV camera mounted on the ceiling above the arenas.
       device:
-        name: BehavioralCamera
+        name: "camera_device 0"
         description: CCTV camera mounted on ceiling above arenas for behavioral recording
-        manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+        meters_per_pixel: 0.0004
+        model: "C920"
+        lens: "Carl Zeiss lens with 20-step autofocus"
+        camera_name: "BehavioralCamera"
     BehavioralVideoTestTrial:
       description: |
         Video recording of the rat's behavior during the test trial. Recorded using a CCTV camera mounted on the ceiling above the arenas.
       device:
-        name: BehavioralCamera
-        description: CCTV camera mounted on ceiling above arena for behavioral recording
-        manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+        name: "camera_device 0"
+        description: CCTV camera mounted on ceiling above arenas for behavioral recording
+        meters_per_pixel: 0.0004
+        model: "C920"
+        lens: "Carl Zeiss lens with 20-step autofocus"
+        camera_name: "BehavioralCamera"
     BehavioralVideoSampleTrial:
       description: |
         Video recording of the rat's behavior during the sample trial. Recorded using a CCTV camera mounted on the ceiling above the arenas.
       device:
-        name: BehavioralCamera
-        description: CCTV camera mounted on ceiling above arena for behavioral recording
-        manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+        name: "camera_device 0"
+        description: CCTV camera mounted on ceiling above arenas for behavioral recording
+        meters_per_pixel: 0.0004
+        model: "C920"
+        lens: "Carl Zeiss lens with 20-step autofocus"
+        camera_name: "BehavioralCamera"
 
 SessionTypes:
   OLM_HabD1:
     session_description: |
       Experimental Day 1. Suject is placed in assigned arena with cagemates for 10 min group habituation
+    name: habituation_1
+    environment: Arena
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
 
   OLM_HabD2:
     session_description: |
       Experimental Day 2. Individual rat placed in arena for 10 min habituation
+    name: habituation_2
+    environment: Arena
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
 
   OLM_HabD3:
     session_description: |
       Experimental Day 3. Individual rat placed in arena for 10 min habituation
+    name: habituation_3
+    environment: Arena
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
 
   OLM_STM:
     session_description: |
@@ -89,6 +116,12 @@ SessionTypes:
       mixed and flattened. The objects were returned to arena with one in the same location and one moved 
       from the corner to the middle of the wall (the object that moved was counterbalanced across genotype). 
       The rat was returned to the arena for a 3 min test trial, 5 min after the sample trial.
+    name: short_term_memory
+    environment: Arena_STM
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
 
   OLM_LTM:
     session_description: |
@@ -101,3 +134,9 @@ SessionTypes:
       mixed and flattened. The objects were returned to arena with one in the same location and one moved 
       from the corner to the middle of the wall (the object that moved was counterbalanced across genotype). 
       The rat was returned to the arena for a 3 min test trial, 24 hr after the sample trial.
+    name: long_term_memory
+    environment: Arena_LTM
+    camera_id:
+      - 0
+    task_epochs:
+      - 1

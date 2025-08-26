@@ -1,10 +1,16 @@
 """Primary NWBConverter class for this dataset."""
+
+from datetime import timedelta
 from typing import Optional
+from warnings import warn
 
 import numpy as np
 from pynwb import NWBFile
 from pynwb.device import Device
 
+from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils import (
+    parse_datetime_from_filename,
+)
 from neuroconv import ConverterPipe
 
 

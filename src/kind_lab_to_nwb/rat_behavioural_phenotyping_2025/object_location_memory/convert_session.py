@@ -55,14 +55,11 @@ def get_novelty_information_for_the_object_positions(
         return {}
 
     # Initialize the novelty info dictionary
-# Initialize result structure
+    # Initialize result structure
     trial_types = ["sample_trial", "test_trial"]
     object_ids = ["A", "B", "C", "D"]
     num_objects = len(object_ids)
-    novelty_info_dict = {
-        t: {"position": [None] * num_objects, "novelty": [None] * num_objects}
-        for t in trial_types
-    }
+    novelty_info_dict = {t: {"position": [None] * num_objects, "novelty": [None] * num_objects} for t in trial_types}
 
     # Process each row in the filtered dataframe
     for _, row in df.iterrows():
@@ -127,6 +124,10 @@ def session_to_nwb(
     source_data = dict()
     conversion_options = dict()
 
+    editable_metadata_path = Path(__file__).parent / "metadata.yaml"
+    editable_metadata = load_dict_from_file(editable_metadata_path)
+    task_metadata = editable_metadata["SessionTypes"][session_id]
+
     if "STM" in session_id or "LTM" in session_id:
         if len(video_file_paths) == 2:
             file_paths = convert_ts_to_mp4(video_file_paths)
@@ -138,7 +139,17 @@ def session_to_nwb(
                     SampleVideo=dict(file_paths=sample_file_paths, video_name="BehavioralVideoSampleTrial"),
                 )
             )
-            conversion_options.update(dict(TestVideo=dict(), SampleVideo=dict()))
+            test_task_metadata = task_metadata.copy()
+            test_task_metadata["name"] = task_metadata["name"] + "_test"
+            test_task_metadata["task_epochs"] = [task_metadata["task_epochs"][0] + 1]
+            sample_task_metadata = task_metadata.copy()
+            sample_task_metadata["name"] = task_metadata["name"] + "_sample"
+            conversion_options.update(
+                dict(
+                    TestVideo=dict(task_metadata=test_task_metadata),
+                    SampleVideo=dict(task_metadata=sample_task_metadata),
+                )
+            )
         else:
             raise ValueError(
                 f"{len(video_file_paths)} video files found for {subject_id}. Expected one video file for the sample trial and one for the test trial."
@@ -184,7 +195,7 @@ def session_to_nwb(
         if len(video_file_paths) == 1:
             file_paths = convert_ts_to_mp4(video_file_paths)
             source_data.update(dict(Video=dict(file_paths=file_paths, video_name="BehavioralVideo")))
-            conversion_options.update(dict(Video=dict()))
+            conversion_options.update(dict(Video=dict(task_metadata=task_metadata)))
         elif len(video_file_paths) > 1:
             raise ValueError(f"Multiple video files found for {subject_id}.")
 
@@ -194,8 +205,6 @@ def session_to_nwb(
     metadata = converter.get_metadata()
 
     # Update default metadata with the editable in the corresponding yaml file
-    editable_metadata_path = Path(__file__).parent / "metadata.yaml"
-    editable_metadata = load_dict_from_file(editable_metadata_path)
     metadata = dict_deep_update(
         metadata,
         editable_metadata,

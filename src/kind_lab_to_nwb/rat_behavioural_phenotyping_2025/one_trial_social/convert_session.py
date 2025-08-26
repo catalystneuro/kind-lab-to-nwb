@@ -50,11 +50,15 @@ def session_to_nwb(
     source_data = dict()
     conversion_options = dict()
 
+    editable_metadata_path = Path(__file__).parent / "metadata.yaml"
+    editable_metadata = load_dict_from_file(editable_metadata_path)
+    task_metadata = editable_metadata["SessionTypes"][session_id]
+
     # Add Behavioral Video
     if len(video_file_paths) == 1:
         file_paths = convert_ts_to_mp4(video_file_paths)
         source_data.update(dict(Video=dict(file_paths=file_paths, video_name="BehavioralVideo")))
-        conversion_options.update(dict(Video=dict()))
+        conversion_options.update(dict(Video=dict(task_metadata=task_metadata)))
     elif len(video_file_paths) > 1:
         raise ValueError(f"Multiple video files found for {subject_id}.")
 
@@ -80,8 +84,6 @@ def session_to_nwb(
     metadata = converter.get_metadata()
 
     # Update default metadata with the editable in the corresponding yaml file
-    editable_metadata_path = Path(__file__).parent / "metadata.yaml"
-    editable_metadata = load_dict_from_file(editable_metadata_path)
     metadata = dict_deep_update(
         metadata,
         editable_metadata,

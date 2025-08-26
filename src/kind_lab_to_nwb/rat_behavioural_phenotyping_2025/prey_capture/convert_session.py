@@ -8,6 +8,9 @@ import numpy as np
 import natsort
 from pydantic import FilePath
 
+from neuroconv.datainterfaces import AudioInterface, ExternalVideoInterface
+from neuroconv.utils import dict_deep_update, load_dict_from_file
+
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.interfaces import (
     BORISBehavioralEventsInterface,
     get_observation_ids,
@@ -22,18 +25,17 @@ from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils import (
     get_subject_metadata_from_task,
     parse_datetime_from_filename,
 )
-from neuroconv.datainterfaces import AudioInterface, ExternalVideoInterface
-from neuroconv.utils import dict_deep_update, load_dict_from_file
 
 
 def session_to_nwb(
-    nwbfile_path: Union[str, Path],
+    output_dir_path: Union[str, Path],
     video_file_paths: List[Union[FilePath, str]],
     session_id: str,
     subject_metadata: dict,
     boris_file_path: Optional[Union[FilePath, str]] = None,
     usv_file_paths: Optional[List[Union[FilePath, str]]] = None,
     usv_starting_times: Optional[List[float]] = None,
+    stub_test: bool = False,
     overwrite: bool = False,
 ):
     """
@@ -41,8 +43,8 @@ def session_to_nwb(
 
     Parameters
     ----------
-    nwbfile_path : Union[str, Path]
-        The full path where the NWB file will be saved.
+    output_dir_path : Union[str, Path]
+        The directory where the NWB file will be saved.
     video_file_paths: List[Union[FilePath, str]]
         The list of video file paths to be converted.
     session_id: str
@@ -58,10 +60,16 @@ def session_to_nwb(
     overwrite: bool, optional
         Whether to overwrite the NWB file if it already exists, by default False.
     """
-    nwbfile_path = Path(nwbfile_path)
-    nwbfile_path.parent.mkdir(parents=True, exist_ok=True)
+    output_dir_path = Path(output_dir_path)
+    if stub_test:
+        output_dir_path = output_dir_path / "nwb_stub"
+    output_dir_path.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
 
-    subject_id = f"{subject_metadata['animal ID']}_{subject_metadata['cohort ID']}"
+    subject_id = f"{subject_metadata['animal ID']}-{subject_metadata['cohort ID']}"
+    nwbfile_path = output_dir_path / f"sub-{subject_id}_ses-{session_id}.nwb"
 
     conversion_options = dict()
 
@@ -135,6 +143,8 @@ def session_to_nwb(
 
     metadata = converter.get_metadata()
     # Update default metadata with the editable in the corresponding yaml file
+    editable_metadata_path = Path(__file__).parent / "metadata.yaml"
+    editable_metadata = load_dict_from_file(editable_metadata_path)
     metadata = dict_deep_update(
         metadata,
         editable_metadata,
@@ -171,10 +181,10 @@ def session_to_nwb(
     metadata["NWBFile"]["session_description"] = metadata["SessionTypes"][session_id]["session_description"]
     experimenters = []
     task_acronym = session_id.split("_")[0]
-    if subject_metadata[f"{task_acronym} exp"] is not np.nan:
+    if str(subject_metadata[f"{task_acronym} exp"]) != "nan":
         experimenters.append(subject_metadata[f"{task_acronym} exp"])
     if (
-        subject_metadata[f"{task_acronym} sco"] is not np.nan
+        str(subject_metadata[f"{task_acronym} sco"]) != "nan"
         and subject_metadata[f"{task_acronym} sco"] != subject_metadata[f"{task_acronym} exp"]
     ):
         experimenters.append(subject_metadata[f"{task_acronym} sco"])
@@ -199,8 +209,8 @@ def session_to_nwb(
 if __name__ == "__main__":
 
     # Parameters for conversion
-    data_dir_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/1 Trial Social")
-    output_dir_path = Path("D:/kind_lab_conversion_nwb/behavioural_pipeline/1_trial_social")
+    data_dir_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/Prey Capture")
+    output_dir_path = Path("D:/kind_lab_conversion_nwb/behavioural_pipeline/prey_capture")
     subjects_metadata_file_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/general_metadata.xlsx")
     task_acronym = "PC"
     session_ids = get_session_ids_from_excel(
@@ -247,11 +257,8 @@ if __name__ == "__main__":
     # Whether to overwrite the NWB file if it already exists
     overwrite = True
 
-    subject_id = f"{subject_metadata['animal ID']}_{subject_metadata['cohort ID']}"
-    nwbfile_path = output_dir_path / f"sub-{subject_id}_ses-{task_acronym}-{session_id}.nwb"
-
     session_to_nwb(
-        nwbfile_path=nwbfile_path,
+        output_dir_path=output_dir_path,
         video_file_paths=video_file_paths,
         session_id=f"{task_acronym}_{session_id}",
         subject_metadata=subject_metadata,

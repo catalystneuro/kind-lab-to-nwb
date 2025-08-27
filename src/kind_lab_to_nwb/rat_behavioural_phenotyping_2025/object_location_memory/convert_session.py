@@ -6,6 +6,7 @@ from pydantic import FilePath
 import warnings
 from datetime import datetime
 import pandas as pd
+import numpy as np
 
 from neuroconv.utils import (
     dict_deep_update,
@@ -38,6 +39,7 @@ def get_novelty_information_for_the_object_positions(
         Animal ID to filter the data.
     session_id : str
         Session ID to filter the data.
+        If the session_id is in the format "OR_LTM" or "OR_STM", it will extract the novelty information
 
     Returns
     -------
@@ -48,8 +50,8 @@ def get_novelty_information_for_the_object_positions(
         return {}
 
     df = pd.read_excel(boris_info_file_path)
-    # select only relevant rows: where animal_id and session_id are contained in the Filename column
-    df = df[df["Filename"].str.contains(animal_id) & df["Filename"].str.contains(session_id)]
+    # select only relevant rows: the Filename column should contain the animal_id "LTM" or "STM" (depending on the session_id)
+    df = df[df["Filename"].str.contains(animal_id) & df["test"].str.contains(session_id.split("_")[1])]
     if df.empty:
         warnings.warn(f"No novelty information found for animal {animal_id} in session {session_id}.")
         return {}
@@ -59,19 +61,27 @@ def get_novelty_information_for_the_object_positions(
     trial_types = ["sample_trial", "test_trial"]
     object_ids = ["A", "B", "C", "D"]
     num_objects = len(object_ids)
-    novelty_info_dict = {t: {"position": [None] * num_objects, "novelty": [None] * num_objects} for t in trial_types}
+    novelty_info_dict = {
+        t: {
+            "boris_label": [None] * num_objects,
+            "position": [None] * num_objects,
+            "novelty": [None] * num_objects,
+            "object": [None] * num_objects,
+        }
+        for t in trial_types
+    }
 
     # Process each row in the filtered dataframe
     for _, row in df.iterrows():
-        filename = row["Filename"]
+        trial = row["trial"]
 
         # Determine trial type from filename
-        if "sample" in filename.lower():
+        if "sample" in trial.lower():
             trial_type = "sample_trial"
-        elif "test" in filename.lower():
+        elif "test" in trial.lower():
             trial_type = "test_trial"
         else:
-            warnings.warn(f"Could not determine trial type from filename: {filename}")
+            warnings.warn(f"Could not determine trial type: {trial}")
             continue
 
         # Extract object information for each object (A, B, C, D)
@@ -79,15 +89,21 @@ def get_novelty_information_for_the_object_positions(
 
         for i, object_id in enumerate(object_ids):
             # Get position and novelty information
-            pos_col = f"Obj_{object_id}"
+            boris_label = f"Obj_{object_id}"
+            pos_col = f"Pos_{object_id}"
             nov_col = f"ID_{object_id}"
+            obj_col = f"ObjName_{object_id}"
 
+            boris_label = row.get(boris_label, None)
             position = row.get(pos_col, None)
             novelty = row.get(nov_col, None)
+            object_name = row.get(obj_col, None)
 
             # Handle NaN values (convert to None)
+            novelty_info_dict[trial_type]["boris_label"][i] = None if pd.isna(boris_label) else boris_label
             novelty_info_dict[trial_type]["position"][i] = None if pd.isna(position) else position
             novelty_info_dict[trial_type]["novelty"][i] = None if pd.isna(novelty) else novelty
+            novelty_info_dict[trial_type]["object"][i] = None if pd.isna(object_name) else object_name
 
     return novelty_info_dict
 
@@ -103,7 +119,7 @@ def session_to_nwb(
     stub_test: bool = False,
     overwrite: bool = False,
 ):
-    subject_id = f"{subject_metadata['animal ID']}_{subject_metadata['cohort ID']}"
+    subject_id = f"{subject_metadata['animal ID']}-{subject_metadata['cohort ID']}"
 
     if not video_file_paths:
         warnings.warn(
@@ -119,7 +135,7 @@ def session_to_nwb(
         exist_ok=True,
     )
 
-    nwbfile_path = output_dir_path / f"sub-{subject_id}_ses-{session_id}.nwb"
+    nwbfile_path = output_dir_path / f"sub-{subject_id}_ses-{session_id}-{session_start_time.strftime('%Y-%m-%d')}.nwb"
 
     source_data = dict()
     conversion_options = dict()
@@ -160,7 +176,7 @@ def session_to_nwb(
             observation_ids = [
                 obs_id
                 for obs_id in all_observation_ids
-                if str(subject_metadata["animal ID"]) in obs_id and session_id.replace("OLM_", "") in obs_id
+                if str(subject_metadata["animal ID"]) in obs_id and session_id.split("_")[1] in obs_id
             ]
             if not observation_ids:
                 print(f"Observation ID not found in BORIS file {boris_file_path}.")
@@ -211,14 +227,27 @@ def session_to_nwb(
     )
 
     metadata["Subject"]["subject_id"] = subject_id
+    metadata["Subject"][
+        "description"
+    ] = f"Subject housed in {subject_metadata['housing']} housing conditions. Cage identifier: {subject_metadata['cage ID']}."
     metadata["Subject"]["date_of_birth"] = subject_metadata["DOB (DD/MM/YYYY)"]
     metadata["Subject"]["genotype"] = subject_metadata["genotype"].upper()
     metadata["Subject"]["strain"] = subject_metadata["line"]
     sex = {"male": "M", "female": "F"}.get(subject_metadata["sex"], "U")
     metadata["Subject"].update(sex=sex)
 
-    metadata["NWBFile"]["session_id"] = session_id
+    metadata["NWBFile"]["session_id"] = f"{session_id}-{session_start_time.strftime('%Y-%m-%d')}"
     metadata["NWBFile"]["session_description"] = metadata["SessionTypes"][session_id]["session_description"]
+    experimenters = []
+    task_acronym = session_id.split("_")[0]
+    if subject_metadata[f"{task_acronym} exp"] is not np.nan:
+        experimenters.append(subject_metadata[f"{task_acronym} exp"])
+    if (
+        subject_metadata[f"{task_acronym} sco"] is not np.nan
+        and subject_metadata[f"{task_acronym} sco"] != subject_metadata[f"{task_acronym} exp"]
+    ):
+        experimenters.append(subject_metadata[f"{task_acronym} sco"])
+    metadata["NWBFile"]["experimenter"] = experimenters
 
     # Check if session_start_time exists in metadata
     if "session_start_time" not in metadata["NWBFile"]:
@@ -248,7 +277,7 @@ def session_to_nwb(
     # Add novelty information on the object position
     if boris_info_file_path is not None:
         novelty_info = get_novelty_information_for_the_object_positions(
-            boris_info_file_path, str(subject_metadata["animal ID"]), session_id.replace("OLM_", "")
+            boris_info_file_path, str(subject_metadata["animal ID"]), session_id
         )
         # Add novelty information to metadata if needed
         # This could be used to store object position and novelty information in the NWB file
@@ -270,8 +299,8 @@ if __name__ == "__main__":
 
     # Parameters for conversion
     data_dir_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/Object Location Memory")
-    output_dir_path = Path("D:/kind_lab_conversion_nwb/object_location_memory")
-    subjects_metadata_file_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/RAT ID metadata Yunkai.xlsx")
+    output_dir_path = Path("D:/kind_lab_conversion_nwb/behavioural_pipeline/object_location_memory")
+    subjects_metadata_file_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/general_metadata.xlsx")
     task_acronym = "OLM"
     session_ids = get_session_ids_from_excel(subjects_metadata_file_path, task_acronym)
 
@@ -294,11 +323,10 @@ if __name__ == "__main__":
         boris_file_path = boris_file_paths[0]
 
     # check if boris info file exists
-    analysis_folder_path = cohort_folder_path / "Analysis"
-    boris_info_file_paths = list(analysis_folder_path.glob("boris_info*.xlsx"))
+    boris_info_file_paths = list(data_dir_path.glob(f"{subject_metadata['cohort ID']}_OL_borris_info.xlsx"))
     if len(boris_info_file_paths) == 0:
         boris_info_file_path = None
-        warnings.warn(f"No BORIS info excel file found in {analysis_folder_path}")
+        warnings.warn(f"No BORIS info excel file found in {data_dir_path}")
     else:
         boris_info_file_path = boris_info_file_paths[0]
 

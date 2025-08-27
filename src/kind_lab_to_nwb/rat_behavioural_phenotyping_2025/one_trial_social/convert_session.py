@@ -69,8 +69,10 @@ def session_to_nwb(
         conversion_options.update(dict(SpyglassVideoInterface=dict(task_metadata=task_metadata)))
     elif len(video_file_paths) > 1:
         if "HabD1" in session_id:
-        # remove videos of stimulus subjects
-            video_file_paths = [video_file_path  if "stim" not in str(video_file_path).lower for video_file_path  in video_file_paths]
+            # remove videos of stimulus subjects
+            video_file_paths = [
+                video_file_path for video_file_path in video_file_paths if "stim" not in str(video_file_path).lower()
+            ]
             for i, video_file_path in enumerate(video_file_paths):
                 file_paths = convert_ts_to_mp4([video_file_path])
                 video_name = f"BehavioralVideoHabD1Trial{i+1}"
@@ -87,7 +89,7 @@ def session_to_nwb(
                 conversion_options.update({f"SpyglassVideoInterface00{i+1}": dict(task_metadata=test_task_metadata)})
 
         else:
-            raise ValueError(f"Multiple video files found for {subject_id}.")
+            raise ValueError(f"Multiple video files found for {subject_id} in session {session_id}.")
 
     # Add One Trial Social Annotated events from BORIS output
     if boris_file_path is not None and "Test" in session_id:
@@ -161,7 +163,7 @@ if __name__ == "__main__":
 
     # Parameters for conversion
     data_dir_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/1 Trial Social")
-    output_dir_path = Path("D:/kind_lab_conversion_nwb/behavioural_pipeline/1_trial_social")
+    output_dir_path = Path("D:/kind_lab_conversion_nwb/behavioural_pipeline/one_trial_social")
     subjects_metadata_file_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/general_metadata.xlsx")
     task_acronym = "1TS"
     session_ids = get_session_ids_from_excel(subjects_metadata_file_path, task_acronym)

@@ -17,36 +17,20 @@ from neuroconv import ConverterPipe
 class PreyCaptureNWBConverter(ConverterPipe):
     """ConverterPipe for the prey capture dataset."""
 
-    def temporally_align_data_interfaces(self, metadata, conversion_options: Optional[dict] = None):
-        video_interfaces = [
-            interface_name for interface_name in self.data_interface_objects if "Video" in interface_name
-        ]
-        session_start_time = metadata["NWBFile"]["session_start_time"]
-
-        # Pushes the session start time forward to align with the video timestamps
-        for interface_name in video_interfaces:
-            video_interface = self.data_interface_objects[interface_name]
-            video_file_path = video_interface.source_data["file_paths"][0]
-            datetime_from_filename = parse_datetime_from_filename(video_file_path.name)
-            if datetime_from_filename.tzinfo is None and session_start_time.tzinfo is not None:
-                datetime_from_filename = datetime_from_filename.replace(tzinfo=session_start_time.tzinfo)
-            aligned_starting_time = (datetime_from_filename - session_start_time).total_seconds()
-            video_timestamps = video_interface.get_timestamps(stub_test=True)
-            video_timestamps = np.concatenate(video_timestamps)
-            if video_timestamps[0] < 0:
-                if aligned_starting_time == 0.0:
-                    # push the session start time forward to align with the video timestamps
-                    warn(
-                        f"The timestamps for {video_file_path} start before the session start time. "
-                        "Pushing the session start time forward to align with the video timestamps."
-                    )
-                    metadata["NWBFile"].update(
-                        session_start_time=session_start_time + timedelta(seconds=abs(video_timestamps[0])),
-                    )
-
     def add_to_nwbfile(self, nwbfile: NWBFile, metadata, conversion_options: Optional[dict] = None):
         for device_metadata in metadata["Devices"]:
             # Add the device to the NWB file
             device = Device(**device_metadata)
             nwbfile.add_device(device)
         super().add_to_nwbfile(nwbfile=nwbfile, metadata=metadata, conversion_options=conversion_options)
+
+    def temporally_align_data_interfaces(
+        self, metadata: Optional[dict] = None, conversion_options: Optional[dict] = None
+    ):
+        audio_interfaces = [interface for interface in self.data_interface_objects if "Audio" in interface]
+        for audio_interface_name in audio_interfaces:
+            audio_interface = self.data_interface_objects[audio_interface_name]
+            if audio_interface._segment_starting_times is None:
+                # Use np.nan to indicate that the aligned starting times are not known
+                num_usv_file_paths = len(audio_interface.source_data["file_paths"])
+                audio_interface._segment_starting_times = [np.nan] * num_usv_file_paths

@@ -147,75 +147,38 @@ if __name__ == "__main__":
     subjects_metadata = get_subject_metadata_from_task(subjects_metadata, task_acronym)
 
     session_id = session_ids[-1]  # Test
-    # subject_metadata = subjects_metadata[159]  # subject 175_Scn2a(1)
+    subject_metadata = subjects_metadata[159]  # subject 175_Scn2a(1)
 
-    # cohort_folder_path = data_dir_path / subject_metadata["line"] / f"{subject_metadata['cohort ID']}_{task_acronym}"
-    # if not cohort_folder_path.exists():
-    #     raise FileNotFoundError(f"Folder {cohort_folder_path} does not exist")
+    cohort_folder_path = data_dir_path / subject_metadata["line"] / f"{subject_metadata['cohort ID']}_{task_acronym}"
+    if not cohort_folder_path.exists():
+        raise FileNotFoundError(f"Folder {cohort_folder_path} does not exist")
 
-    # # check if boris file exists on the cohort folder
-    # boris_file_paths = list(cohort_folder_path.glob("*.boris"))
-    # if len(boris_file_paths) == 0:
-    #     boris_file_path = None
-    #     warnings.warn(f"No BORIS file found in {cohort_folder_path}")
-    # else:
-    #     boris_file_path = boris_file_paths[0]
+    # check if boris file exists on the cohort folder
+    boris_file_paths = list(cohort_folder_path.glob("*.boris"))
+    if len(boris_file_paths) == 0:
+        boris_file_path = None
+        warnings.warn(f"No BORIS file found in {cohort_folder_path}")
+    else:
+        boris_file_path = boris_file_paths[0]
 
-    # video_folder_path = cohort_folder_path / session_id
-    # if not video_folder_path.exists():
-    #     raise FileNotFoundError(f"Folder {cohort_folder_path} does not exist")
-    # video_file_paths = list(video_folder_path.glob(f"*{subject_metadata['animal ID']}*"))
+    video_folder_path = cohort_folder_path / session_id
+    if not video_folder_path.exists():
+        raise FileNotFoundError(f"Folder {cohort_folder_path} does not exist")
+    video_file_paths = list(video_folder_path.glob(f"*{subject_metadata['animal ID']}*"))
 
-    # video_path = Path(video_file_paths[0])
-    # session_start_time = parse_datetime_from_filename(video_path.name)
+    video_path = Path(video_file_paths[0])
+    session_start_time = parse_datetime_from_filename(video_path.name)
 
-    # stub_test = False
-    # overwrite = True
+    stub_test = False
+    overwrite = True
 
-    # session_to_nwb(
-    #     output_dir_path=output_dir_path,
-    #     video_file_paths=video_file_paths,
-    #     boris_file_path=boris_file_path,
-    #     subject_metadata=subject_metadata,
-    #     session_id=f"{task_acronym}_{session_id}",
-    #     session_start_time=session_start_time,
-    #     stub_test=stub_test,
-    #     overwrite=overwrite,
-    # )
-
-    for subject_metadata in subjects_metadata[107:115]:
-        cohort_folder_path = (
-            data_dir_path / subject_metadata["line"] / f"{subject_metadata['cohort ID']}_{task_acronym}"
-        )
-        if not cohort_folder_path.exists():
-            raise FileNotFoundError(f"Folder {cohort_folder_path} does not exist")
-
-        # check if boris file exists on the cohort folder
-        boris_file_paths = list(cohort_folder_path.glob("*.boris"))
-        if len(boris_file_paths) == 0:
-            boris_file_path = None
-            warnings.warn(f"No BORIS file found in {cohort_folder_path}")
-        else:
-            boris_file_path = boris_file_paths[0]
-
-        video_folder_path = cohort_folder_path / session_id
-        if not video_folder_path.exists():
-            raise FileNotFoundError(f"Folder {cohort_folder_path} does not exist")
-        video_file_paths = list(video_folder_path.glob(f"*{subject_metadata['animal ID']}*"))
-
-        video_path = Path(video_file_paths[0])
-        session_start_time = parse_datetime_from_filename(video_path.name)
-
-        stub_test = False
-        overwrite = True
-
-        session_to_nwb(
-            output_dir_path=output_dir_path,
-            video_file_paths=video_file_paths,
-            boris_file_path=boris_file_path,
-            subject_metadata=subject_metadata,
-            session_id=f"{task_acronym}_{session_id}",
-            session_start_time=session_start_time,
-            stub_test=stub_test,
-            overwrite=overwrite,
-        )
+    session_to_nwb(
+        output_dir_path=output_dir_path,
+        video_file_paths=video_file_paths,
+        boris_file_path=boris_file_path,
+        subject_metadata=subject_metadata,
+        session_id=f"{task_acronym}_{session_id}",
+        session_start_time=session_start_time,
+        stub_test=stub_test,
+        overwrite=overwrite,
+    )

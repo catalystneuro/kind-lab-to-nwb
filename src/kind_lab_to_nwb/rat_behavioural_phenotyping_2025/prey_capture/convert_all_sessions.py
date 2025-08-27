@@ -1,30 +1,104 @@
 """Script to convert all Pray Capture sessions to NWB format, following the structure of auditory_fear_conditioning/convert_all_sessions.py."""
-import logging
-import traceback
+
 import warnings
+import traceback
 from pathlib import Path
+from pprint import pformat
 from typing import Union
+from tqdm import tqdm
 
 import natsort
-import pandas as pd
-from tqdm import tqdm
 
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.prey_capture.convert_session import (
     session_to_nwb,
 )
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils import (
-    extract_subject_metadata_from_excel,
     get_session_ids_from_excel,
+    extract_subject_metadata_from_excel,
     get_subject_metadata_from_task,
-)
-from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils.utils import (
-    dandi_ember_upload,
-    get_cage_ids_from_excel_files,
-    update_subjects_metadata_with_cage_ids,
+    parse_datetime_from_filename,
 )
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
+def prey_capture_dataset_to_nwb(
+    *,
+    data_dir_path: Union[str, Path],
+    output_dir_path: Union[str, Path],
+    subjects_metadata_file_path: Union[str, Path],
+    task_acronym: str = "PC",
+    overwrite: bool = False,
+    verbose: bool = True,
+):
+    """Convert the entire dataset to NWB.
+
+    Parameters
+    ----------
+    data_dir_path : Union[str, Path]
+        The path to the directory containing the raw data.
+    output_dir_path : Union[str, Path]
+        The path to the directory where the NWB files will be saved.
+    subjects_metadata_file_path : Union[str, Path], optional
+        The path to the Excel file containing subject metadata, by default None
+    task_acronym : str, optional
+        The acronym of the task, by default "PC"
+    overwrite : bool, optional
+        Whether to overwrite existing NWB files, by default False
+    verbose : bool, optional
+        Whether to print verbose output, by default True
+    """
+
+    data_dir_path = Path(data_dir_path)
+    output_dir_path = Path(output_dir_path)
+    output_dir_path.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+    session_to_nwb_kwargs_per_session = get_session_to_nwb_kwargs_per_session(
+        data_dir_path=data_dir_path, subjects_metadata_file_path=subjects_metadata_file_path, task_acronym=task_acronym
+    )
+
+    if verbose:
+        print(f"Found {len(session_to_nwb_kwargs_per_session)} sessions to convert")
+
+    for session_to_nwb_kwargs in tqdm(session_to_nwb_kwargs_per_session, desc="Converting sessions"):
+        session_to_nwb_kwargs["output_dir_path"] = output_dir_path
+
+        # Create meaningful error file name using subject and session info
+        subject_id = f"{session_to_nwb_kwargs['subject_metadata']['animal ID']}_{session_to_nwb_kwargs['subject_metadata']['cohort ID']}"
+        session_id = session_to_nwb_kwargs["session_id"]
+
+        exception_file_path = output_dir_path / f"ERROR_sub_{subject_id}-ses_{session_id}.txt"
+
+        safe_session_to_nwb(
+            session_to_nwb_kwargs=session_to_nwb_kwargs,
+            exception_file_path=exception_file_path,
+        )
+
+
+def safe_session_to_nwb(
+    *,
+    session_to_nwb_kwargs: dict,
+    exception_file_path: Union[Path, str],
+):
+    """Convert a session to NWB while handling any errors by recording error messages to the exception_file_path.
+
+    Parameters
+    ----------
+    session_to_nwb_kwargs : dict
+        The arguments for session_to_nwb.
+    exception_file_path : Path
+        The path to the file where the exception messages will be saved.
+    """
+    exception_file_path = Path(exception_file_path)
+    try:
+        session_to_nwb(**session_to_nwb_kwargs)
+    except Exception as e:
+        with open(
+            exception_file_path,
+            mode="w",
+        ) as f:
+            f.write(f"session_to_nwb_kwargs: \n {pformat(session_to_nwb_kwargs)}\n\n")
+            f.write(traceback.format_exc())
 
 
 def get_session_to_nwb_kwargs_per_session(
@@ -33,6 +107,26 @@ def get_session_to_nwb_kwargs_per_session(
     subjects_metadata_file_path: Union[str, Path],
     task_acronym: str = "PC",
 ):
+    """Get the kwargs for session_to_nwb for each session in the dataset.
+
+    Parameters
+    ----------
+    data_dir_path : Union[str, Path]
+        The path to the directory containing the raw data.
+    subjects_metadata_file_path : Union[str, Path], optional
+        The path to the Excel file containing subject metadata, by default None
+    task_acronym : str, optional
+        The acronym of the task, by default "MI"
+
+    Returns
+    -------
+    list[dict[str, Any]]
+        A list of dictionaries containing the kwargs for session_to_nwb for each session.
+    """
+    data_dir_path = Path(data_dir_path)
+    subjects_metadata_file_path = Path(subjects_metadata_file_path)
+    exception_file_path = data_dir_path / f"exceptions_for_task_{task_acronym}.txt"
+
     session_ids = get_session_ids_from_excel(
         subjects_metadata_file_path=subjects_metadata_file_path,
         task_acronym=task_acronym,
@@ -40,22 +134,19 @@ def get_session_to_nwb_kwargs_per_session(
     subjects_metadata = extract_subject_metadata_from_excel(subjects_metadata_file_path)
     subjects_metadata = get_subject_metadata_from_task(subjects_metadata, task_acronym)
 
-    # The folder where the pooled data excel files are stored
-    pooled_data_folder_path = Path("/Users/weian/data/")
-    cage_ids = get_cage_ids_from_excel_files(pooled_data_folder_path)
-    subjects_metadata = update_subjects_metadata_with_cage_ids(
-        subjects_metadata=subjects_metadata,
-        cage_ids=cage_ids,
-    )
-
     session_to_nwb_kwargs = []
     for subject_metadata in subjects_metadata:
         subject_id = subject_metadata["animal ID"]
         cohort_id = subject_metadata["cohort ID"]
         line = subject_metadata["line"]
         cohort_folder_path = Path(data_dir_path) / line / f"{cohort_id}_{task_acronym}"
+        with open(exception_file_path, mode="a") as f:
+            f.write(f"Subject {subject_metadata['cohort ID']}_{subject_metadata['animal ID']}\n")
         if not cohort_folder_path.exists():
-            logging.warning(f"Cohort folder {cohort_folder_path} does not exist. Skipping subject {subject_id}.")
+            # raise FileNotFoundError(f"Folder {cohort_folder_path} does not exist")
+            with open(exception_file_path, mode="a") as f:
+                f.write(f"Session {session_id}\n")
+                f.write(f"Folder {cohort_folder_path} does not exist\n\n")
             continue
         for session_id in session_ids:
             video_folder_path = cohort_folder_path / session_id
@@ -67,10 +158,10 @@ def get_session_to_nwb_kwargs_per_session(
             else:
                 video_file_paths = natsort.natsorted(video_folder_path.glob(f"*{subject_metadata['animal ID']}*"))
 
-            if not video_file_paths:
-                logging.warning(
-                    f"No video files found for animal ID {subject_id} in '{video_folder_path}'. Skipping session."
-                )
+            if len(video_file_paths) == 0:
+                with open(exception_file_path, mode="a") as f:
+                    f.write(f"Session {session_id}\n")
+                    f.write(f"No video files found in {video_folder_path}\n\n")
                 continue
             # If the data has been scored, the cohort folder would contain BORIS files (.boris) of the behaviors of interest
             # TODO: there are no example boris files for PC shared yet
@@ -99,108 +190,22 @@ def get_session_to_nwb_kwargs_per_session(
     return session_to_nwb_kwargs
 
 
-def dataset_to_nwb(
-    *,
-    data_dir_path: Union[str, Path],
-    output_dir_path: Union[str, Path],
-    subjects_metadata_file_path: Union[str, Path],
-    overwrite: bool = False,
-    verbose: bool = True,
-):
-    data_dir_path = Path(data_dir_path)
-    output_dir_path = Path(output_dir_path)
-    if not data_dir_path.exists():
-        raise FileNotFoundError(f"Data directory {data_dir_path} does not exist.")
-    if not Path(subjects_metadata_file_path).exists():
-        raise FileNotFoundError(f"Metadata file {subjects_metadata_file_path} does not exist.")
-
-    session_to_nwb_kwargs_per_session = get_session_to_nwb_kwargs_per_session(
-        data_dir_path=data_dir_path,
-        subjects_metadata_file_path=subjects_metadata_file_path,
-        task_acronym="PC",
-    )
-    results = []
-
-    for session_kwargs in tqdm(
-        session_to_nwb_kwargs_per_session,
-        desc="Converting sessions to NWB",
-        disable=not verbose,
-        unit="session",
-    ):
-        session_id = session_kwargs["session_id"]
-        subject_metadata = session_kwargs["subject_metadata"]
-        video_file_paths = session_kwargs["video_file_paths"]
-        boris_file_path = session_kwargs["boris_file_path"]
-        subject_id = subject_metadata["animal ID"]
-        cohort_id = subject_metadata["cohort ID"]
-        usv_file_paths = session_kwargs.get("usv_file_paths", None)
-        # TODO: how to propagate USV starting times?
-        usv_starting_times = session_kwargs.get("usv_starting_times", None)
-        nwbfile_path = output_dir_path / f"sub-{subject_id}_{cohort_id}_ses-{session_id}.nwb"
-        try:
-            if nwbfile_path.exists() and not overwrite:
-                logging.info(f"NWB file {nwbfile_path} already exists. Skipping conversion.")
-                results.append(
-                    {
-                        "session_id": session_id,
-                        "subject_id": subject_id,
-                        "status": "skipped",
-                        "nwbfile_path": str(nwbfile_path),
-                        "error": "",
-                        **session_kwargs,
-                    }
-                )
-                continue
-            logging.info(f"Converting session {session_id} for subject {subject_id} to NWB...")
-            session_to_nwb(
-                nwbfile_path=nwbfile_path,
-                video_file_paths=video_file_paths,
-                session_id=session_id,
-                subject_metadata=subject_metadata,
-                boris_file_path=boris_file_path,
-                usv_file_paths=usv_file_paths,
-                usv_starting_times=usv_starting_times,
-            )
-            results.append(
-                {
-                    "session_id": session_id,
-                    "subject_id": subject_id,
-                    "status": "success",
-                    "nwbfile_path": str(nwbfile_path),
-                    "error": "",
-                    **session_kwargs,
-                }
-            )
-        except Exception as e:
-            error_message = traceback.format_exc()
-            logging.warning(f"Error converting session {session_id} for subject {subject_id}: {e}")
-            results.append(
-                {
-                    "session_id": session_id,
-                    "subject_id": subject_id,
-                    "status": "failed",
-                    "nwbfile_path": str(nwbfile_path),
-                    "error": error_message,
-                    **session_kwargs,
-                }
-            )
-    results_csv_path = output_dir_path / "PC_conversion_results.csv"
-    results_data = pd.DataFrame(results)
-    results_data.to_csv(results_csv_path, index=False)
-    logging.info(f"Conversion completed. Results saved to {results_csv_path}")
-
-
 if __name__ == "__main__":
-    # Parameters for conversion
-    data_dir_path = Path("/Volumes/T9/Behavioural Pipeline/Prey Capture")
-    output_dir_path = Path("/Users/weian/data/Prey Capture/nwbfiles")
-    subjects_metadata_file_path = Path("/Users/weian/data/RAT ID metadata Yunkai copy - updated 12.2.25.xlsx")
-    dataset_to_nwb(
+
+    data_dir_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/Prey Capture")
+    output_dir_path = Path("D:/kind_lab_conversion_nwb/behavioural_pipeline/prey_capture")
+    subjects_metadata_file_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/general_metadata.xlsx")
+    task_acronym = "PC"
+    verbose = False
+    overwrite = False
+
+    prey_capture_dataset_to_nwb(
         data_dir_path=data_dir_path,
         output_dir_path=output_dir_path,
         subjects_metadata_file_path=subjects_metadata_file_path,
-        verbose=True,
-        overwrite=True,
+        task_acronym=task_acronym,
+        verbose=verbose,
+        overwrite=overwrite,
     )
 
     # dandiset_folder_path = Path("/Users/weian/data/Kind/tmp")

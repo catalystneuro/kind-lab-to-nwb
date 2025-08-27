@@ -44,10 +44,7 @@ class ObjectRecognitionNWBConverter(NWBConverter):
         conversion_options : dict, optional
             Additional options for the conversion process.
         """
-        if (
-            "TestObjectRecognitionBehavior" in self.data_interface_objects
-            and "SampleObjectRecognitionBehavior" in self.data_interface_objects
-        ):
+        if "TestVideo" in self.data_interface_objects and "SampleVideo" in self.data_interface_objects:
             video_file_path = self.data_interface_objects["SampleVideo"].source_data["file_paths"][0]
             sample_video_datetime = parse_datetime_from_filename(video_file_path.name)
 
@@ -57,9 +54,14 @@ class ObjectRecognitionNWBConverter(NWBConverter):
             # Align the start time of the test video to the start time of the sample video
 
             aligned_starting_time = (test_video_datetime - sample_video_datetime).total_seconds()
-            self.data_interface_objects["TestObjectRecognitionBehavior"].set_aligned_starting_time(
-                aligned_starting_time
-            )
+            if "STM" in metadata["NWBFile"]["session_id"] and aligned_starting_time == 0:
+                # If the session is STM and the aligned starting time is 0, set it to a default value of 5 minutes
+                aligned_starting_time = 20 * 60  # 15 min of sample video + 5 min of pause as described in the protocol
+
+            if "TestObjectRecognitionBehavior" in self.data_interface_objects:
+                self.data_interface_objects["TestObjectRecognitionBehavior"].set_aligned_starting_time(
+                    aligned_starting_time
+                )
             self.data_interface_objects["TestVideo"].set_aligned_starting_time(aligned_starting_time)
 
     def add_to_nwbfile(self, nwbfile: NWBFile, metadata, conversion_options: Optional[dict] = None):
@@ -68,3 +70,75 @@ class ObjectRecognitionNWBConverter(NWBConverter):
             # Add the device to the NWB file
             device = Device(**device_metadata)
             nwbfile.add_device(device)
+        if (
+            "TestObjectRecognitionBehavior" in self.data_interface_objects
+            and "SampleObjectRecognitionBehavior" in self.data_interface_objects
+            and "NoveltyInformation" in metadata
+        ):
+            test_trial_info = metadata["NoveltyInformation"]["test_trial"]
+            test_trial_events_table_name = conversion_options["TestObjectRecognitionBehavior"]["table_name"]
+            test_trial_events_table = nwbfile.processing["behavior"][test_trial_events_table_name].to_dataframe()
+
+            # Prepare data arrays with correct values before adding columns
+            object_names = ["" for _ in range(len(test_trial_events_table))]
+            novelty_info = ["" for _ in range(len(test_trial_events_table))]
+            positions = ["" for _ in range(len(test_trial_events_table))]
+
+            # Fill the arrays with the correct values
+            for idx, row in test_trial_events_table.iterrows():
+                for i, boris_label in enumerate(test_trial_info["boris_label"]):
+                    if boris_label == row["label"]:
+                        object_names[idx] = test_trial_info["object"][i]
+                        novelty_info[idx] = test_trial_info["novelty"][i]
+                        positions[idx] = test_trial_info["position"][i]
+
+            # Add columns with the populated data
+            nwbfile.processing["behavior"][test_trial_events_table_name].add_column(
+                name="object_name",
+                description="Name of the object in the test trial",
+                data=object_names,
+            )
+            nwbfile.processing["behavior"][test_trial_events_table_name].add_column(
+                name="novelty",
+                description="Novelty of the object in the test trial",
+                data=novelty_info,
+            )
+            nwbfile.processing["behavior"][test_trial_events_table_name].add_column(
+                name="position",
+                description="Position of the object in the test trial",
+                data=positions,
+            )
+
+            sample_trial_info = metadata["NoveltyInformation"]["sample_trial"]
+            sample_trial_events_table_name = conversion_options["SampleObjectRecognitionBehavior"]["table_name"]
+            sample_trial_events_table = nwbfile.processing["behavior"][sample_trial_events_table_name].to_dataframe()
+
+            # Prepare data arrays with correct values before adding columns
+            object_names = ["" for _ in range(len(sample_trial_events_table))]
+            novelty_info = ["" for _ in range(len(sample_trial_events_table))]
+            positions = ["" for _ in range(len(sample_trial_events_table))]
+
+            # Fill the arrays with the correct values
+            for idx, row in sample_trial_events_table.iterrows():
+                for i, boris_label in enumerate(sample_trial_info["boris_label"]):
+                    if boris_label == row["label"]:
+                        object_names[idx] = sample_trial_info["object"][i]
+                        novelty_info[idx] = sample_trial_info["novelty"][i]
+                        positions[idx] = sample_trial_info["position"][i]
+
+            # Add columns with the populated data
+            nwbfile.processing["behavior"][sample_trial_events_table_name].add_column(
+                name="object_name",
+                description="Name of the object in the sample trial",
+                data=object_names,
+            )
+            nwbfile.processing["behavior"][sample_trial_events_table_name].add_column(
+                name="novelty",
+                description="Novelty of the object in the sample trial",
+                data=novelty_info,
+            )
+            nwbfile.processing["behavior"][sample_trial_events_table_name].add_column(
+                name="position",
+                description="Position of the object in the sample trial",
+                data=positions,
+            )

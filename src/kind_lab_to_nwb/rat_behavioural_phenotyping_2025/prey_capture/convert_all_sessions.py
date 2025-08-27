@@ -6,7 +6,7 @@ from pathlib import Path
 from pprint import pformat
 from typing import Union
 from tqdm import tqdm
-
+import numpy as np
 import natsort
 
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.prey_capture.convert_session import (
@@ -136,12 +136,12 @@ def get_session_to_nwb_kwargs_per_session(
 
     session_to_nwb_kwargs = []
     for subject_metadata in subjects_metadata:
-        subject_id = subject_metadata["animal ID"]
+        animal_id = subject_metadata["animal ID"]
         cohort_id = subject_metadata["cohort ID"]
         line = subject_metadata["line"]
         cohort_folder_path = Path(data_dir_path) / line / f"{cohort_id}_{task_acronym}"
         with open(exception_file_path, mode="a") as f:
-            f.write(f"Subject {subject_metadata['cohort ID']}_{subject_metadata['animal ID']}\n")
+            f.write(f"Subject {cohort_id}_{animal_id}\n")
         if not cohort_folder_path.exists():
             # raise FileNotFoundError(f"Folder {cohort_folder_path} does not exist")
             with open(exception_file_path, mode="a") as f:
@@ -150,15 +150,20 @@ def get_session_to_nwb_kwargs_per_session(
             continue
         for session_id in session_ids:
             video_folder_path = cohort_folder_path / session_id
-            if session_id == "HabD1":
-                cage_id = subject_metadata.get("cage ID")
-                video_file_paths = natsort.natsorted(video_folder_path.glob(f"*.mp4"))
-                # Filter video file paths if the cage id is in the file name.
-                video_file_paths = [path for path in video_file_paths if f"cage{cage_id}" in path.name.lower()]
-            else:
-                video_file_paths = natsort.natsorted(video_folder_path.glob(f"*{subject_metadata['animal ID']}*"))
+            if not video_folder_path.exists() and session_id != "Weeto":
+                with open(exception_file_path, mode="a") as f:
+                    f.write(f"Session {session_id}\n")
+                    f.write(f"Folder {video_folder_path} does not exist\n\n")
+                continue
 
+            video_file_paths = natsort.natsorted(video_folder_path.glob(f"*{subject_metadata['animal ID']}*"))
             if len(video_file_paths) == 0:
+                cage_id = subject_metadata["cage ID"]
+                if not np.isnan(cage_id):
+                    cage_id = int(cage_id)
+                    video_file_paths = natsort.natsorted(video_folder_path.glob(f"*cage{cage_id}*"))
+
+            if len(video_file_paths) == 0 and session_id != "Weeto":
                 with open(exception_file_path, mode="a") as f:
                     f.write(f"Session {session_id}\n")
                     f.write(f"No video files found in {video_folder_path}\n\n")
@@ -173,7 +178,7 @@ def get_session_to_nwb_kwargs_per_session(
                 boris_file_path = boris_file_paths[0]
 
             # Optional, add USV files
-            usv_file_paths = natsort.natsorted(video_folder_path.rglob(f"*{subject_metadata['animal ID']}*.wav"))
+            usv_file_paths = natsort.natsorted(video_folder_path.rglob(f"*{animal_id}*.wav"))
             if len(usv_file_paths) == 0:
                 usv_file_paths = None
                 warnings.warn(f"No USV file found in {video_folder_path}")

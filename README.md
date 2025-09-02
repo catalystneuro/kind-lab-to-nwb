@@ -53,7 +53,7 @@ You can install the package with:
 git clone https://github.com/catalystneuro/kind-lab-to-nwb
 cd kind-lab-to-nwb
 conda env create --file make_env.yml
-conda activate kind_lab_to_nwb_env
+conda activate kind-lab-to-nwb-env
 ```
 
 Alternatively, using pip only:

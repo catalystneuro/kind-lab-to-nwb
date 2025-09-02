@@ -20,7 +20,7 @@ import spyglass.common as sgc  # this import connects to the database
 # spyglass.data_import has tools for inserting NWB files into the database
 import spyglass.data_import as sgi
 
-from spyglass.utils.nwb_helper_fn import get_nwb_copy_filename
+from spyglass.utils.nwb_helper_fn import get_nwb_copy_filename, get_nwb_file
 
 from kind_lab_to_nwb.spyglass_utils import insert_annotated_events, clean_db_entry, AnnotatedEvents
 
@@ -68,12 +68,25 @@ def print_tables(nwbfile_path):
 
 
 def main():
-    nwbfile_path = Path("/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/raw/sub-302_Arid1b(2)_ses-MI_Test.nwb")
+    nwb_file_name = "sub-408-Arid1b(3)_ses-MI-Test_image.nwb"
+    nwbfile_path = Path("/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/raw") / nwb_file_name
+    nwb_copy_file_name = get_nwb_copy_filename(nwbfile_path.name)
+    nwb_dict = dict(nwb_file_name=nwb_copy_file_name)
 
     clean_db_entry(nwbfile_path)
 
-    # sgi.insert_sessions(str(nwbfile_path), rollback_on_fail=True, raise_err=True)
-    insert_annotated_events(nwbfile_path)
+    sgi.insert_sessions(str(nwbfile_path), rollback_on_fail=True, raise_err=True)
+
+    nwbf = get_nwb_file(nwbfile_path)
+
+    # Insert annotated events data
+    events = AnnotatedEvents()
+    if not events & nwb_dict:
+        events.insert_from_nwbfile(nwb_copy_file_name, nwbf)
+
+    # Fetch actions DataFrame
+    actions_df = events.fetch1_dataframe("annotated_events")
+    print(actions_df.head())
 
     print_tables(nwbfile_path)
 

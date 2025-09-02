@@ -85,8 +85,8 @@ def main():
         events.insert_from_nwbfile(nwb_copy_file_name, nwbf)
 
     # Fetch actions DataFrame
-    actions_df = events.fetch1_dataframe("annotated_events")
-    print(actions_df.head())
+    annotated_events_df = events.fetch1_dataframe("annotated_events")
+    print(annotated_events_df.head())
 
     print_tables(nwbfile_path)
 

@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Union
 
 # General Spyglass Imports
-from spyglass.utils.nwb_helper_fn import get_nwb_copy_filename
+from spyglass.utils.nwb_helper_fn import get_nwb_copy_filename, get_nwb_file
 
 from kind_lab_to_nwb.spyglass_utils import AnnotatedEvents
 
@@ -27,6 +27,6 @@ def insert_annotated_events(nwbfile_path: Union[str, Path]) -> None:
     """
     # Convert to Path object for consistent handling
     nwbfile_path = Path(nwbfile_path)
-
+    nwbf = get_nwb_file(nwbfile_path)
     nwb_copy_file_name = get_nwb_copy_filename(nwbfile_path.name)
-    AnnotatedEvents().make(key={"nwb_file_name": nwb_copy_file_name})
+    AnnotatedEvents().insert_from_nwbfile(nwb_copy_file_name, nwbf)

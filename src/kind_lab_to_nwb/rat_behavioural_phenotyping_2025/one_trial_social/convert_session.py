@@ -104,7 +104,7 @@ def session_to_nwb(
 
     # Add Audio if available
     if audio_file_path is not None:
-        audio_interface = AudioInterface(file_paths=audio_file_path)
+        audio_interface = AudioInterface(file_paths=[audio_file_path])
         data_interfaces.append(audio_interface)
         conversion_options.update(dict(AudioInterface=dict(stub_test=stub_test, write_as="acquisition")))
 

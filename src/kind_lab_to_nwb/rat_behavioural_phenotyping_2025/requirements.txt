@@ -1,5 +1,6 @@
 ndx-events==0.2.1
 ndx-sound==0.2.2
 openpyxl
-neuroconv[video]
+neuroconv==0.7.4
+pynwb==3.0.0
 xlrd

@@ -176,9 +176,27 @@ def get_session_to_nwb_kwargs_per_session(
 
             video_path = Path(video_file_paths[0])
             session_start_time = parse_datetime_from_filename(video_path.name)
-            # TODO add timezone information
+
+            audio_folder_path = video_folder_path / "USVs"
+            if audio_folder_path.exists():
+                audio_file_paths = list(audio_folder_path.glob(f"*{subject_metadata['animal ID']}*.wav"))
+                if len(audio_file_paths) == 0:
+                    audio_file_path = None
+                elif len(audio_file_paths) > 1:
+                    with open(exception_file_path, mode="a") as f:
+                        f.write(f"Session {session_id}\n")
+                        f.write(
+                            f"Multiple audio files for subject {subject_metadata['animal ID']} found in {audio_folder_path}\n\n"
+                        )
+                    continue
+                else:
+                    audio_file_path = audio_file_paths[0]
+            else:
+                audio_file_path = None
+
             session_kwargs = {
                 "video_file_paths": video_file_paths,
+                "audio_file_path": audio_file_path,
                 "boris_file_path": boris_file_path,
                 "subject_metadata": subject_metadata,
                 "session_id": f"{task_acronym}_{session_id}",
@@ -192,9 +210,9 @@ def get_session_to_nwb_kwargs_per_session(
 
 if __name__ == "__main__":
 
-    data_dir_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/1 Trial Social")
-    output_dir_path = Path("D:/kind_lab_conversion_nwb/behavioural_pipeline/one_trial_social")
-    subjects_metadata_file_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/general_metadata.xlsx")
+    data_dir_path = Path("G:/Kind-CN-data-share/behavioural_pipeline/1 Trial Social")
+    output_dir_path = Path("G:/kind_lab_conversion_nwb/behavioural_pipeline/one_trial_social")
+    subjects_metadata_file_path = Path("G:/Kind-CN-data-share/behavioural_pipeline/general_metadata.xlsx")
     task_acronym = "1TS"
 
     verbose = False

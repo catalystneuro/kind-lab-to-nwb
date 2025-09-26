@@ -5,6 +5,7 @@ from typing import Union
 from pydantic import FilePath
 import warnings
 from datetime import datetime
+import numpy as np
 
 from neuroconv.utils import (
     dict_deep_update,
@@ -43,24 +44,30 @@ def session_to_nwb(
         exist_ok=True,
     )
 
-    subject_id = f"{subject_metadata['animal ID']}_{subject_metadata['cohort ID']}"
+    subject_id = f"{subject_metadata['animal ID']}-{subject_metadata['cohort ID']}"
     nwbfile_path = output_dir_path / f"sub-{subject_id}_ses-{session_id}.nwb"
 
     source_data = dict()
     conversion_options = dict()
 
+    editable_metadata_path = Path(__file__).parent / "metadata.yaml"
+    editable_metadata = load_dict_from_file(editable_metadata_path)
+    task_metadata = editable_metadata["SessionTypes"][session_id]
+
     # Add Behavioral Video
     if len(video_file_paths) == 1:
         file_paths = convert_ts_to_mp4(video_file_paths)
         source_data.update(dict(Video=dict(file_paths=file_paths, video_name="BehavioralVideo")))
-        conversion_options.update(dict(Video=dict()))
+        conversion_options.update(dict(Video=dict(task_metadata=task_metadata)))
     elif len(video_file_paths) > 1:
         raise ValueError(f"Multiple video files found for {subject_id}.")
 
     # Add Marble Interaction Annotated events from BORIS output
     if boris_file_path is not None and "Test" in session_id:
         observation_ids = get_observation_ids(boris_file_path)
-        observation_id = next((obs_id for obs_id in observation_ids if subject_id.lower() in obs_id), None)
+        observation_id = next(
+            (obs_id for obs_id in observation_ids if str(subject_metadata["animal ID"]) in obs_id), None
+        )
         if observation_id is None:
             raise ValueError(f"No observation ID found containing subject ID '{subject_id}'")
         source_data.update(
@@ -74,14 +81,15 @@ def session_to_nwb(
     metadata = converter.get_metadata()
 
     # Update default metadata with the editable in the corresponding yaml file
-    editable_metadata_path = Path(__file__).parent / "metadata.yaml"
-    editable_metadata = load_dict_from_file(editable_metadata_path)
     metadata = dict_deep_update(
         metadata,
         editable_metadata,
     )
 
     metadata["Subject"]["subject_id"] = subject_id
+    metadata["Subject"][
+        "description"
+    ] = f"Subject housed in {subject_metadata['housing']} housing conditions. Cage identifier: {subject_metadata['cage ID']}."
     metadata["Subject"]["date_of_birth"] = subject_metadata["DOB (DD/MM/YYYY)"]
     metadata["Subject"]["genotype"] = subject_metadata["genotype"].upper()
     metadata["Subject"]["strain"] = subject_metadata["line"]
@@ -90,6 +98,16 @@ def session_to_nwb(
 
     metadata["NWBFile"]["session_id"] = session_id
     metadata["NWBFile"]["session_description"] = metadata["SessionTypes"][session_id]["session_description"]
+    experimenters = []
+    task_acronym = session_id.split("_")[0]
+    if subject_metadata[f"{task_acronym} exp"] is not np.nan:
+        experimenters.append(subject_metadata[f"{task_acronym} exp"])
+    if (
+        subject_metadata[f"{task_acronym} sco"] is not np.nan
+        and subject_metadata[f"{task_acronym} sco"] != subject_metadata[f"{task_acronym} exp"]
+    ):
+        experimenters.append(subject_metadata[f"{task_acronym} sco"])
+    metadata["NWBFile"]["experimenter"] = experimenters
 
     # Check if session_start_time exists in metadata
     if "session_start_time" not in metadata["NWBFile"]:
@@ -120,8 +138,8 @@ if __name__ == "__main__":
 
     # Parameters for conversion
     data_dir_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/Marble Interaction")
-    output_dir_path = Path("D:/kind_lab_conversion_nwb/marble_interaction")
-    subjects_metadata_file_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/RAT ID metadata Yunkai.xlsx")
+    output_dir_path = Path("D:/kind_lab_conversion_nwb/behavioural_pipeline/marble_interaction")
+    subjects_metadata_file_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/general_metadata.xlsx")
     task_acronym = "MI"
     session_ids = get_session_ids_from_excel(subjects_metadata_file_path, task_acronym)
 
@@ -129,7 +147,7 @@ if __name__ == "__main__":
     subjects_metadata = get_subject_metadata_from_task(subjects_metadata, task_acronym)
 
     session_id = session_ids[-1]  # Test
-    subject_metadata = subjects_metadata[13]  # subject 408Arid1b
+    subject_metadata = subjects_metadata[159]  # subject 175_Scn2a(1)
 
     cohort_folder_path = data_dir_path / subject_metadata["line"] / f"{subject_metadata['cohort ID']}_{task_acronym}"
     if not cohort_folder_path.exists():

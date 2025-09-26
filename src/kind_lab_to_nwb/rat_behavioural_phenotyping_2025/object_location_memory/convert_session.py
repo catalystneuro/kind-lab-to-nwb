@@ -5,6 +5,8 @@ from typing import Union
 from pydantic import FilePath
 import warnings
 from datetime import datetime
+import pandas as pd
+import numpy as np
 
 from neuroconv.utils import (
     dict_deep_update,
@@ -23,17 +25,101 @@ from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils import (
 )
 
 
+def get_novelty_information_for_the_object_positions(
+    boris_info_file_path: Union[FilePath, str], animal_id: str, session_id: str
+) -> dict:
+    """
+    Extracts novelty information on the objects from the BORIS info file.
+
+    Parameters
+    ----------
+    boris_info_file_path : Union[FilePath, str]
+        Path to the BORIS info file.
+    animal_id : str
+        Animal ID to filter the data.
+    session_id : str
+        Session ID to filter the data.
+        If the session_id is in the format "OR_LTM" or "OR_STM", it will extract the novelty information
+
+    Returns
+    -------
+    dict
+        Dictionary containing novelty information on the objects.
+    """
+    if not boris_info_file_path:
+        return {}
+
+    df = pd.read_excel(boris_info_file_path)
+    # select only relevant rows: the Filename column should contain the animal_id "LTM" or "STM" (depending on the session_id)
+    df = df[df["Filename"].str.contains(animal_id) & df["test"].str.contains(session_id.split("_")[1])]
+    if df.empty:
+        warnings.warn(f"No novelty information found for animal {animal_id} in session {session_id}.")
+        return {}
+
+    # Initialize the novelty info dictionary
+    # Initialize result structure
+    trial_types = ["sample_trial", "test_trial"]
+    object_ids = ["A", "B", "C", "D"]
+    num_objects = len(object_ids)
+    novelty_info_dict = {
+        t: {
+            "boris_label": [None] * num_objects,
+            "position": [None] * num_objects,
+            "novelty": [None] * num_objects,
+            "object": [None] * num_objects,
+        }
+        for t in trial_types
+    }
+
+    # Process each row in the filtered dataframe
+    for _, row in df.iterrows():
+        trial = row["trial"]
+
+        # Determine trial type from filename
+        if "sample" in trial.lower():
+            trial_type = "sample_trial"
+        elif "test" in trial.lower():
+            trial_type = "test_trial"
+        else:
+            warnings.warn(f"Could not determine trial type: {trial}")
+            continue
+
+        # Extract object information for each object (A, B, C, D)
+        object_ids = ["A", "B", "C", "D"]
+
+        for i, object_id in enumerate(object_ids):
+            # Get position and novelty information
+            boris_label = f"Obj_{object_id}"
+            pos_col = f"Pos_{object_id}"
+            nov_col = f"ID_{object_id}"
+            obj_col = f"ObjName_{object_id}"
+
+            boris_label = row.get(boris_label, None)
+            position = row.get(pos_col, None)
+            novelty = row.get(nov_col, None)
+            object_name = row.get(obj_col, None)
+
+            # Handle NaN values (convert to None)
+            novelty_info_dict[trial_type]["boris_label"][i] = None if pd.isna(boris_label) else boris_label
+            novelty_info_dict[trial_type]["position"][i] = None if pd.isna(position) else position
+            novelty_info_dict[trial_type]["novelty"][i] = None if pd.isna(novelty) else novelty
+            novelty_info_dict[trial_type]["object"][i] = None if pd.isna(object_name) else object_name
+
+    return novelty_info_dict
+
+
 def session_to_nwb(
     output_dir_path: Union[str, Path],
     video_file_paths: Union[FilePath, str],
     boris_file_path: Union[FilePath, str],
+    boris_info_file_path: Union[FilePath, str],
     subject_metadata: dict,
     session_id: str,
     session_start_time: datetime,
     stub_test: bool = False,
     overwrite: bool = False,
 ):
-    subject_id = f"{subject_metadata['animal ID']}_{subject_metadata['cohort ID']}"
+    subject_id = f"{subject_metadata['animal ID']}-{subject_metadata['cohort ID']}"
 
     if not video_file_paths:
         warnings.warn(
@@ -49,10 +135,14 @@ def session_to_nwb(
         exist_ok=True,
     )
 
-    nwbfile_path = output_dir_path / f"sub-{subject_id}_ses-{session_id}.nwb"
+    nwbfile_path = output_dir_path / f"sub-{subject_id}_ses-{session_id}-{session_start_time.strftime('%Y-%m-%d')}.nwb"
 
     source_data = dict()
     conversion_options = dict()
+
+    editable_metadata_path = Path(__file__).parent / "metadata.yaml"
+    editable_metadata = load_dict_from_file(editable_metadata_path)
+    task_metadata = editable_metadata["SessionTypes"][session_id]
 
     if "STM" in session_id or "LTM" in session_id:
         if len(video_file_paths) == 2:
@@ -65,7 +155,17 @@ def session_to_nwb(
                     SampleVideo=dict(file_paths=sample_file_paths, video_name="BehavioralVideoSampleTrial"),
                 )
             )
-            conversion_options.update(dict(TestVideo=dict(), SampleVideo=dict()))
+            test_task_metadata = task_metadata.copy()
+            test_task_metadata["name"] = task_metadata["name"] + "_test"
+            test_task_metadata["task_epochs"] = [task_metadata["task_epochs"][0] + 1]
+            sample_task_metadata = task_metadata.copy()
+            sample_task_metadata["name"] = task_metadata["name"] + "_sample"
+            conversion_options.update(
+                dict(
+                    TestVideo=dict(task_metadata=test_task_metadata),
+                    SampleVideo=dict(task_metadata=sample_task_metadata),
+                )
+            )
         else:
             raise ValueError(
                 f"{len(video_file_paths)} video files found for {subject_id}. Expected one video file for the sample trial and one for the test trial."
@@ -76,7 +176,7 @@ def session_to_nwb(
             observation_ids = [
                 obs_id
                 for obs_id in all_observation_ids
-                if str(subject_metadata["animal ID"]) in obs_id and session_id.replace("OLM_", "") in obs_id
+                if str(subject_metadata["animal ID"]) in obs_id and session_id.split("_")[1] in obs_id
             ]
             if not observation_ids:
                 print(f"Observation ID not found in BORIS file {boris_file_path}.")
@@ -111,7 +211,7 @@ def session_to_nwb(
         if len(video_file_paths) == 1:
             file_paths = convert_ts_to_mp4(video_file_paths)
             source_data.update(dict(Video=dict(file_paths=file_paths, video_name="BehavioralVideo")))
-            conversion_options.update(dict(Video=dict()))
+            conversion_options.update(dict(Video=dict(task_metadata=task_metadata)))
         elif len(video_file_paths) > 1:
             raise ValueError(f"Multiple video files found for {subject_id}.")
 
@@ -121,22 +221,33 @@ def session_to_nwb(
     metadata = converter.get_metadata()
 
     # Update default metadata with the editable in the corresponding yaml file
-    editable_metadata_path = Path(__file__).parent / "metadata.yaml"
-    editable_metadata = load_dict_from_file(editable_metadata_path)
     metadata = dict_deep_update(
         metadata,
         editable_metadata,
     )
 
     metadata["Subject"]["subject_id"] = subject_id
+    metadata["Subject"][
+        "description"
+    ] = f"Subject housed in {subject_metadata['housing']} housing conditions. Cage identifier: {subject_metadata['cage ID']}."
     metadata["Subject"]["date_of_birth"] = subject_metadata["DOB (DD/MM/YYYY)"]
     metadata["Subject"]["genotype"] = subject_metadata["genotype"].upper()
     metadata["Subject"]["strain"] = subject_metadata["line"]
     sex = {"male": "M", "female": "F"}.get(subject_metadata["sex"], "U")
     metadata["Subject"].update(sex=sex)
 
-    metadata["NWBFile"]["session_id"] = session_id
+    metadata["NWBFile"]["session_id"] = f"{session_id}-{session_start_time.strftime('%Y-%m-%d')}"
     metadata["NWBFile"]["session_description"] = metadata["SessionTypes"][session_id]["session_description"]
+    experimenters = []
+    task_acronym = session_id.split("_")[0]
+    if subject_metadata[f"{task_acronym} exp"] is not np.nan:
+        experimenters.append(subject_metadata[f"{task_acronym} exp"])
+    if (
+        subject_metadata[f"{task_acronym} sco"] is not np.nan
+        and subject_metadata[f"{task_acronym} sco"] != subject_metadata[f"{task_acronym} exp"]
+    ):
+        experimenters.append(subject_metadata[f"{task_acronym} sco"])
+    metadata["NWBFile"]["experimenter"] = experimenters
 
     # Check if session_start_time exists in metadata
     if "session_start_time" not in metadata["NWBFile"]:
@@ -163,6 +274,15 @@ def session_to_nwb(
                 metadata["Devices"].pop(i)
             break
 
+    # Add novelty information on the object position
+    if boris_info_file_path is not None:
+        novelty_info = get_novelty_information_for_the_object_positions(
+            boris_info_file_path, str(subject_metadata["animal ID"]), session_id
+        )
+        # Add novelty information to metadata if needed
+        # This could be used to store object position and novelty information in the NWB file
+        metadata["NoveltyInformation"] = novelty_info
+
     # Run conversion
     converter.run_conversion(
         metadata=metadata,
@@ -179,8 +299,8 @@ if __name__ == "__main__":
 
     # Parameters for conversion
     data_dir_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/Object Location Memory")
-    output_dir_path = Path("D:/kind_lab_conversion_nwb/object_location_memory")
-    subjects_metadata_file_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/RAT ID metadata Yunkai.xlsx")
+    output_dir_path = Path("D:/kind_lab_conversion_nwb/behavioural_pipeline/object_location_memory")
+    subjects_metadata_file_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/general_metadata.xlsx")
     task_acronym = "OLM"
     session_ids = get_session_ids_from_excel(subjects_metadata_file_path, task_acronym)
 
@@ -188,7 +308,7 @@ if __name__ == "__main__":
     subjects_metadata = get_subject_metadata_from_task(subjects_metadata, task_acronym)
 
     session_id = session_ids[-2]  # Test STM
-    subject_metadata = subjects_metadata[130]  # subject 617Scn2a
+    subject_metadata = subjects_metadata[132]  # subject 617Scn2a
 
     cohort_folder_path = data_dir_path / subject_metadata["line"] / f"{subject_metadata['cohort ID']}_{task_acronym}"
     if not cohort_folder_path.exists():
@@ -201,6 +321,14 @@ if __name__ == "__main__":
         warnings.warn(f"No BORIS file found in {cohort_folder_path}")
     else:
         boris_file_path = boris_file_paths[0]
+
+    # check if boris info file exists
+    boris_info_file_paths = list(data_dir_path.glob(f"{subject_metadata['cohort ID']}_OL_borris_info.xlsx"))
+    if len(boris_info_file_paths) == 0:
+        boris_info_file_path = None
+        warnings.warn(f"No BORIS info excel file found in {data_dir_path}")
+    else:
+        boris_info_file_path = boris_info_file_paths[0]
 
     video_folder_path = cohort_folder_path / session_id
     if not video_folder_path.exists():
@@ -223,6 +351,7 @@ if __name__ == "__main__":
         output_dir_path=output_dir_path,
         video_file_paths=video_file_paths,
         boris_file_path=boris_file_path,
+        boris_info_file_path=boris_info_file_path,
         subject_metadata=subject_metadata,
         session_id=f"{task_acronym}_{session_id}",
         session_start_time=session_start_time,

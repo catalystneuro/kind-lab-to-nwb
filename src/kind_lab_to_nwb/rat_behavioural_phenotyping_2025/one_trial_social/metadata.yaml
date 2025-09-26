@@ -21,8 +21,6 @@ NWBFile:
     Videos were scored using BORIS software to manually quantify the time that the test rat spent engaged in social exploration of the stimulus rat (nose within whisking distance, grooming, climbing on, placing paws on, boxing with, following closely or pinning the stimulus rat). Activity was tracked using ANYmaze to generate distance moved and % time in different zones of the arena (e.g. center and outer periphery during the habituation trials when the other rat was not present).
   institution: University of Edinburgh
   lab: Kind
-  experimenter:
-    - Example, Researcher # Example value - actual experimenter name needed
 
 Subject:
   species: Rattus norvegicus
@@ -41,9 +39,32 @@ Behavior:
       description: |
         Video recording of the rat's behavior. Recorded using a CCTV camera mounted on the ceiling above the arenas.
       device:
-        name: BehavioralCamera
-        description: CCTV camera mounted on ceiling above arena for behavioral recording
-        manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+        name: "camera_device 0"
+        description: CCTV camera mounted on ceiling above arenas for behavioral recording
+        meters_per_pixel: 0.0004
+        model: "C920"
+        lens: "Carl Zeiss lens with 20-step autofocus"
+        camera_name: "BehavioralCamera"
+    BehavioralVideoHabD1Trial1:
+      description: |
+        Video recording of the rat's behavior. Recorded using a CCTV camera mounted on the ceiling above the arenas.
+      device:
+        name: "camera_device 0"
+        description: CCTV camera mounted on ceiling above arenas for behavioral recording
+        meters_per_pixel: 0.0004
+        model: "C920"
+        lens: "Carl Zeiss lens with 20-step autofocus"
+        camera_name: "BehavioralCamera"
+    BehavioralVideoHabD1Trial2:
+      description: |
+        Video recording of the rat's behavior. Recorded using a CCTV camera mounted on the ceiling above the arenas.
+      device:
+        name: "camera_device 0"
+        description: CCTV camera mounted on ceiling above arenas for behavioral recording
+        meters_per_pixel: 0.0004
+        model: "C920"
+        lens: "Carl Zeiss lens with 20-step autofocus"
+        camera_name: "BehavioralCamera"
 
 SessionTypes:
   1TS_HabD1:
@@ -51,18 +72,36 @@ SessionTypes:
       Experimental Day 1. The test subject and the rat it was to be paired with 
       (stimulus rats, which was unfamiliar same sex and strain and within 1-3 wks of age of the test rats) 
       was also placed in cage groups into the arena twice for 10 min, with approximately 1-2 hr between sessions.
+    name: habituation_1
+    environment: Arena
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
 
   1TS_HabD2:
     session_description: |
       Experimental Day 2. Second group habituation.
       Test subject was placed in arena for 10 min.
+    name: habituation_2
+    environment: Arena
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
 
   1TS_Test:
     session_description: |
-      Experimental Day 3. Individual habituation.
+      Experimental Day 3. Test.
       The subject received a test trial of 15 min duration in which the rat was placed into the arena for 5 min, 
       and then an unfamiliar same-sex rat was introduced to the arena into the opposite corner to which the test rat was. 
       After 10 min together, the test rat was removed from arena first and placed into a clean holding cage to avoid transferring any odours to his cage mates. 
       Then the stimulus rat was then removed and placed back into its home cage. 
       Stimulus rats could be used up to two times with different test rats within a day, with at least 1 hr between trials. 
       Stimulus rats were not used in more than 3 experiments.
+    name: one_trial_social_test
+    environment: Arena
+    camera_id:
+      - 0
+    task_epochs:
+      - 1

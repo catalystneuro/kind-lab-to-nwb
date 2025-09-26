@@ -1,107 +1,248 @@
 # kind-lab-to-nwb
-NWB conversion scripts for Kind lab data to the
-[Neurodata Without Borders](https://nwb-overview.readthedocs.io/) data format.
 
+NWB conversion scripts for Kind lab data to the [Neurodata Without Borders](https://nwb-overview.readthedocs.io/) data format.
+
+This repository contains conversion pipelines for multiple datasets from the Kind lab, each organized in its own module with specific conversion scripts and utilities.
+
+## Repository Structure
+
+```
+kind-lab-to-nwb/
+├── LICENSE
+├── make_env.yml
+├── pyproject.toml
+├── README.md
+├── MANIFEST.in
+├── .gitignore
+├── .pre-commit-config.yaml
+├── dj_local_conf.json
+├── misc/
+└── src/
+    └── kind_lab_to_nwb/
+        ├── __init__.py
+        ├── arc_ecephys_2024/           # Fear conditioning EEG/LFP dataset
+        │   ├── __init__.py
+        │   ├── convert_session.py      # Single session conversion
+        │   ├── convert_all_sessions.py # Batch conversion script
+        │   ├── insert_session.py       # Database insertion utilities
+        │   ├── metadata.yaml           # Experiment metadata
+        │   ├── notes.md                # Detailed conversion notes
+        │   ├── spyglass_mock/          # Spyglass compatibility utilities
+        │   ├── tutorial/               # Data access tutorials
+        │   └── utils/                  # Conversion utility functions
+        └── rat_behavioural_phenotyping_2025/  # Behavioral phenotyping datasets
+            ├── auditory_fear_conditioning/
+            ├── marble_interaction/
+            ├── object_location_memory/
+            ├── object_recognition/
+            ├── one_trial_social/
+            ├── prey_capture/
+            ├── water_maze/
+            ├── interfaces/             # Custom data interfaces
+            ├── tutorials/              # Analysis tutorials
+            └── utils/                  # Shared utilities
+```
 
 ## Installation
-## Basic installation
 
-You can install the latest release of the package with pip:
+### Installation from GitHub
 
-```
-pip install kind-lab-to-nwb
-```
+You can install the package with:
 
-We recommend that you install the package inside a [virtual environment](https://docs.python.org/3/tutorial/venv.
-html). A simple way of doing this is to use a [conda environment](https://docs.conda.
-io/projects/conda/en/latest/user-guide/concepts/environments.html) from the `conda` package manager ([installation
-instructions](https://docs.conda.io/en/latest/miniconda.html)). Detailed instructions on how to use conda
-environments can be found in their [documentation](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html).
-
-### Running a specific conversion
-Once you have installed the package with pip, you can run any of the conversion scripts in a notebook or a python file:
-
-https://github.com/catalystneuro/kind-lab-to-nwb//tree/main/src/arc_ecephys_2024/convert_session.py
-
-Copy or download this file run the script with the following command:
-
-```
-python convert_session.py
-```
-
-## Installation from GitHub
-Another option is to install the package directly from GitHub. This option has the advantage that the source code
-can be modified if you need to amend some of the code we originally provided to adapt to future experimental
-differences. To install the conversion from GitHub you will need to use `git` ([installation instructions] (https://github.com/git-guides/install-git)).
-We also recommend the installation of `conda` ([installation instructions](https://docs.conda.io/en/latest/miniconda.html)) as it contains all the required
-machinery in a single and simple install.
-
-From a terminal (note that conda should install one in your system) you can do the following:
-
-```
+```bash
 git clone https://github.com/catalystneuro/kind-lab-to-nwb
 cd kind-lab-to-nwb
 conda env create --file make_env.yml
-conda activate kind_lab_to_nwb_env
+conda activate kind-lab-to-nwb-env
 ```
 
-This creates a [conda environment](https://docs.conda.io/projects/conda/en/latest/user-guide/concepts/environments.html) which isolates the conversion code from your system libraries.  We recommend that you run all your conversion related tasks and analysis from the created environment in order to minimize issues related to package dependencies.
+Alternatively, using pip only:
 
-Alternatively, if you want to avoid conda altogether (for example if you use another virtual environment tool) you
-can install the repository with the following commands using only pip:
-
-```
+```bash
 git clone https://github.com/catalystneuro/kind-lab-to-nwb
 cd kind-lab-to-nwb
 pip install --editable .
 ```
 
-Note:
-both of the methods above install the repository in [editable mode](https://pip.pypa.io/en/stable/cli/pip_install/#editable-installs).
+## Datasets
 
-### Running a specific conversion
-If the project has more than one conversion, you can install the requirements for a specific conversion with the following command:
+### arc_ecephys_2024: Fear Conditioning EEG/LFP Dataset
+
+This module converts data from a fear conditioning experiment investigating neural responses in Syngap1+/Delta-GAP rats. The dataset includes EEG, LFP, accelerometer, and behavioral video recordings across multiple experimental sessions.
+
+#### Dataset Description
+
+**Experiment**: Fear conditioning paradigm in male wild-type and Syngap1+/Delta-GAP rats (n=31, ages 3-6 months)
+
+**Data Types**:
+- Local Field Potentials (LFP) - 2 kHz sampling, 0.1-600 Hz bandpass
+- Electroencephalogram (EEG) - surface recordings from multiple brain regions
+- 3-axis accelerometer data - 500 Hz sampling
+- Behavioral videos - ~30 Hz
+- TTL trigger events - 2 kHz sampling
+
+**Experimental Sessions**:
+1. **Hab_1**: Context habituation (Day 1)
+2. **Seizure_screening**: Seizure monitoring (Day 2, subset of animals)
+3. **Hab_2**: Second context habituation (Day 3)
+4. **Baseline_tone_flash_hab**: CS pre-exposure (Day 4, subset)
+5. **Cond**: Fear conditioning with CS-US pairings (Day 4)
+6. **Recall**: Fear response testing (Day 5)
+
+#### Quick Start
+
+##### Converting a Single Session
+
+```python
+from pathlib import Path
+from kind_lab_to_nwb.arc_ecephys_2024.convert_session import session_to_nwb
+from neuroconv.tools.path_expansion import LocalPathExpander
+
+# Set up paths
+data_dir_path = Path("/path/to/your/data")
+output_dir_path = Path("/path/to/output")
+
+# Define source data specification
+source_data_spec = {
+    "OpenEphysRecording": {
+        "base_directory": data_dir_path,
+        "folder_path": "{subject_id}/{session_id}/{subject_id}_{session_date}_{session_time}_{task}",
+    },
+}
+
+# Expand paths and extract metadata
+path_expander = LocalPathExpander()
+metadata_list = path_expander.expand_paths(source_data_spec)
+
+# Convert first session
+session_to_nwb(
+    data_dir_path=data_dir_path,
+    output_dir_path=output_dir_path,
+    path_expander_metadata=metadata_list[0],
+    stub_test=False,
+    verbose=True,
+)
 ```
-pip install --editable .[arc_ecephys_2024]
+
+##### Converting All Sessions
+
+```python
+from kind_lab_to_nwb.arc_ecephys_2024.convert_all_sessions import dataset_to_nwb
+
+dataset_to_nwb(
+    data_dir_path="/path/to/your/data",
+    output_dir_path="/path/to/output",
+    verbose=True,
+)
 ```
 
-You can run a specific conversion with the following command:
+#### Data Access Tutorial
+
+The module includes a comprehensive Jupyter notebook tutorial (`tutorial/access_data_tutorial.ipynb`) demonstrating how to:
+
+- Stream NWB files from DANDI Archive
+- Access EEG and LFP signals
+- View behavioral videos
+- Analyze accelerometer data
+- Extract TTL trigger events
+- Visualize multi-modal data
+
+#### Expected Data Structure
+
+Your raw data should be organized as follows:
+
 ```
-python src/kind_lab_to_nwb/arc_ecephys_2024/convert_session.py
+data_directory/
+├── channels_details_v2.xlsx          # Electrode configuration
+├── cs_video_frames.xlsx              # Video synchronization data
+├── subject_id_1/
+│   └── session_id/
+│       ├── subject_id_session_date_session_time_task/  # OpenEphys data
+│       └── video_file.avi            # Behavioral video
+└── subject_id_2/
+    └── session_id/
+        └── ...
 ```
 
-## Repository structure
-Each conversion is organized in a directory of its own in the `src` directory:
+#### Key Features
 
-    kind-lab-to-nwb/
-    ├── LICENSE
-    ├── make_env.yml
-    ├── pyproject.toml
-    ├── README.md
-    ├── requirements.txt
-    ├── setup.py
-    └── src
-        ├── kind_lab_to_nwb
-        │   └── arc_ecephys_2024
-        │       ├── notes.md
-        │       ├── behaviorinterface.py
-        │       ├── convert_session.py
-        │       ├── metadata.yml
-        │       ├── nwbconverter.py
-        │       ├── notes.md
-        │       └── __init__.py
-        │   ├── conversion_directory_b
+- **Time Alignment**: Automatic synchronization between electrophysiology, video, and behavioral triggers
+- **Multi-modal Integration**: Combines EEG, LFP, accelerometer, and video data in single NWB files
+- **Spyglass Compatibility**: Includes utilities for integration with the Spyglass analysis framework
+- **Flexible Processing**: Supports both single session and batch conversion workflows
+- **Rich Metadata**: Comprehensive experimental metadata including electrode locations and task descriptions
 
-        └── __init__.py
+#### Spyglass Integration
 
-For example, for the conversion `arc_ecephys_2024` you can find a directory located in `src/kind-lab-to-nwb/arc_ecephys_2024`.
-Inside each conversion directory you can find the following files:
+The module includes specialized utilities for Spyglass compatibility:
 
+```python
+# For Spyglass integration, use the custom branch
+git clone -b populate_sensor_data https://github.com/alessandratrapani/spyglass.git
+```
 
-* `convert_sesion.py`: this script defines the function to convert one full session of the conversion.
-* `metadata.yml`: metadata in yaml format for this specific conversion.
-* `behaviorinterface.py`: the behavior interface. Usually ad-hoc for each conversion.
-* `nwbconverter.py`: the place where the `NWBConverter` class is defined.
-* `notes.md`: notes and comments concerning this specific conversion.
+The `spyglass_mock/` directory contains utilities for testing Spyglass integration and mock data generation.
 
-The directory might contain other files that are necessary for the conversion but those are the central ones.
+### rat_behavioural_phenotyping_2025
+
+This module contains conversion scripts for various behavioral phenotyping experiments including:
+
+- **Auditory Fear Conditioning**: Fear learning paradigms
+- **Marble Interaction**: Object interaction behaviors  
+- **Object Location Memory**: Spatial memory tasks
+- **Object Recognition**: Recognition memory tests
+- **One Trial Social**: Social behavior assessment
+- **Prey Capture**: Predatory behavior analysis
+- **Water Maze**: Spatial navigation tasks
+
+Each sub-module includes its own conversion scripts, metadata files, and analysis tutorials.
+
+## Usage Guidelines
+
+### General Workflow
+
+1. **Prepare your data** according to the expected structure for your dataset
+2. **Install the package** and dependencies
+3. **Configure paths** in the conversion scripts
+4. **Run conversion** (single session or batch)
+5. **Validate output** using the provided tutorials
+
+### Customization
+
+Each conversion module can be customized by:
+
+- Modifying `metadata.yaml` files for experiment-specific metadata
+- Adjusting conversion parameters in the main scripts
+- Adding custom interfaces for new data types
+- Extending utility functions for specific analysis needs
+
+## Contributing
+
+When adding new conversion modules:
+
+1. Create a new directory under `src/kind_lab_to_nwb/`
+2. Include the standard files: `convert_session.py`, `metadata.yaml`, `notes.md`
+3. Add utility functions in a `utils/` subdirectory
+4. Provide tutorials and documentation
+5. Follow the existing code structure and naming conventions
+
+## Support
+
+For questions about specific conversions or to report issues, please:
+
+1. Check the `notes.md` file in the relevant module
+2. Review the tutorial notebooks
+3. Open an issue on the GitHub repository
+
+## References
+
+- **arc_ecephys_2024**: Based on Katsanevaki, D., et al. (2024). "Key roles of C2/GAP domains in SYNGAP1-related pathophysiology." Cell Reports, 43(9), 114733.
+- **DANDI Archive**: Dataset available at [DANDI:001457](https://dandiarchive.org/dandiset/001457/draft)
+- **EMBER Archive**: Datasets available at:
+  - [EMBER:000199](https://dandi.emberarchive.org/dandiset/000199) - Auditory Fear Conditioning
+  - [EMBER:000200](https://dandi.emberarchive.org/dandiset/000200) - Marble Interaction
+  - [EMBER:000201](https://dandi.emberarchive.org/dandiset/000201) - Object Location Memory
+  - [EMBER:000202](https://dandi.emberarchive.org/dandiset/000202) - Object Recognition
+  - [EMBER:000203](https://dandi.emberarchive.org/dandiset/000203) - One Trial Social
+  - [EMBER:000204](https://dandi.emberarchive.org/dandiset/000204) - Prey Capture
+  - [EMBER:000205](https://dandi.emberarchive.org/dandiset/000205) - Water Maze

@@ -34,9 +34,12 @@ Behavior:
       description: |
         Video recording of the rat's behavior. Recorded using a CCTV camera mounted on the ceiling above the chambers.
       device:
-        name: BehavioralCamera
-        description: CCTV camera mounted on ceiling above chambers for behavioral recording
-        manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+        name: "camera_device 0"
+        description: CCTV camera mounted on ceiling above arenas for behavioral recording
+        meters_per_pixel: 0.0004
+        model: "C920"
+        lens: "Carl Zeiss lens with 20-step autofocus"
+        camera_name: "BehavioralCamera"
   Audio:
     - name: AcousticWaveformSeries
       description: Ultrasonic vocalizations recorded during the trials using a Pettersson M500 USB microphone.
@@ -54,11 +57,23 @@ SessionTypes:
     session_description: |
       Week 1 Experimental Day 1. Group habituation.
       Cage mates placed together in arena for 30 min.
+    name: habituation_1
+    environment: Arena
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
 
   PC_HabD2:
     session_description: |
       Week 1 Experimental Day 2. Individual habituation.
       Individual rat placed in arena for 10 min.
+    name: habituation_2
+    environment: Arena
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
 
   PC_HabD3:
     session_description: |
@@ -66,6 +81,12 @@ SessionTypes:
       Individual rat placed in starting cylinder for 15s,
       then released with dead cricket in opposite corner.
       10 min duration.
+    name: habituation_3
+    environment: Arena
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
 
   PC_HabD4:
     session_description: |
@@ -73,6 +94,12 @@ SessionTypes:
       Individual rat placed in starting cylinder for 15s,
       then released with dead cricket in opposite corner.
       10 min duration.
+    name: habituation_4
+    environment: Arena
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
 
   PC_HabD5:
     session_description: |
@@ -80,6 +107,12 @@ SessionTypes:
       Individual rat placed in starting cylinder for 15s,
       then released with dead cricket in opposite corner.
       10 min duration.
+    name: habituation_5
+    environment: Arena
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
 
   PC_TestD1:
     session_description: |
@@ -91,6 +124,12 @@ SessionTypes:
       (whichever happens first). Crickets were not reused.
       The arena was cleared of all debris and wiped with water between trials.
       Rats were held in the holding bucket between trials, the intertrial interval was approx. 1-2 min.
+    name: test_1
+    environment: Arena
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
 
   PC_TestD2:
     session_description: |
@@ -102,6 +141,12 @@ SessionTypes:
       (whichever happens first). Crickets were not reused.
       The arena was cleared of all debris and wiped with water between trials.
       Rats were held in the holding bucket between trials, the intertrial interval was approx. 1-2 min.
+    name: test_2
+    environment: Arena
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
 
   PC_TestD3:
     session_description: |
@@ -113,6 +158,12 @@ SessionTypes:
       (whichever happens first). Crickets were not reused.
       The arena was cleared of all debris and wiped with water between trials.
       Rats were held in the holding bucket between trials, the intertrial interval was approx. 1-2 min.
+    name: test_3
+    environment: Arena
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
 
   PC_TestD4:
     session_description: |
@@ -125,6 +176,12 @@ SessionTypes:
       The arena was cleared of all debris and wiped with water between trials.
       Rats were held in the holding bucket between trials, the intertrial interval was approx. 1-2 min.
       Ultrasonic vocalizations recorded.
+    name: test_4
+    environment: Arena
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
 
   PC_TestD5:
     session_description: |
@@ -137,6 +194,12 @@ SessionTypes:
       (whichever happens first). Crickets were not reused.
       The arena was cleared of all debris and wiped with water between trials.
       Rats were held in the holding bucket between trials, the intertrial interval was approx. 1-2 min.
+    name: test_5
+    environment: Arena
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
 
   PC_Weeto:
     session_description: |
@@ -148,3 +211,9 @@ SessionTypes:
       (whichever happens first). Weetos were not reused.
       The arena was cleared of all debris and wiped with water between trials.
       Rats were held in the holding bucket between trials, the intertrial interval was approx. 1-2 min.
+    name: test_weeto
+    environment: Arena
+    camera_id:
+      - 0
+    task_epochs:
+      - 1

@@ -1,4 +1,5 @@
 """Primary script to run to convert an entire session for of data using the NWBConverter."""
+
 import warnings
 from datetime import datetime
 from pathlib import Path
@@ -62,13 +63,13 @@ def session_to_nwb(
     source_data = dict()
     conversion_options = dict()
 
+    editable_metadata_path = Path(__file__).parent / "metadata.yaml"
+    editable_metadata = load_dict_from_file(editable_metadata_path)
+    task_metadata = editable_metadata["SessionTypes"][session_id]
+
     # Add Behavioral Video
-    if len(video_file_paths) == 1:
-        file_paths = convert_ffii_files_to_avi(video_file_paths)
-        source_data.update(dict(Video=dict(file_paths=file_paths, video_name="BehavioralVideo")))
-        conversion_options.update(dict(Video=dict()))
-    elif len(video_file_paths) > 1:
-        raise ValueError(f"Multiple video files found for {subject_id}.")
+    source_data.update(dict(Video=dict(file_paths=[video_file_path], video_name="BehavioralVideo")))
+    conversion_options.update(dict(Video=dict(task_metadata=task_metadata)))
 
     if freeze_scores_file_path is not None:
         # Add Freeze Scores as trials

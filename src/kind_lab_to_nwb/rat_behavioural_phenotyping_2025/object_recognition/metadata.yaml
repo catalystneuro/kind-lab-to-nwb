@@ -20,8 +20,6 @@ NWBFile:
     Object exploration was recorded via CCTV camera and manually scored using BORIS software.
   institution: University of Edinburgh
   lab: Kind
-  experimenter:
-    - Example, Researcher # Example value - actual experimenter name needed
 
 Subject:
   species: Rattus norvegicus
@@ -37,36 +35,63 @@ Behavior:
       description: |
         Video recording of the rat's behavior. Recorded using a CCTV camera mounted on the ceiling above the arenas.
       device:
-        name: BehavioralCamera
-        description: CCTV camera mounted on ceiling above arena for behavioral recording
-        manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+        name: "camera_device 0"
+        description: CCTV camera mounted on ceiling above arenas for behavioral recording
+        meters_per_pixel: 0.0004
+        model: "C920"
+        lens: "Carl Zeiss lens with 20-step autofocus"
+        camera_name: "BehavioralCamera"
     BehavioralVideoTestTrial:
       description: |
         Video recording of the rat's behavior during the test trial. Recorded using a CCTV camera mounted on the ceiling above the arenas.
       device:
-        name: BehavioralCamera
-        description: CCTV camera mounted on ceiling above arena for behavioral recording
-        manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+        name: "camera_device 0"
+        description: CCTV camera mounted on ceiling above arenas for behavioral recording
+        meters_per_pixel: 0.0004
+        model: "C920"
+        lens: "Carl Zeiss lens with 20-step autofocus"
+        camera_name: "BehavioralCamera"
     BehavioralVideoSampleTrial:
       description: |
         Video recording of the rat's behavior during the sample trial. Recorded using a CCTV camera mounted on the ceiling above the arenas.
       device:
-        name: BehavioralCamera
-        description: CCTV camera mounted on ceiling above arena for behavioral recording
-        manufacturer: Example Manufacturer # Example value - actual manufacturer needed
+        name: "camera_device 0"
+        description: CCTV camera mounted on ceiling above arenas for behavioral recording
+        meters_per_pixel: 0.0004
+        model: "C920"
+        lens: "Carl Zeiss lens with 20-step autofocus"
+        camera_name: "BehavioralCamera"
 
 SessionTypes:
   OR_HabD1:
     session_description: |
       Experimental Day 1. Individual rat placed in arena for 10 min habituation
+    name: habituation_1
+    environment: Arena
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
 
   OR_HabD2:
     session_description: |
       Experimental Day 2. Individual rat placed in arena for 10 min habituation
+    name: habituation_2
+    environment: Arena
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
 
   OR_HabD3:
     session_description: |
       Experimental Day 3. Individual rat placed in arena for 10 min habituation
+    name: habituation_3
+    environment: Arena
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
 
   OR_STM:
     session_description: |
@@ -78,6 +103,12 @@ SessionTypes:
       The objects were removed from the arena, the arena was cleaned with 70% ethanol and the objects 
       replaced with a replica object and one novel object (counterbalanced for location and object between rats). 
       The rat was returned to the arena for a 3 min test trial, 5 min after the sample trial.
+    name: short_term_memory_test
+    environment: Arena
+    camera_id:
+      - 0
+    task_epochs:
+      - 1
 
   OR_LTM:
     session_description: |
@@ -89,3 +120,9 @@ SessionTypes:
       The objects were removed from the arena, the arena was cleaned with 70% ethanol and the objects 
       replaced with a replica object and one novel object (counterbalanced for location and object between rats). 
       The rat was returned to the arena for a 3 min test trial, 24 hr after the sample trial.
+    name: long_term_memory_test
+    environment: Arena_LTM
+    camera_id:
+      - 0
+    task_epochs:
+      - 1

@@ -288,8 +288,8 @@ def parse_datetime_from_filename(filename: str) -> datetime:
     if isinstance(filename, Path):
         filename = filename.name
 
-    # Pattern 1: Date and time separated by space (2024-03-20 10-32-22_...)
-    pattern1 = r"(\d{4}-\d{2}-\d{2} \d{2}-\d{2}-\d{2})_"
+    # Pattern 1: Date and time separated by space (2024-03-20 10-32-22_... or 2024-03-20 10-32-22 ...)
+    pattern1 = r"(\d{4}-\d{2}-\d{2} \d{2}-\d{2}-\d{2})[_ ]"
     match = re.search(pattern1, filename)
     if match:
         datetime_str = match.group(1)
@@ -302,8 +302,8 @@ def parse_datetime_from_filename(filename: str) -> datetime:
         datetime_str = match.group(1)
         return datetime.strptime(datetime_str, "%Y-%m-%d_%H-%M-%S")
 
-    # Pattern 2: Only date (2022-08-01_...)
-    pattern2 = r"(\d{4}-\d{2}-\d{2})_"
+    # Pattern 2: Only date (2022-08-01_... or 2022-08-01 ...)
+    pattern2 = r"(\d{4}-\d{2}-\d{2})[_ ]"
     match = re.search(pattern2, filename)
     if match:
         datetime_str = match.group(1)
@@ -402,3 +402,70 @@ def dandi_ember_upload(
         if cleanup:
             rmtree(path=dandiset_folder_path)
             rmtree(path=nwb_folder_path)
+
+
+def get_cage_ids_from_excel_files(pooled_data_folder_path: DirectoryPath) -> dict:
+    """
+    Extract a dictionary mapping (animal_id, cohort_id) to cage ID from pooled data Excel files.
+
+    Parameters
+    ----------
+    pooled_data_folder_path : DirectoryPath
+        The path to the folder containing the pooled data Excel files.
+
+    Returns
+    -------
+    dict
+        A dictionary with keys as (animal_id, cohort_id) tuples and values as cage IDs.
+    """
+    pooled_data_file_paths = list(Path(pooled_data_folder_path).glob(f"*POOLED*.xlsx"))
+    if not pooled_data_file_paths:
+        raise FileNotFoundError(
+            f"No Excel files containing 'POOLED' in their name found in '{pooled_data_folder_path}'."
+        )
+    cage_id_identifier_columns = ["animal ID", "cohort ID", "cage ID"]
+    cage_ids = dict()
+    for pooled_data_file_path in pooled_data_file_paths:
+        df = pd.read_excel(pooled_data_file_path, sheet_name=0)
+        df = df.dropna(how="all")
+        df.columns = df.columns.str.strip()
+        df.rename(columns={"Unique animal ID": "animal ID"}, inplace=True)
+        for col in cage_id_identifier_columns:
+            if col not in df.columns:
+                raise KeyError(f"Expected column '{col}' is not present in '{pooled_data_file_path}'.")
+        for _, row in df.iterrows():
+            try:
+                animal_id = int(row["animal ID"])
+                cohort_id = str(row["cohort ID"])
+                cage_id = row["cage ID"]
+                cage_ids[(animal_id, cohort_id)] = cage_id
+            except Exception as e:
+                print(
+                    f"Error processing {pooled_data_file_path.stem} row:\n {row[cage_id_identifier_columns].values}: {e}"
+                )
+                continue  # skip rows with missing or invalid data
+    return cage_ids
+
+
+def update_subjects_metadata_with_cage_ids(subjects_metadata: List[dict], cage_ids: dict) -> List[dict]:
+    """
+    Update the subjects metadata dictionary with the corresponding cage_id from a lookup dict.
+    The lookup dict should use (animal_id, cohort_id) as the key.
+
+    Parameters
+    ----------
+    subjects_metadata : list[dict]
+        List of subject metadata dictionaries.
+    cage_ids : dict
+        Dictionary mapping (animal_id, cohort_id) tuples to cage IDs.
+
+    Returns
+    -------
+    List[dict]
+        The updated list of subject metadata dictionaries with "cage ID" added.
+    """
+    for subject_metadata in subjects_metadata:
+        subject_metadata["cage ID"] = cage_ids.get(
+            (subject_metadata.get("animal ID"), subject_metadata.get("cohort ID")), None
+        )
+    return subjects_metadata

@@ -7,6 +7,7 @@ from ndx_events import AnnotatedEventsTable
 from neuroconv.basedatainterface import BaseDataInterface
 from neuroconv.utils import DeepDict
 from pydantic import FilePath
+from neuroconv.tools.nwb_helpers import get_module
 
 
 def get_observation_ids(file_path: FilePath) -> List[str]:
@@ -163,13 +164,7 @@ class BORISBehavioralEventsInterface(BaseDataInterface):
 
         # create a processing module in the NWB file to hold processed events data
         # if the processing module already exists, it will be used instead of creating a new one
-        if "events" in nwbfile.processing:
-            events_module = nwbfile.processing["events"]
-        else:
-            # create a new processing module
-            events_module = nwbfile.create_processing_module(name="events", description="processed event data")
 
-        # add the AnnotatedEventsTable instance to the processing module
-        events_module.add(annotated_events)
+        get_module(nwbfile=nwbfile, name="behavior", description="processed behavioral events").add(annotated_events)
 
         return nwbfile

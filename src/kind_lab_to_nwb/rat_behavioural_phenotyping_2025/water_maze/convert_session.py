@@ -1,9 +1,8 @@
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import List, Union
 
 import natsort
 import pandas as pd
-from pynwb import NWBHDF5IO
 
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils import (
     extract_subject_metadata_from_excel,
@@ -91,14 +90,27 @@ def session_to_nwb(
     )
 
     metadata["Subject"]["subject_id"] = subject_id
+    metadata["Subject"][
+        "description"
+    ] = f"Subject housed in {subject_metadata['housing']} housing conditions. Cage identifier: {subject_metadata['cage ID']}."
     metadata["Subject"]["date_of_birth"] = subject_metadata["DOB (DD/MM/YYYY)"]
     metadata["Subject"]["genotype"] = subject_metadata["genotype"].upper()
     metadata["Subject"]["strain"] = subject_metadata["line"]
     sex = {"male": "M", "female": "F"}.get(subject_metadata["sex"], "U")
     metadata["Subject"].update(sex=sex)
-    # Add session ID to metadata
-    metadata["NWBFile"]["session_id"] = session_id
+
+    metadata["NWBFile"]["session_id"] = f"{session_id}"
     metadata["NWBFile"]["session_description"] = metadata["SessionTypes"][session_key]["session_description"]
+    experimenters = []
+    task_acronym = session_id.split("_")[0]
+    if not pd.isna(subject_metadata[f"{task_acronym} exp"]):
+        experimenters.append(subject_metadata[f"{task_acronym} exp"])
+    if (
+        not pd.isna(subject_metadata[f"{task_acronym} sco"])
+        and subject_metadata[f"{task_acronym} sco"] != subject_metadata[f"{task_acronym} exp"]
+    ):
+        experimenters.append(subject_metadata[f"{task_acronym} sco"])
+    metadata["NWBFile"]["experimenter"] = experimenters
 
     session_start_time = video_timestamps.iloc[0]
     metadata["NWBFile"]["session_start_time"] = session_start_time.tz_localize("Europe/London")
@@ -167,15 +179,11 @@ def process_session(
 if __name__ == "__main__":
 
     # Parameters for conversion
-    data_dir_path = Path("/Volumes/T9/Behavioural Pipeline/Water Maze")
-    output_dir_path = data_dir_path / "nwbfiles"
-
-    subjects_metadata_file_path = Path("/Users/weian/data/RAT ID metadata Yunkai copy - updated 12.2.25.xlsx")
+    data_dir_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/Water Maze")
+    output_dir_path = Path("D:/kind_lab_conversion_nwb/behavioural_pipeline/water_maze")
+    subjects_metadata_file_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/general_metadata.xlsx")
     task_acronym = "WM"
-    session_ids = get_session_ids_from_excel(
-        subjects_metadata_file_path=subjects_metadata_file_path,
-        task_acronym=task_acronym,
-    )
+    session_ids = get_session_ids_from_excel(subjects_metadata_file_path, task_acronym)
 
     subjects_metadata = extract_subject_metadata_from_excel(subjects_metadata_file_path)
     subjects_metadata = get_subject_metadata_from_task(subjects_metadata, task_acronym)

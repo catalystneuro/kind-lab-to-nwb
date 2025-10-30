@@ -20,12 +20,9 @@ import spyglass.common as sgc  # this import connects to the database
 # spyglass.data_import has tools for inserting NWB files into the database
 import spyglass.data_import as sgi
 
-# LFP Imports
-import spyglass.lfp as sglfp
+from spyglass.utils.nwb_helper_fn import get_nwb_copy_filename, get_nwb_file
 
-from spyglass.utils.nwb_helper_fn import get_nwb_copy_filename
-
-from kind_lab_to_nwb.spyglass_utils import insert_lfp, clean_db_entry
+from kind_lab_to_nwb.spyglass_utils import insert_annotated_events, clean_db_entry, AnnotatedEvents
 
 
 def log_table(table, restriction=True):
@@ -37,26 +34,17 @@ def log_table(table, restriction=True):
 def print_tables(nwbfile_path):
     nwb_copy_file_name = get_nwb_copy_filename(nwbfile_path.name)
     nwb_dict = {"nwb_file_name": nwb_copy_file_name}
-    probe_ids = (sgc.ElectrodeGroup & nwb_dict).fetch("probe_id", as_dict=True)
     camera_names = (sgc.VideoFile & nwb_dict).fetch("camera_name", as_dict=True)
     table_list = [  # list of tuples with (table, restriction)
         (sgc.Nwbfile, nwb_dict),
         (sgc.Session, nwb_dict),
-        (sgc.DIOEvents, nwb_dict),
-        (sgc.Electrode, nwb_dict),
-        (sgc.ElectrodeGroup, nwb_dict),
-        (sgc.Probe, probe_ids),
-        (sgc.Probe.Shank, probe_ids),
-        (sgc.Probe.Electrode, probe_ids),
+        (AnnotatedEvents, nwb_dict),
         (sgc.Raw, nwb_dict),
-        (sgc.DataAcquisitionDevice, nwb_dict),
         (sgc.IntervalList, nwb_dict),
         (sgc.Task, True),
         (sgc.VideoFile, nwb_dict),
         (sgc.CameraDevice, camera_names),
         (sgc.TaskEpoch, True),
-        (sgc.SensorData, nwb_dict),
-        (sglfp.ImportedLFP, True),
     ]
     with open("tables.txt", "w") as f:
         for table, restriction in table_list:
@@ -80,14 +68,25 @@ def print_tables(nwbfile_path):
 
 
 def main():
-    nwbfile_path = Path(
-        "/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/raw/sub_Rat_1021-ses_Baseline_tone_flash_hab.nwb"
-    )
+    nwb_file_name = "sub-408-Arid1b(3)_ses-MI-Test_image.nwb"
+    nwbfile_path = Path("/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/raw") / nwb_file_name
+    nwb_copy_file_name = get_nwb_copy_filename(nwbfile_path.name)
+    nwb_dict = dict(nwb_file_name=nwb_copy_file_name)
 
     clean_db_entry(nwbfile_path)
 
     sgi.insert_sessions(str(nwbfile_path), rollback_on_fail=True, raise_err=True)
-    insert_lfp(nwbfile_path)
+
+    nwbf = get_nwb_file(nwbfile_path)
+
+    # Insert annotated events data
+    events = AnnotatedEvents()
+    if not events & nwb_dict:
+        events.insert_from_nwbfile(nwb_copy_file_name, nwbf)
+
+    # Fetch actions DataFrame
+    annotated_events_df = events.fetch1_dataframe("annotated_events")
+    print(annotated_events_df.head())
 
     print_tables(nwbfile_path)
 

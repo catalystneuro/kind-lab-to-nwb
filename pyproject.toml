@@ -21,6 +21,8 @@ dependencies = [
   "ndx_events==0.2.1",
   "ndx_sound==0.2.2",
   "spikeinterface==0.102.1",
+  "openpyxl",
+  "opencv-python-headless",
 ]
 
 [project.urls]

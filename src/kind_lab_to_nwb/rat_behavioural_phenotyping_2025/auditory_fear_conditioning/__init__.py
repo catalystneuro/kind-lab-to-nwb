@@ -1,1 +1,3 @@
-from nwbconverter import AuditoryFearConditioningNWBConverter
+from .nwbconverter import AuditoryFearConditioningNWBConverter
+
+__all__ = ["AuditoryFearConditioningNWBConverter"]

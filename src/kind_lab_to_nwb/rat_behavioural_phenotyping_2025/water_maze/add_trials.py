@@ -16,11 +16,11 @@ def add_trials_to_nwbfile(
 
     standard_columns = {
         "Platform": ("platform", "Platform location"),
-        "Time to platform": ("time_to_platform", "Time taken to reach the platform in seconds"),
-        "Trial duration": ("trial_duration", "Total duration of the trial in seconds"),
-        "Distance travelled (cm)": ("distance_travelled_cm", "Distance travelled in centimeters"),
-        "Average speed": ("average_speed", "Average swimming speed in cm/s"),
-        "% time near walls": ("percent_time_near_walls", "Percentage of time spent near walls"),
+        "Time to platform": ("time_to_platform", "Time taken to reach the platform in seconds", "float"),
+        "Trial duration": ("trial_duration", "Total duration of the trial in seconds", "float"),
+        "Distance travelled (cm)": ("distance_travelled_cm", "Distance travelled in centimeters", "float"),
+        "Average speed": ("average_speed", "Average swimming speed in cm/s", "float"),
+        "% time near walls": ("percent_time_near_walls", "Percentage of time spent near walls", "float"),
         "Platform Quadrant": ("platform_quadrant", "Quadrant containing the platform (1=NE, 2=NW, 3=SW, 4=SE)", "int"),
     }
 
@@ -36,6 +36,7 @@ def add_trials_to_nwbfile(
     zone_time_column_name = next((col for col in trials.columns if zone_time_column_name_substring in col), None)
     has_zone_data = zone_time_column_name is not None
 
+    has_platform_crossings = "Platform crossings" in trials.columns
     # Add columns for quadrant times (in seconds)
     quadrants = ["NE", "NW", "SW", "SE"]
     if has_quadrant_data:
@@ -44,7 +45,13 @@ def add_trials_to_nwbfile(
         # Find the column index for "Quadrant time (%)"
         quadrant_time_percent_idx = trials.columns.get_loc("Quadrant time (%)")
         # Find the column index for "Time to platform"
-        time_to_platform_idx = trials.columns.get_loc("Time to platform.1")
+        try:
+            time_to_platform_idx = trials.columns.get_loc("Time to platform.1")
+        except KeyError:
+            time_to_platform_idx = trials.columns.get_loc("Time to platform")
+
+        if has_platform_crossings:
+            platform_crossings_idx = trials.columns.get_loc("Platform crossings")
 
         for quadrant in quadrants:
             nwbfile.add_trial_column(
@@ -57,6 +64,11 @@ def add_trials_to_nwbfile(
             nwbfile.add_trial_column(
                 name=f"time_to_platform_{quadrant}", description=f"Time to platform when in {quadrant} quadrant"
             )
+            if has_platform_crossings:
+                nwbfile.add_trial_column(
+                    name=f"platform_crossings_{quadrant}",
+                    description=f"Number of platform crossings when in {quadrant} quadrant",
+                )
 
     # Add columns for zone data if present
     zones = ["NE", "NE_A", "SE", "SE_A", "SW", "SW_A", "NW", "NW_A"]
@@ -79,6 +91,9 @@ def add_trials_to_nwbfile(
                 # Convert to integer if specified
                 if optional_type and optional_type[0] == "int":
                     value = int(float(value))  # Convert through float to handle potential decimal values
+                # Convert to float if specified
+                elif optional_type and optional_type[0] == "float":
+                    value = float(value)
                 trial_data[nwb_col] = value
 
         if has_quadrant_data:
@@ -91,6 +106,10 @@ def add_trials_to_nwbfile(
 
                 # Time to platform in each quadrant
                 trial_data[f"time_to_platform_{quadrant}"] = float(row.iloc[time_to_platform_idx + i])
+
+                if has_platform_crossings:
+                    # Platform crossings in each quadrant
+                    trial_data[f"platform_crossings_{quadrant}"] = float(row.iloc[platform_crossings_idx + i])
         if has_zone_data:
             for i, zone in enumerate(zones):
                 trial_data[f"zone_percent_time_{zone}"] = float(row.iloc[zone_idx + i])
@@ -102,7 +121,7 @@ def add_trials_to_nwbfile(
 
         nwbfile.add_trial(
             start_time=row["start_time"],
-            stop_time=row["start_time"] + row["Trial duration"],
+            stop_time=row["start_time"] + trial_data["trial_duration"],
             **trial_data,
             timeseries=image_series,
         )

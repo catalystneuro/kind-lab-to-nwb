@@ -112,14 +112,16 @@ def session_to_nwb(
     metadata["NWBFile"]["experimenter"] = experimenters
 
     # Read freeze log file
-    freeze_log = pd.read_excel(freeze_log_file_path, header=None)
+    freeze_log = pd.read_csv(freeze_log_file_path, sep="\t", header=None)
     # TODO: replace with the actual column names
     row = freeze_log.values[0]
     # Combine into a single datetime object
     try:
         session_start_time = datetime.combine(row[-2].date(), row[-1])
-    except AttributeError:
-        session_start_time = datetime.combine(datetime.strptime(row[-2], "%d/%m/%Y").date(), row[-1])
+    except:
+        session_start_time = datetime.combine(
+            datetime.strptime(row[-2], "%d/%m/%Y").date(), datetime.strptime(row[-1], "%H:%M").time()
+        )
     session_start_time = session_start_time.replace(tzinfo=ZoneInfo("Europe/London"))
     metadata["NWBFile"].update(session_start_time=session_start_time)
 
@@ -151,8 +153,8 @@ if __name__ == "__main__":
     subjects_metadata = extract_subject_metadata_from_excel(subjects_metadata_file_path)
     subjects_metadata = get_subject_metadata_from_task(subjects_metadata, task_acronym)
 
-    session_id = session_ids[-2]  # 4_RecallD1
-    subject_metadata = subjects_metadata[0]  # subject 408_Arid1b(3)
+    session_id = session_ids[1]  # 2_HabD2
+    subject_metadata = subjects_metadata[68]  # subject 635_Arid1b(11)
 
     cohort_folder_path = data_dir_path / subject_metadata["line"] / f"{subject_metadata['cohort ID']}_{task_acronym}"
     if not cohort_folder_path.exists():

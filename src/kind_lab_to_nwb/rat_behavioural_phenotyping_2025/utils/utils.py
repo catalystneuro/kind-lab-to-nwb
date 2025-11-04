@@ -165,7 +165,10 @@ def convert_ts_to_mp4(video_file_paths: List[FilePath]) -> List[FilePath]:
     return output_file_paths
 
 
-def convert_ffii_files_to_avi(ffii_file_paths: List[str], frame_rate: int = 15) -> List[str]:
+def convert_ffii_files_to_avi(
+    ffii_file_paths: List[str],
+    frame_rate: float = 7.5,
+) -> List[str]:
     """
     Convert a list of .ffii files to .avi files using ffmpeg.
     Converted files are saved in a 'converted' subdirectory within the parent directory
@@ -179,8 +182,8 @@ def convert_ffii_files_to_avi(ffii_file_paths: List[str], frame_rate: int = 15) 
     ----------
     ffii_file_paths : List[str]
         List of paths to .ffii files to convert.
-    frame_rate : int, optional
-        Frame rate for the output video, by default 15.
+    frame_rate : float, optional
+        Frame rate for the output video, by default 7.5.
 
     Returns
     -------
@@ -205,7 +208,7 @@ def convert_ffii_files_to_avi(ffii_file_paths: List[str], frame_rate: int = 15) 
                 continue
             else:
                 raise ValueError(
-                    f"Unsupported file format: {video_file_path.name} has extension {video_file_path.suffix}, but only .ts files can be converted."
+                    f"Unsupported file format: {video_file_path.name} has extension {video_file_path.suffix}, but only .ffii files can be converted."
                 )
         # Create a subdirectory called "converted"
         output_dir = Path(video_file_path).parent / "converted"

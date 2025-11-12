@@ -24,6 +24,7 @@ dependencies = [
   "spikeinterface==0.102.1",
   "openpyxl",
   "opencv-python-headless",
+  "ipykernel",
 ]
 
 [project.urls]

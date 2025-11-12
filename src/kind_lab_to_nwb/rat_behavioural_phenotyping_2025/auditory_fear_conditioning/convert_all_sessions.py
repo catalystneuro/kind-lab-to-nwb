@@ -64,6 +64,7 @@ def auditory_fear_conditioning_dataset_to_nwb(
 
     for session_to_nwb_kwargs in tqdm(session_to_nwb_kwargs_per_session, desc="Converting sessions"):
         session_to_nwb_kwargs["output_dir_path"] = output_dir_path
+        session_to_nwb_kwargs["overwrite"] = overwrite
 
         # Create meaningful error file name using subject and session info
         subject_id = f"{session_to_nwb_kwargs['subject_metadata']['animal ID']}_{session_to_nwb_kwargs['subject_metadata']['cohort ID']}"

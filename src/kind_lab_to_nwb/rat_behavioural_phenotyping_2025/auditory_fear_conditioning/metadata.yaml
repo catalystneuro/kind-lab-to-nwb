@@ -18,8 +18,6 @@ NWBFile:
     Freezing behavior was recorded and analyzed using FreezeFrame 5 software.
   institution: University of Edinburgh
   lab: Kind
-  experimenter:
-    - Example, Researcher # Example value - actual experimenter name needed
 
 Subject:
   species: Rattus norvegicus

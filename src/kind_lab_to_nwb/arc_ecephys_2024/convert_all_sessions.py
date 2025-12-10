@@ -1,18 +1,21 @@
 """Primary script to run to convert all sessions in a dataset using session_to_nwb."""
-
+import os
 import traceback
 from concurrent.futures import (
     ProcessPoolExecutor,
     as_completed,
 )
+from datetime import datetime
 from pathlib import Path
 from pprint import pformat
 from typing import Union
 from tqdm import tqdm
 
-from .convert_session import (
+from convert_session import (
     session_to_nwb,
 )
+from kind_lab_to_nwb.arc_ecephys_2024.fear_conditioning_paradigm.params import AnalysisParams
+from kind_lab_to_nwb.arc_ecephys_2024.fear_conditioning_paradigm.pipeline import Pipeline
 
 
 def dataset_to_nwb(
@@ -37,8 +40,7 @@ def dataset_to_nwb(
     """
     data_dir_path = Path(data_dir_path)
     session_to_nwb_kwargs_per_session = get_session_to_nwb_kwargs_per_session(
-        data_dir_path=data_dir_path,
-    )
+        data_dir_path=data_dir_path, output_dir_path=output_dir_path)
 
     futures = []
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
@@ -88,33 +90,22 @@ def safe_session_to_nwb(
 
 def get_session_to_nwb_kwargs_per_session(
     *,
-    data_dir_path: Union[str, Path],
-):
-    """Get the kwargs for session_to_nwb for each session in the dataset.
+    data_dir_path: Union[str, Path], output_dir_path: Union[str, Path]):
 
-    Parameters
-    ----------
-    data_dir_path : Union[str, Path]
-        The path to the directory containing the raw data.
+    params = AnalysisParams()
+    params.validate_all_other_params()
+    pipeline = Pipeline(params)
 
-    Returns
-    -------
-    list[dict[str, Any]]
-        A list of dictionaries containing the kwargs for session_to_nwb for each session.
-    """
-    #####
-    # # Implement this function to return the kwargs for session_to_nwb for each session
-    # This can be a specific list with hard-coded sessions, a path expansion or any conversion specific logic that you might need
-    #####
-    raise NotImplementedError
+    kwargs = pipeline.extract_kwargs_NWB_conversion(data_dir_path=data_dir_path, output_dir_path=output_dir_path)
+    return kwargs
 
 
 if __name__ == "__main__":
 
     # Parameters for conversion
-    data_dir_path = Path("/Directory/With/Raw/Formats/")
-    output_dir_path = Path("~/conversion_nwb/")
-    max_workers = 1
+    data_dir_path = Path('/mnt/308A3DD28A3D9576/SYNGAP_ephys')
+    output_dir_path = Path('/media/prignane/data_fast/conversion_nwb')
+    max_workers = 32
     verbose = False
 
     dataset_to_nwb(

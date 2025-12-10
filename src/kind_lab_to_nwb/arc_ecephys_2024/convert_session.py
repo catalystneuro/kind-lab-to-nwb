@@ -1,6 +1,7 @@
 """Primary script to run to convert an entire session for of data using the NWBConverter."""
 
 import datetime
+import os
 from pathlib import Path
 from typing import Union
 from zoneinfo import ZoneInfo
@@ -42,10 +43,7 @@ def session_to_nwb(
     output_dir_path = Path(output_dir_path)
     if stub_test:
         output_dir_path = output_dir_path / "nwb_stub"
-    output_dir_path.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
+    output_dir_path.mkdir(parents=True, exist_ok=True)
     subject_id = path_expander_metadata["metadata"]["Subject"]["subject_id"]
     session_id = path_expander_metadata["metadata"]["NWBFile"]["session_id"]
     nwbfile_path = output_dir_path / f"sub_{subject_id}-ses_{session_id}.nwb"
@@ -57,7 +55,6 @@ def session_to_nwb(
     session_date = path_expander_metadata["metadata"]["extras"]["session_date"]
     session_time = path_expander_metadata["metadata"]["extras"]["session_time"]
     session_start_time = datetime.datetime.strptime(f"{session_date} {session_time}", "%Y-%m-%d %H-%M-%S")
-    metadata["NWBFile"]["session_start_time"] = session_start_time.replace(tzinfo=ZoneInfo("Europe/London"))
 
     # Update default metadata with the editable in the corresponding yaml file
     editable_metadata_path = Path(__file__).parent / "metadata.yaml"
@@ -86,6 +83,7 @@ def session_to_nwb(
         raise ValueError(f"Genotype {subject_genotype} not recognized")
 
     metadata["Subject"]["genotype"] = subject_genotype
+    metadata["NWBFile"]["session_start_time"] = session_start_time.replace(tzinfo=ZoneInfo("Europe/London"))
 
     nwbfile = make_nwbfile_from_metadata(metadata=metadata)
 
@@ -112,6 +110,9 @@ def session_to_nwb(
         folder_path=folder_path,
         stream_name="Signals AUX",
     )
+
+
+    folder_path = os.path.split(folder_path)[0]
 
     # Add behavior events
     add_behavioral_events(nwbfile=nwbfile, folder_path=folder_path)

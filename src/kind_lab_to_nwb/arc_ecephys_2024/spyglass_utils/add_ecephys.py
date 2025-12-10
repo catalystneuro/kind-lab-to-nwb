@@ -105,7 +105,7 @@ def add_electrical_series(
         stream_name=stream_name,
         block_index=block_index,
     )
-    channel_names = extractor.get_property("channel_names")
+    channel_names = extractor.channel_ids
 
     # Extract all unique locations and create electrode groups
     unique_locations = set(info["location"] for info in channels_info.values())

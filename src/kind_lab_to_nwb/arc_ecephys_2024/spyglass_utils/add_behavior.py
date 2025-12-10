@@ -7,7 +7,7 @@ Functions:
     add_behavioral_signals: Add behavioral signals (e.g., accelerometer data) from Open Ephys
         recordings to an NWB file.
 """
-
+import os
 from pydantic import DirectoryPath
 from typing import Optional
 
@@ -16,16 +16,20 @@ from pynwb.behavior import BehavioralEvents, BehavioralTimeSeries
 from spikeinterface.extractors.neoextractors import OpenEphysLegacyRecordingExtractor
 
 from ndx_franklab_novela import DataAcqDevice
+import pandas as pd
+from pyopenephys.openephys_tools import loadEvents
 
-from open_ephys.analysis import Session
+
 import numpy as np
 
 
 def add_behavioral_events(nwbfile: NWBFile, folder_path) -> None:
-    session = Session(folder_path)
-    recording = session.recordings[0]
-    event_table = recording.events
+    parent_dir = folder_path + '/' + [i for i in os.listdir(folder_path) if 'Record Node' in i][0]
+    events_file_path = parent_dir + '/all_channels.events'
 
+    events_file = loadEvents(events_file_path)
+    event_table = pd.DataFrame.from_dict(
+        {'channel': events_file['channel'], 'state': events_file['eventId'], 'timestamp': events_file['timestamps']})
     # Constants and setup
     rate = 2000.0  # Hz
     starting_time = 0.0  # seconds
@@ -57,12 +61,12 @@ def add_behavioral_events(nwbfile: NWBFile, folder_path) -> None:
         # Create a BehavioralTimeSeries object for the TTL signal
         behavioral_events.add_timeseries(
             TimeSeries(
-                name=ttl_channel_info[channel]["name"],
+                name=ttl_channel_info[channel+1]["name"],
                 data=signal,
                 rate=rate,
                 starting_time=starting_time,
                 unit="n.a.",
-                description=ttl_channel_info[channel]["description"],
+                description=ttl_channel_info[channel+1]["description"],
             )
         )
 

@@ -1,0 +1,375 @@
+%Dual band peaks seizure detection algorithm and interface
+%Copyright (C) 2025 Domagoj Anticic, Kind Lab, The University of Edinburgh
+
+%This program is free software: you can redistribute it and/or modify
+%it under the terms of the GNU General Public License as published by
+%the Free Software Foundation, either version 3 of the License, or
+%(at your option) any later version.
+
+%This program is distributed in the hope that it will be useful,
+%but WITHOUT ANY WARRANTY; without even the implied warranty of
+%MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%GNU General Public License for more details.
+
+%You should have received a copy of the GNU General Public License
+%along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+% !TeX spellcheck = en_GB
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\usepackage{setspace}
+\usepackage{listings}
+\usepackage{enumitem}
+\usepackage{graphicx}     
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{subcaption}
+\usepackage{hyperref}
+
+%\usepackage[backend=bibtex,style=numeric, sorting=none]{biblatex}
+%\addbibresource{bib.bib}
+
+\geometry{top=1.0in,bottom=1.0in,left=1.0in,right=1.0in}
+\linespread{1.1}
+
+
+\title{
+	\endgraf\rule{\textwidth}{.4pt} 
+	Seizure detection scorer with dual band peaks method documentation
+	\endgraf\rule{\textwidth}{.4pt} 
+
+}
+
+\author{Domagoj Anticic, Kind Lab, The University of Edinburgh \\ D.Anticic@sms.ed.ac.uk}
+\date{\today}
+
+\begin{document}
+	
+	\maketitle
+	\newpage
+	\tableofcontents
+	\newpage
+	
+	\section{Copyright Disclaimer}
+	   
+	\begin{verbatim}
+		Dual band peaks seizure detection algorithm and interface
+		Copyright (C) 2025 Domagoj Anticic and Paul Rignanese, Kind Lab, The University of Edinburgh
+		
+		This program is free software: you can redistribute it and/or modify
+		it under the terms of the GNU General Public License as published by
+		the Free Software Foundation, either version 3 of the License, or
+		(at your option) any later version.
+		
+		This program is distributed in the hope that it will be useful,
+		but WITHOUT ANY WARRANTY; without even the implied warranty of
+		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+		GNU General Public License for more details.
+		
+		You should have received a copy of the GNU General Public License
+		along with this program.  If not, see <https://www.gnu.org/licenses/>.
+	\end{verbatim}
+	\newpage
+
+	
+	
+	\section{Overview}
+	
+	The dual band peaks method detects SWDs in LFP data by considering the consistency of the timing between peaks in low and high frequency bands. 
+	
+	\section{Algorithm}
+	
+	\subsection{Overview}
+	
+	The consistency of the time between signal peaks in lower and higher frequencies is considered. For SWDs, the lower frequencies correspond to the underlying seizure modulation, while the higher frequencies correspond to the sharper periodic peaks. When a seizure is occurring, the time differences in peaks of both bands become consistent. This is quantified with a rolling variance of the time differences, where and SWD-like behaviour in either band manifests as a sharp drop in variance. 
+	
+	% Include 'doodle bands.png'
+	\begin{figure}[h!]
+		\centering
+		\includegraphics[width=0.6\linewidth]{doodle bands.png}
+		\caption{}
+		\label{}
+	\end{figure}
+	
+	% Include 'doodle variance.png'
+	\begin{figure}[h!]
+		\centering
+		\includegraphics[width=0.6\linewidth]{doodle variance.png}
+		\caption{}
+		\label{}
+	\end{figure}
+	
+	% Include 'doodle variance 2.png'
+	\begin{figure}[h!]
+		\centering
+		\includegraphics[width=0.6\linewidth]{doodle variance 2.png}
+		\caption{}
+		\label{}
+	\end{figure}
+	
+
+	
+	Samples where the variance is lower than a threshold are detected and, with specified padding, are converted into a binary mask of true and false states, indicating low variance regions. A bitwise logical AND operation is used to combine the two to get potential seizures.
+	
+	Finally, to reduce false positives, a the rolling mean power of the unfiltered signal is used in conjunction with a threshold to detect regions of high signal power. A further bitwise logical AND operation combines the variance states with the power states. This stage is optional, but highly effective. 
+	
+	Before any seizures are shown or verified, basic merging and filter may be done. If the data has many bad periods or disconnections, this is advisable. 
+	
+	Detection is done per frame of a specified length (referred to as detection frame).
+	
+	% Include 'process doodle.png'
+	\begin{figure}[h!]
+		\centering
+		\includegraphics[width=0.9\linewidth]{process doodle.png}
+		\caption{}
+		\label{}
+	\end{figure}
+	
+	
+	\subsection{Main parameters}
+	
+	For the timing variance to be effective, a minimum peak height must be set. However, since the amplitude and sensitivity of the signal varies widely across recordings, this cannot be set to a fixed value. Instead, all peaks are first detected without restriction. Then, from the distribution of peak heights, a minimum peak height is taken from a set quantile. This is repeated for both bands. The two minimum heights are then used to find peaks again, in conjunction with the additional restriction of a minimum peak distance. 
+	
+	From this, the rolling time difference and its variance is computed. The rolling time variance has a fixed threshold for both bands.
+	
+	The most relevant parameters to tune can be changed and saved within the interface. If enabled, by pressing C while in a detection frame, the constants window will open up from where bars can be used to adjust the constants. These are:
+	
+	\begin{table}[ht]
+		\centering
+		\begin{tabular}{|l|p{7cm}|l|}
+			\hline
+			\textbf{Parameter} & \textbf{Description} & \textbf{Unit} \\ \hline
+			Quantile bandpass & Bandpass peak quantile & Hz \\ \hline
+			Quantile highpass & Highpass peak quantile & Hz \\ \hline
+			Threshold bandpass & Rolling variance threshold for bandpass & $s^2$ \\  \hline
+			Threshold highpass & Rolling variance threshold for highpass & $s^2$ \\  \hline
+			Window size & Rolling window size, in terms of variance of peak time differences & even natural numbers \\ \hline
+			Spread & Amount of padding in states of either band around a variance threshold crossing point & s \\ \hline
+		\end{tabular}
+		\caption{Main parameters}
+		\label{table:main_params}
+	\end{table}
+	
+	For tuning the parameters, see~\ref{sec:tune}
+	
+	
+	\subsection{Input stage processing}
+	
+	If bad periods are passed, those segments of the signal can optionally be excluded prior to any further signal processing. 
+	
+	The mean of the signal is taken and subtracted from the the raw signal, after which nans are replaced with zeros and a low pass filter with a $1Hz$ cutoff is applied. The mean is subtracted from the signal in order to minimise the "sharpness" of the transition after nans are replaced with zeros, which would create artefacts which could affect later detection near edges of missing data. 
+	
+	\subsection{Output stage processing}
+	
+	Before any results are shown in seizure detection frames, optional merging and filtering may be done. 
+	
+	Following detection, bad periods, if passed, are excluded, such that no seizure can be detected in a bad period. This is distinct from removal of bad periods before detection, as there may be edge effects near missing data.
+
+	At the very end before returning the data, very short gaps are merged ($10$ samples), these usually corresponding to window transitions. Excel sheet saving saves the version prior to merging and after merging. In most cases these will be identical. 
+	
+
+	
+	
+	\section{Utilities}
+	
+	The following features are implemented to allow for the algorithm to be effectively used. These can be enabled or disabled in the \texttt{params} file.
+	
+	\subsection{Manual verification}
+	
+	For each frame of detection, detected seizures may be manually verified whereby they can be accepted, rejected or their boundaries modified. 
+	
+	In the verification window, the following controls are used:
+	
+	\begin{table}[h]
+		\centering
+		\begin{tabular}{|c|c|}
+			\hline
+			\textbf{Control}         & \textbf{Operation}                \\ \hline
+			Accept as is             & Y                                \\ \hline
+			Modify start             & Left cursor click                \\ \hline
+			Modify end               & Right cursor click               \\ \hline
+			Reject                   & X                                \\ \hline
+			Reset and accept original& R \\ \hline
+		\end{tabular}
+		\caption{Controls and their operations in the verification window}
+		\label{tab:control_operation}
+	\end{table}
+	
+	\textit{Note: in case the user accidentally swaps the start and end, a prompt will appear with the suggested correction.}
+	
+	Additionally, if verification is enabled, in the detection frame view, K may be pressed to reject all detected seizures and L may be pressed to accept all detected seizures. This skips the seizure by seizure verification stage and continues to the next detection frame. 
+	
+	It is important to note the verification will only show positives. If manual verification is being done, it is advisable to adjust the constants to catch nearly every seizure, even if there are more false positives. Those may be easily manually rejected.
+	
+	After verification, overlapping periods are merged, as the user may adjust two periods such that they overlap. An appropriate message is displayed to indicate this was done.
+	
+	\subsection{Constant tuning window and constant saving}
+	
+	Pressing C while in a detection frame will open a window for constant tuning, where quantiles, thresholds and spread may be tuned. Pressing Y will accept the changes and pressing X will reject them.
+	
+	This window is enabled by default but may be disabled if undesired. Additionally, after the constants are changed, the detection process will reset to the beginning of the file. If this is unwanted, it may be disabled, but this would mean a portion of the file is detected with different constants.
+	
+	
+	The Following table contains different constant saving modes which may be specified
+
+	
+	\begin{table}[h]
+		\centering
+		\begin{tabular}{|l|l|p{6cm}|}
+			\hline
+			\textbf{Name} & \textbf{String to specify} & \textbf{Description} \\
+			\hline
+			None & "none" & Constants loaded from defaults \\
+			\hline
+			Global & "global" & A single set of constants is used globally for all files \\
+			\hline
+			Per Animal & "per\_animal" & Separate constants are saved for each animal, applicable to all sessions. \\
+			\hline
+			Per Session & "per\_session" & Constants are saved per session and shared across different animals. \\
+			\hline
+			Per Session per Animal & "per\_session\_per\_animal" & Constants are saved separately for each session and for each animal. \\
+			\hline
+		\end{tabular}
+		\caption{Constants Saving Mode Descriptions}
+		\label{tab:constants_saving_mode}
+	\end{table}
+	
+	In order to use per animal, per session and per session per animal, an appropriate file structure is necessary, where the base directory contains animals, each animal contains sessions. 
+
+	
+	\subsection{Spreadsheet output}
+	
+	If a location is specified, two spreadsheets will be outputted, one before and one after merging detection frames. Each contains all seizures and all nonseizures. 
+	
+	\subsection{Specific start and end indecies}
+	
+	Specific start and end indecies for detection may be passed. Not however that the peaks for threshold setting will still be detected across the entire passed data.
+		
+	\subsection{Backup file}
+	
+	A backup file is automatically saved after each detection frame. If the same file is loaded and a backup file exists, the user will be prompted to load from it. 
+	
+	Note that if a start and end index are passed, they must match the originally used one when the backup was made in order for the backup to be recognised. This is intentional and prevents unexpected behaviour. 
+	
+	\subsection{Bad interval exclusion}
+	
+	If bad periods are passed and bad interval exclusion from input signal is enabled, this will replace the bad intervals with nans. 
+	
+	\subsection{Merging and filtering}
+	
+	Merging of close and filtering of short seizures can be enabled. This will merge and filter before anything is shown to the user in the detection frame, and hence will not be shown for verification either. While this may remove false positives and close gaps, it is important to note that no data is saved anywhere before this step, so it should be used cautiously.
+		
+	\subsection{Remarks}
+	
+	Generally, the bandpass quantiles should be adjusted in bigger steps than the highpass quantiles.
+	
+	If just increasing or decreasing quantiles does not work, it may help to increase the quantile(s) and increase the threshold(s), or decrease the quantile(s) and decrease the threshold(s). This will give a different behaviour as you are making one thing more sensitive and the other less.
+	
+	False positives are preferred over false negatives as there is a manual verification step for every detected seizure. So, false positives can easily be discarded, while false negatives will not be explicitly shown.
+	
+
+	
+	
+	
+	\section{Pipeline and suggested usage}
+	
+	\subsection{Overview}
+	
+	The terminal output guides the user through use, options and controls. 
+	
+	\subsection{Tuning constants}
+	\label{sec:tune}
+	
+	\subsubsection{Quantiles}
+	
+	All peaks in a band are taken and the value of a set quantile becomes the threshold. Anything above this threshold is then considered a peak in later processing with timings and variances.
+	
+	If the detection is too sensitive, inspect the variances in the bandpass and the highpass - where is the variance generally low, independently of whether there is a seizure or not? If you zoom into the data, does it look like too many peaks which shouldn't be considered peaks are marked as such (red cross)? Increase the variance for said band(s). This will make the computed peak threshold higher and thus make the detection less sensitive. Do the opposite if not sensitive enough.
+	
+	If it seems like the variance has sufficient range (very low when there is a seizure, higher up or out of range generally where there is none), then the quantiles are set right.
+	
+	
+	\subsubsection{Variance thresholds}
+	
+	The variance thresholds set how low the rolling variance of the time differences in the peaks has to be for this to be considered a seizure.
+	
+	If the rolling variance looks good (the variances get distinctively low during a seizure, but higher elsewhere), the threshold may be adjusted. If the variance decreases near a seizure, but does not go below the threshold, then the threshold needs to be increased. 
+		
+	\subsubsection{Window size}
+	
+	If short seizures are not being caught, the window size should be lowered. This will cause issues elsewhere, probably increasing the amount of false positives. Using rolling power likely helps with this. Furthermore, the quantile(s) could be increased and/or variance threshold(s) decreased.
+	
+	Window size can be increased if you wish to prevent short false positives.
+	
+	Window size should be an even number.
+	
+	\subsubsection{Power parameters}
+	
+	Power is found using rolling power of a set window size. A threshold is found my taking all amplitudes of the signal, finding the average of the $0.01$ and $0.99$ quantile and multiplying that by a constant factor. The primary variables to tune are the rolling window size and this threshold power factor. There is also a set duration of time padding around each detection, which may also be tuned.
+	
+	\subsection{Others}
+	
+	If dealing with a specific recording method, very low/high sampling rate or phenotype, the following parameters might be changed
+	
+	The band frequency should correspond to the low frequency component of seizures, while the high frequency component should correspond to the spikes. If e.g. the spikes are not being detected, perhaps the frequency cutoff of the highpass is too low.
+	
+	The minimum duration between peaks is specified. If dealing with very noisy data, this minimum limit might be forcing a low variance, leading to false positives. To detect more peaks not constrained by this distance, this value can be lowered, but note that this will result in more peaks overall so the quantiles will have to be adjusted. Another possible need to adjust this is if using very high/low sampling rates.
+	
+	
+	\section{Effectivness}
+	For noise to go though, it must be periodic and present in both bands, which is not something most of noise is like.
+	
+	\section{Full list of parameters}
+	
+	Variables:
+	
+	\begin{table}[h]
+		\centering
+		\begin{tabular}{|p{4cm}|p{5.5cm}|p{1.5cm}|p{4cm}|}
+			\hline
+			\textbf{Name} & \textbf{Variable Name} & \textbf{Default Value} & \textbf{Comment} \\ \hline
+			Duration per frame & periods\_len\_minutes\_seizure & 20 min & Duration of each analysis frame \\ \hline
+			Bandpass lower frequency & f\_band\_low & 2 Hz & Lower frequency limit for bandpass filter \\ \hline
+			Bandpass upper frequency & f\_band\_high & 9 Hz & Upper frequency limit for bandpass filter \\ \hline
+			Highpass cutoff frequency & f\_hf\_cut & 35 Hz & Cutoff frequency for highpass filter \\ \hline
+			Merge gap & merge\_gap & 0.4 s & Time gap for merging detections. \\ \hline
+			Short cutoff & short\_cutoff & 0.4 s & Minimum seizure length (filtering) \\ \hline
+			Rolling Power Window size & window\_power & 2.0 s & Window length used for power calculation \\ \hline
+			Threshold power multiplier & threshold\_power\_factor & 0.75 & Multiplier for threshold computed from mean of power minimum and maximum \\ \hline
+			Power padding duration & pad\_power\_duration & 0.45 s & Duration to pad around power threshold events \\ \hline
+			Default quantile for bandpass & quantile\_band\_default & 0.6 & Default quantile used for bandpass min. peak height \\ \hline
+			Default quantile for high frequency & quantile\_hf\_default & 0.98772 & Default quantile for high-frequency  min. peak height \\ \hline
+			Default bandpass threshold & threshold\_band\_default & 0.004 & Default threshold level for bandpass peak time variance \\ \hline
+			Default High Frequency Threshold & threshold\_hf\_default & 0.001 & Default threshold level for high-frequency peak time variance \\ \hline
+			Default window size & window\_size\_default & 4 s & Number of peaks to consider when computing rolling variance of peak timings\\ \hline
+			Default spread factor & spread\_default & 1.0 s & How much to pad around variance threshold crossings in both bands before converting to binary mask \\ \hline
+			Minimum peak distance & peak\_dist & 0.035 s & Minimum distance between detected peaks \\ \hline
+			Verification padding time & verification\_padding\_time & 6 s & Time duration shown around each frame during verification \\ \hline
+		\end{tabular}
+		\caption{Constants}
+		\label{tab:numerical_settings}
+	\end{table}
+	
+	\begin{table}[h]
+		\centering
+		\begin{tabular}{|p{4cm}|p{5.5cm}|p{1.5cm}|p{4cm}|}
+			\hline
+			\textbf{Name} & \textbf{Variable Name} & \textbf{Default Value} & \textbf{Comment} \\ \hline
+			Verify seizures & verify\_seizures & False & Enable verification stage for each detected seizure \\ \hline
+			Disable user input & no\_user\_input & False & Disables user input  \\ \hline
+			Live constant adjustment & live\_constant\_adjust & True & Allows adjustment of detection constants inside detection window \\ \hline
+			Restart after adjustment & restart\_after\_adjust & True & Restarts analysis from start of file after live adjustment of detection constants\\ \hline
+			Merge and filter & merge\_and\_filter & False & Merging of close and filtering of short seizures before showing on window - no data is saved prior to this \\ \hline
+			Power Threshold Use & use\_power\_threshold & True & Option to use power threshold as extra detection layer \\ \hline
+			Exclude bad periods from signal & exclude\_bad\_from\_input\_sig & False & Excludes signals marked as bad from input signal\\ \hline
+			Remove bad periods from detections & remove\_bad\_from\_detected & True & Removes detections flagged as bad from results \\ \hline
+			Remove signal drift & remove\_drift & True & Removes low frequency component and DC drift in signal data \\ \hline
+		\end{tabular}
+		\caption{Modes}
+		\label{tab:boolean_settings}
+	\end{table}
+
+	
+\end{document}

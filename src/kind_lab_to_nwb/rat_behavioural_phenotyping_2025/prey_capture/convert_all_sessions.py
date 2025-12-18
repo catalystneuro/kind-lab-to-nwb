@@ -1,17 +1,18 @@
-"""Primary script to run to convert all sessions in a dataset using session_to_nwb."""
+"""Script to convert all Pray Capture sessions to NWB format, following the structure of auditory_fear_conditioning/convert_all_sessions.py."""
 
+import warnings
 import traceback
 from pathlib import Path
 from pprint import pformat
 from typing import Union
 from tqdm import tqdm
 import numpy as np
+import natsort
 
-
-from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.one_trial_social.convert_session import (
+from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.prey_capture.convert_session import (
     session_to_nwb,
 )
-from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils.utils import (
+from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils import (
     get_session_ids_from_excel,
     extract_subject_metadata_from_excel,
     get_subject_metadata_from_task,
@@ -19,13 +20,14 @@ from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils.utils import (
 )
 
 
-def one_trial_social_dataset_to_nwb(
+def prey_capture_dataset_to_nwb(
     *,
     data_dir_path: Union[str, Path],
     output_dir_path: Union[str, Path],
     subjects_metadata_file_path: Union[str, Path],
-    task_acronym: str = "1TS",
-    verbose: bool = False,
+    task_acronym: str = "PC",
+    overwrite: bool = False,
+    verbose: bool = True,
 ):
     """Convert the entire dataset to NWB.
 
@@ -38,10 +40,13 @@ def one_trial_social_dataset_to_nwb(
     subjects_metadata_file_path : Union[str, Path], optional
         The path to the Excel file containing subject metadata, by default None
     task_acronym : str, optional
-        The acronym of the task, by default "1TS"
+        The acronym of the task, by default "PC"
+    overwrite : bool, optional
+        Whether to overwrite existing NWB files, by default False
     verbose : bool, optional
         Whether to print verbose output, by default True
     """
+
     data_dir_path = Path(data_dir_path)
     output_dir_path = Path(output_dir_path)
     output_dir_path.mkdir(
@@ -100,7 +105,7 @@ def get_session_to_nwb_kwargs_per_session(
     *,
     data_dir_path: Union[str, Path],
     subjects_metadata_file_path: Union[str, Path],
-    task_acronym: str = "1TS",
+    task_acronym: str = "PC",
 ):
     """Get the kwargs for session_to_nwb for each session in the dataset.
 
@@ -111,7 +116,7 @@ def get_session_to_nwb_kwargs_per_session(
     subjects_metadata_file_path : Union[str, Path], optional
         The path to the Excel file containing subject metadata, by default None
     task_acronym : str, optional
-        The acronym of the task, by default "1TS"
+        The acronym of the task, by default "MI"
 
     Returns
     -------
@@ -122,105 +127,95 @@ def get_session_to_nwb_kwargs_per_session(
     subjects_metadata_file_path = Path(subjects_metadata_file_path)
     exception_file_path = data_dir_path / f"exceptions_for_task_{task_acronym}.txt"
 
-    session_ids = get_session_ids_from_excel(subjects_metadata_file_path, task_acronym)
-
+    session_ids = get_session_ids_from_excel(
+        subjects_metadata_file_path=subjects_metadata_file_path,
+        task_acronym=task_acronym,
+    )
     subjects_metadata = extract_subject_metadata_from_excel(subjects_metadata_file_path)
     subjects_metadata = get_subject_metadata_from_task(subjects_metadata, task_acronym)
 
-    session_to_nwb_kwargs_per_session = []
-
+    session_to_nwb_kwargs = []
     for subject_metadata in subjects_metadata:
+        animal_id = subject_metadata["animal ID"]
+        cohort_id = subject_metadata["cohort ID"]
+        line = subject_metadata["line"]
+        cohort_folder_path = Path(data_dir_path) / line / f"{cohort_id}_{task_acronym}"
         with open(exception_file_path, mode="a") as f:
-            f.write(f"Subject {subject_metadata['cohort ID']}_{subject_metadata['animal ID']}\n")
+            f.write(f"Subject {cohort_id}_{animal_id}\n")
+        if not cohort_folder_path.exists():
+            # raise FileNotFoundError(f"Folder {cohort_folder_path} does not exist")
+            with open(exception_file_path, mode="a") as f:
+                f.write(f"Session {session_id}\n")
+                f.write(f"Folder {cohort_folder_path} does not exist\n\n")
+            continue
         for session_id in session_ids:
-
-            cohort_folder_path = (
-                data_dir_path / subject_metadata["line"] / f"{subject_metadata['cohort ID']}_{task_acronym}"
-            )
-            if not cohort_folder_path.exists():
-                # raise FileNotFoundError(f"Folder {cohort_folder_path} does not exist")
-                with open(exception_file_path, mode="a") as f:
-                    f.write(f"Session {session_id}\n")
-                    f.write(f"Folder {cohort_folder_path} does not exist\n\n")
-                continue
-
-            # check if boris file exists on the cohort folder
-            boris_file_paths = list(cohort_folder_path.glob("*.boris"))
-            if len(boris_file_paths) == 0:
-                boris_file_path = None
-                # warnings.warn(f"No BORIS file found in {cohort_folder_path}")
-                # with open(exception_file_path, mode="a") as f:
-                #     f.write(f"No BORIS file found in {cohort_folder_path} for session {session_id}\n\n")
-            else:
-                boris_file_path = boris_file_paths[0]
-
             video_folder_path = cohort_folder_path / session_id
-            if not video_folder_path.exists():
-                # raise FileNotFoundError(f"Folder {video_folder_path} does not exist")
+            if not video_folder_path.exists() and session_id != "Weeto":
                 with open(exception_file_path, mode="a") as f:
                     f.write(f"Session {session_id}\n")
                     f.write(f"Folder {video_folder_path} does not exist\n\n")
                 continue
 
-            video_file_paths = list(video_folder_path.glob(f"*{subject_metadata['animal ID']}*"))
+            video_file_paths = natsort.natsorted(video_folder_path.glob(f"*{subject_metadata['animal ID']}*"))
             if len(video_file_paths) == 0:
                 cage_id = subject_metadata["cage ID"]
                 if not np.isnan(cage_id):
                     cage_id = int(cage_id)
-                    video_file_paths = list(video_folder_path.glob(f"*cage{cage_id}*"))
-                if len(video_file_paths) == 0:
-                    with open(exception_file_path, mode="a") as f:
-                        f.write(f"Session {session_id}\n")
-                        f.write(f"No video files found in {video_folder_path} for session {session_id}\n\n")
-                    continue
+                    video_file_paths = natsort.natsorted(video_folder_path.glob(f"*cage{cage_id}*"))
 
-            video_path = Path(video_file_paths[0])
-            session_start_time = parse_datetime_from_filename(video_path.name)
-
-            audio_folder_path = video_folder_path / "USVs"
-            if audio_folder_path.exists():
-                audio_file_paths = list(audio_folder_path.glob(f"*{subject_metadata['animal ID']}*.wav"))
-                if len(audio_file_paths) == 0:
-                    audio_file_path = None
-                elif len(audio_file_paths) > 1:
-                    with open(exception_file_path, mode="a") as f:
-                        f.write(f"Session {session_id}\n")
-                        f.write(
-                            f"Multiple audio files for subject {subject_metadata['animal ID']} found in {audio_folder_path}\n\n"
-                        )
-                    continue
-                else:
-                    audio_file_path = audio_file_paths[0]
+            if len(video_file_paths) == 0 and session_id != "Weeto":
+                with open(exception_file_path, mode="a") as f:
+                    f.write(f"Session {session_id}\n")
+                    f.write(f"No video files found in {video_folder_path}\n\n")
+                continue
+            # If the data has been scored, the cohort folder would contain BORIS files (.boris) of the behaviors of interest
+            # TODO: there are no example boris files for PC shared yet
+            boris_file_paths = list(cohort_folder_path.glob("*.boris"))
+            if len(boris_file_paths) == 0:
+                boris_file_path = None
+                warnings.warn(f"No BORIS file found in {cohort_folder_path}")
             else:
-                audio_file_path = None
+                boris_file_path = boris_file_paths[0]
 
-            session_kwargs = {
-                "video_file_paths": video_file_paths,
-                "audio_file_path": audio_file_path,
-                "boris_file_path": boris_file_path,
-                "subject_metadata": subject_metadata,
-                "session_id": f"{task_acronym}_{session_id}",
-                "session_start_time": session_start_time,
-            }
-            session_to_nwb_kwargs_per_session.append(session_kwargs)
-        with open(exception_file_path, mode="a") as f:
-            f.write(f"------------------------------------------------------------\n\n")
-    return session_to_nwb_kwargs_per_session
+            # Optional, add USV files
+            usv_file_paths = natsort.natsorted(video_folder_path.rglob(f"*{animal_id}*.wav"))
+            if len(usv_file_paths) == 0:
+                usv_file_paths = None
+                warnings.warn(f"No USV file found in {video_folder_path}")
+
+            session_to_nwb_kwargs.append(
+                {
+                    "session_id": f"PC_{session_id}",
+                    "subject_metadata": subject_metadata,
+                    "video_file_paths": video_file_paths,
+                    "boris_file_path": boris_file_path,
+                    "usv_file_paths": usv_file_paths,
+                }
+            )
+    return session_to_nwb_kwargs
 
 
 if __name__ == "__main__":
 
-    data_dir_path = Path("G:/Kind-CN-data-share/behavioural_pipeline/1 Trial Social")
-    output_dir_path = Path("G:/kind_lab_conversion_nwb/behavioural_pipeline/one_trial_social")
-    subjects_metadata_file_path = Path("G:/Kind-CN-data-share/behavioural_pipeline/general_metadata.xlsx")
-    task_acronym = "1TS"
-
+    data_dir_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/Prey Capture")
+    output_dir_path = Path("D:/kind_lab_conversion_nwb/behavioural_pipeline/prey_capture")
+    subjects_metadata_file_path = Path("D:/Kind-CN-data-share/behavioural_pipeline/general_metadata.xlsx")
+    task_acronym = "PC"
     verbose = False
+    overwrite = False
 
-    one_trial_social_dataset_to_nwb(
+    prey_capture_dataset_to_nwb(
         data_dir_path=data_dir_path,
         output_dir_path=output_dir_path,
         subjects_metadata_file_path=subjects_metadata_file_path,
         task_acronym=task_acronym,
         verbose=verbose,
+        overwrite=overwrite,
     )
+
+    # dandiset_folder_path = Path("/Users/weian/data/Kind/tmp")
+    # dandi_ember_upload(
+    #     nwb_folder_path=output_dir_path,
+    #     dandiset_folder_path=dandiset_folder_path,
+    #     dandiset_id="000205",
+    # )

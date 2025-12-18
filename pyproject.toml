@@ -15,9 +15,16 @@ classifiers = [
 ]
 
 dependencies = [
-  "neuroconv",
-  "nwbinspector",
+  "pynwb==3.0.0",
+  "neuroconv==0.7.4",
+  "nwbinspector==0.6.3",
   "ndx_franklab_novela==0.2.1",
+  "ndx_events==0.2.1",
+  "ndx_sound==0.2.2",
+  "spikeinterface==0.102.1",
+  "openpyxl",
+  "opencv-python-headless",
+  "ipykernel",
 ]
 
 [project.urls]

@@ -1,15 +1,12 @@
 """Primary script to run to convert an entire session for of data using the NWBConverter."""
 
-import subprocess
 import warnings
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Union
 from zoneinfo import ZoneInfo
 
 import pandas as pd
-from pydantic import FilePath
-from pynwb import NWBHDF5IO
+from pydantic import FilePath, DirectoryPath
 
 from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.auditory_fear_conditioning import (
     AuditoryFearConditioningNWBConverter,
@@ -19,68 +16,19 @@ from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils import (
     get_session_ids_from_excel,
     get_subject_metadata_from_task,
 )
+from kind_lab_to_nwb.rat_behavioural_phenotyping_2025.utils.utils import (
+    convert_ffii_files_to_avi,
+)
 from neuroconv.utils import dict_deep_update, load_dict_from_file
 
 
-def _convert_ffii_to_avi(
-    folder_path: Union[str, Path], convert_ffii_repo_path: Optional[Union[str, Path]] = None, frame_rate: int = 15
-) -> None:
-    """
-    Convert ffii files in a directory to avi format using the convert-ffii tool.
-    This utility function requires ffmpeg (https://ffmpeg.org/download.html) to be installed on the system prior to use.
-
-    Notes
-    -----
-    The video conversion script is forked from https://github.com/jf-lab/convert-ffii.git
-    The converted avi files will be saved in the same directory as the input files.
-
-    This utility function checks if the convert-ffii repository is available,
-    clones it if needed, and runs the conversion script on the specified directory.
-
-    Parameters
-    ----------
-    folder_path : Union[str, Path]
-        Path to the directory containing the ffii files to be converted
-    convert_ffii_repo_path : Optional[Union[str, Path]], optional
-        Path where the convert-ffii repository should be or will be cloned to.
-        If None, will use the current working directory.
-    frame_rate : int, optional
-        Frame rate to use for the video conversion, by default 15 Hz
-
-    """
-    folder_path = Path(folder_path)
-    if not folder_path.exists():
-        raise FileNotFoundError(f"Input directory '{folder_path}' does not exist.")
-
-    convert_ffii_repo_path = Path(convert_ffii_repo_path) if convert_ffii_repo_path else None
-    if convert_ffii_repo_path is None:
-        convert_ffii_repo_path = Path.cwd() / "convert-ffii"
-
-    if not convert_ffii_repo_path.exists():
-        print(f"Cloning convert-ffii repository to {str(convert_ffii_repo_path)}...")
-        subprocess.run(
-            ["git", "clone", "https://github.com/weiglszonja/convert-ffii.git", str(convert_ffii_repo_path)], check=True
-        )
-    else:
-        print(f"Using existing convert-ffii repository at '{str(convert_ffii_repo_path)}'.")
-
-    # Run the conversion script
-    ffii_to_avi_conversion_script = convert_ffii_repo_path / "ffii2avi_recursive.py"
-    if not ffii_to_avi_conversion_script.exists():
-        raise FileNotFoundError(f"Conversion script not found at '{ffii_to_avi_conversion_script}'.")
-
-    subprocess.run(
-        ["python", str(ffii_to_avi_conversion_script), str(folder_path), "--fps", str(frame_rate)], check=True
-    )
-
-
 def session_to_nwb(
-    output_dir_path: Union[str, Path],
-    video_file_path: Union[FilePath, str],
-    freeze_log_file_path: Union[FilePath, str],
+    output_dir_path: DirectoryPath,
+    video_file_path: FilePath,
+    freeze_log_file_path: FilePath,
     session_id: str,
     subject_metadata: dict,
-    freeze_scores_file_path: Optional[Union[FilePath, str]] = None,
+    freeze_scores_file_path: None | FilePath = None,
     overwrite: bool = False,
 ):
     """
@@ -88,11 +36,11 @@ def session_to_nwb(
 
     Parameters
     ----------
-    output_dir_path : Union[str, Path]
-        The folder path where the NWB file will be saved.
-    video_file_path: Union[FilePath, str]
+    output_dir_path : DirectoryPath
+        The path where the NWB file will be saved.
+    video_file_path: FilePath
         The path to the video file (.avi) to be converted.
-    freeze_log_file_path: Union[FilePath, str]
+    freeze_log_file_path: FilePath
         The path to the freeze log file.
     session_id: str
         The session ID to be used in the metadata.
@@ -115,12 +63,14 @@ def session_to_nwb(
     source_data = dict()
     conversion_options = dict()
 
+    # Update default metadata with the editable in the corresponding yaml file
     editable_metadata_path = Path(__file__).parent / "metadata.yaml"
     editable_metadata = load_dict_from_file(editable_metadata_path)
     task_metadata = editable_metadata["SessionTypes"][session_id]
 
     # Add Behavioral Video
-    source_data.update(dict(Video=dict(file_paths=[video_file_path], video_name="BehavioralVideo")))
+    file_paths = convert_ffii_files_to_avi([str(video_file_path)])
+    source_data.update(dict(Video=dict(file_paths=file_paths, video_name="BehavioralVideo")))
     conversion_options.update(dict(Video=dict(task_metadata=task_metadata)))
 
     if freeze_scores_file_path is not None:
@@ -139,24 +89,53 @@ def session_to_nwb(
     )
 
     metadata["Subject"]["subject_id"] = subject_id
+    metadata["Subject"][
+        "description"
+    ] = f"Subject housed in {subject_metadata['housing']} housing conditions. Cage identifier: {subject_metadata['cage ID']}."
     metadata["Subject"]["date_of_birth"] = subject_metadata["DOB (DD/MM/YYYY)"]
     metadata["Subject"]["genotype"] = subject_metadata["genotype"].upper()
     metadata["Subject"]["strain"] = subject_metadata["line"]
     sex = {"male": "M", "female": "F"}.get(subject_metadata["sex"], "U")
     metadata["Subject"].update(sex=sex)
-    # Add session ID to metadata
-    metadata["NWBFile"]["session_id"] = session_id
+
+    metadata["NWBFile"]["session_id"] = f"{session_id}"
     metadata["NWBFile"]["session_description"] = metadata["SessionTypes"][session_id]["session_description"]
+    experimenters = []
+    task_acronym = session_id.split("_")[0]
+    if not pd.isna(subject_metadata[f"{task_acronym} exp"]):
+        experimenters.append(subject_metadata[f"{task_acronym} exp"])
+    if (
+        not pd.isna(subject_metadata[f"{task_acronym} sco"])
+        and subject_metadata[f"{task_acronym} sco"] != subject_metadata[f"{task_acronym} exp"]
+    ):
+        experimenters.append(subject_metadata[f"{task_acronym} sco"])
+    metadata["NWBFile"]["experimenter"] = experimenters
 
     # Read freeze log file
-    freeze_log = pd.read_excel(freeze_log_file_path, header=None)
-    # TODO: replace with the actual column names
-    row = freeze_log.values[0]
+    try:
+        freeze_log = pd.read_csv(freeze_log_file_path, sep="\t", header=None)
+    except:
+        freeze_log = pd.read_excel(freeze_log_file_path, header=None)
+    matching_rows = []
+    for row in freeze_log.values:
+        if str(subject_metadata["animal ID"]) in row[0]:
+            matching_rows.append(row)
+    if len(matching_rows) == 0:
+        raise ValueError(
+            f"No matching rows found in freeze log file '{freeze_log_file_path}' for subject ID '{subject_metadata['animal ID']}'."
+        )
+    elif len(matching_rows) > 1:
+        raise ValueError(
+            f"Multiple matching rows found in freeze log file '{freeze_log_file_path}' for subject ID '{subject_metadata['animal ID']}'."
+        )
+    row = matching_rows[0]
     # Combine into a single datetime object
     try:
         session_start_time = datetime.combine(row[-2].date(), row[-1])
-    except AttributeError:
-        session_start_time = datetime.combine(datetime.strptime(row[-2], "%d/%m/%Y").date(), row[-1])
+    except:
+        session_start_time = datetime.combine(
+            datetime.strptime(row[-2], "%d/%m/%Y").date(), datetime.strptime(row[-1], "%H:%M").time()
+        )
     session_start_time = session_start_time.replace(tzinfo=ZoneInfo("Europe/London"))
     metadata["NWBFile"].update(session_start_time=session_start_time)
 
@@ -172,18 +151,13 @@ def session_to_nwb(
         overwrite=overwrite,
     )
 
-    with NWBHDF5IO(nwbfile_path, mode="r") as io:
-        nwbfile_in = io.read()
-        print(nwbfile_in.trials.to_dataframe())
-
 
 if __name__ == "__main__":
 
     # Parameters for conversion
-    data_dir_path = Path("/Users/weian/data/Auditory Fear Conditioning")
-    output_dir_path = data_dir_path / "nwbfiles"
-
-    subjects_metadata_file_path = Path("/Users/weian/data/RAT ID metadata Yunkai copy - updated 12.2.25.xlsx")
+    data_dir_path = Path("E:/Kind-CN-data-share/behavioural_pipeline/Auditory Fear Conditioning")
+    output_dir_path = Path("E:/kind_lab_conversion_nwb/behavioural_pipeline/auditory_fear_conditioning")
+    subjects_metadata_file_path = Path("E:/Kind-CN-data-share/behavioural_pipeline/general_metadata.xlsx")
     task_acronym = "AFC"
     session_ids = get_session_ids_from_excel(
         subjects_metadata_file_path=subjects_metadata_file_path,
@@ -193,8 +167,8 @@ if __name__ == "__main__":
     subjects_metadata = extract_subject_metadata_from_excel(subjects_metadata_file_path)
     subjects_metadata = get_subject_metadata_from_task(subjects_metadata, task_acronym)
 
-    session_id = session_ids[-2]  # 4_RecallD1
-    subject_metadata = subjects_metadata[120]  # subject 831_Grin2b(4)
+    session_id = session_ids[2]  # 2_HabD2
+    subject_metadata = subjects_metadata[0]  # subject 635_Arid1b(11)
 
     cohort_folder_path = data_dir_path / subject_metadata["line"] / f"{subject_metadata['cohort ID']}_{task_acronym}"
     if not cohort_folder_path.exists():
@@ -202,16 +176,9 @@ if __name__ == "__main__":
 
     video_folder_path = cohort_folder_path / session_id
 
-    # TODO: move this to convert_sessions.py
-    # _convert_ffii_to_avi(
-    #     folder_path=video_folder_path,
-    #     convert_ffii_repo_path="convert-ffii",
-    #     frame_rate=15, # TODO: confirm frame rate
-    # )
-
     if not video_folder_path.exists():
         raise FileNotFoundError(f"Folder {cohort_folder_path} does not exist")
-    video_file_paths = list(video_folder_path.glob(f"*{subject_metadata['animal ID']}*.avi"))
+    video_file_paths = list(video_folder_path.glob(f"*{subject_metadata['animal ID']}*.ffii"))
     if len(video_file_paths) == 0:
         raise FileNotFoundError(
             f"No video files found in for animal ID {subject_metadata['animal ID']} in '{video_folder_path}'."
@@ -227,7 +194,7 @@ if __name__ == "__main__":
         freeze_scores_file_path = freeze_scores_file_paths[0]
     else:
         freeze_scores_file_path = None
-        warnings.warn(f"No freeze scores file (.csv) found in {video_file_path}.")
+        warnings.warn(f"No freeze scores file (.csv) found in {video_folder_path}.")
 
     # Path to the excel file containing metadata
     freeze_log_file_path = video_folder_path / "Freeze_Log.xls"
@@ -235,7 +202,6 @@ if __name__ == "__main__":
     stub_test = False
     # Whether to overwrite the NWB file if it already exists
     overwrite = True
-
     session_to_nwb(
         output_dir_path=output_dir_path,
         video_file_path=video_file_path,

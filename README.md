@@ -70,24 +70,7 @@ pip install --editable .
 
 This module converts data from a fear conditioning experiment investigating neural responses in Syngap1+/Delta-GAP rats. The dataset includes EEG, LFP, accelerometer, and behavioral video recordings across multiple experimental sessions.
 
-#### Dataset Description
-
-**Experiment**: Fear conditioning paradigm in male wild-type and Syngap1+/Delta-GAP rats (n=31, ages 3-6 months)
-
-**Data Types**:
-- Local Field Potentials (LFP) - 2 kHz sampling, 0.1-600 Hz bandpass
-- Electroencephalogram (EEG) - surface recordings from multiple brain regions
-- 3-axis accelerometer data - 500 Hz sampling
-- Behavioral videos - ~30 Hz
-- TTL trigger events - 2 kHz sampling
-
-**Experimental Sessions**:
-1. **Hab_1**: Context habituation (Day 1)
-2. **Seizure_screening**: Seizure monitoring (Day 2, subset of animals)
-3. **Hab_2**: Second context habituation (Day 3)
-4. **Baseline_tone_flash_hab**: CS pre-exposure (Day 4, subset)
-5. **Cond**: Fear conditioning with CS-US pairings (Day 4)
-6. **Recall**: Fear response testing (Day 5)
+**For detailed information about the experimental procedure, subjects, data streams, devices, temporal alignment, and Spyglass compatibility, see [arc_ecephys_2024/notes.md](src/kind_lab_to_nwb/arc_ecephys_2024/notes.md).**
 
 #### Quick Start
 
@@ -174,18 +157,13 @@ data_directory/
 
 #### Spyglass Integration
 
-The module includes specialized utilities for Spyglass compatibility:
-
-```python
-# For Spyglass integration, use the custom branch
-git clone -b populate_sensor_data https://github.com/alessandratrapani/spyglass.git
-```
+The module includes specialized utilities for Spyglass compatibility
 
 The `spyglass_mock/` directory contains utilities for testing Spyglass integration and mock data generation.
 
 ### rat_behavioural_phenotyping_2025
 
-This module contains conversion scripts for various behavioral phenotyping experiments including:
+This module contains conversion scripts for various behavioral phenotyping experiments as part of the Rat Behavioural Phenotyping Pipeline developed at SIDB (Simons Initiative for the Developing Brain). The pipeline includes:
 
 - **Auditory Fear Conditioning**: Fear learning paradigms
 - **Marble Interaction**: Object interaction behaviors  
@@ -194,6 +172,8 @@ This module contains conversion scripts for various behavioral phenotyping exper
 - **One Trial Social**: Social behavior assessment
 - **Prey Capture**: Predatory behavior analysis
 - **Water Maze**: Spatial navigation tasks
+
+**For detailed information about experimental procedures, apparatus, analysis methods, and data streams for each behavioral task, see [rat_behavioural_phenotyping_2025/notes.md](src/kind_lab_to_nwb/rat_behavioural_phenotyping_2025/notes.md).**
 
 Each sub-module includes its own conversion scripts, metadata files, and analysis tutorials.
 

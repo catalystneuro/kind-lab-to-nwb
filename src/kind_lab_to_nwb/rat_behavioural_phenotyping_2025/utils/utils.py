@@ -1,6 +1,6 @@
 import re
+import struct
 import subprocess
-import uuid
 from datetime import datetime
 from pathlib import Path
 from shutil import rmtree
@@ -8,7 +8,6 @@ from typing import List
 
 import pandas as pd
 from pydantic import DirectoryPath, FilePath
-from pynwb.file import Subject
 
 
 def extract_subject_metadata_from_excel(subjects_metadata_file_path: FilePath) -> List[dict]:
@@ -163,6 +162,106 @@ def convert_ts_to_mp4(video_file_paths: List[FilePath]) -> List[FilePath]:
             except subprocess.CalledProcessError as e:
                 print(f"An error occurred: {e}")
 
+    return output_file_paths
+
+
+def convert_ffii_files_to_avi(
+    ffii_file_paths: List[str],
+    frame_rate: float = 7.5,
+) -> List[str]:
+    """
+    Convert a list of .ffii files to .avi files using ffmpeg.
+    Converted files are saved in a 'converted' subdirectory within the parent directory
+    of the original files. If a file is already in .avi or another supported format,
+    it is skipped. If the output file already exists, conversion is also skipped.
+
+    ## Requirements
+        - [ffmpeg](http://ffmpeg.org/download.html)
+
+    Parameters
+    ----------
+    ffii_file_paths : List[str]
+        List of paths to .ffii files to convert.
+    frame_rate : float, optional
+        Frame rate for the output video, by default 7.5.
+
+    Returns
+    -------
+    List[str]
+        List of output .avi file paths.
+    """
+
+    output_file_paths = []
+    for video_file_path in ffii_file_paths:
+        video_file_path = Path(video_file_path)
+        # Check if the input file exists
+        if not video_file_path.is_file():
+            raise FileNotFoundError(f"The file {video_file_path} does not exist.")
+        # Check if the input file is a .ffii file
+        if video_file_path.suffix.lower() != ".ffii":
+            # Check if the file is already in a supported format
+            if video_file_path.suffix.lower() in SUPPORTED_SUFFIXES:
+                print(
+                    f"Skipping conversion: {video_file_path.name} is already in {video_file_path.suffix} format, which is supported by DANDI."
+                )
+                output_file_paths.append(video_file_path)
+                continue
+            else:
+                raise ValueError(
+                    f"Unsupported file format: {video_file_path.name} has extension {video_file_path.suffix}, but only .ffii files can be converted."
+                )
+        # Create a subdirectory called "converted"
+        output_dir = Path(video_file_path).parent / "converted"
+        output_dir.mkdir(parents=True, exist_ok=True)
+        # Define the output file path by replacing the extension with .avi
+        output_file_path = output_dir / (video_file_path.stem + ".avi")
+        if output_file_path.exists():
+            print(f"The file {output_file_path} already exists. Skipping conversion.")
+            output_file_paths.append(output_file_path)
+            continue
+        print(f"Converting {video_file_path}...")
+        with open(video_file_path, "rb") as f:
+            m = f.read(8)
+            if len(m) < 8:
+                print(f"File {video_file_path} is too short to contain header, skipping.")
+                continue
+            height, width = struct.unpack(">2I", m)
+            rate = str(frame_rate)
+            cmdstr = (
+                "ffmpeg",
+                "-y",
+                "-r",
+                rate,
+                "-f",
+                "rawvideo",
+                "-pix_fmt",
+                "gray",
+                "-s",
+                f"{width}x{height}",
+                "-i",
+                "-",
+                "-c:v",
+                "ffv1",  # Lossless codec
+                output_file_path,
+            )
+            p = subprocess.Popen(cmdstr, stdin=subprocess.PIPE, shell=False)
+            try:
+                while True:
+                    img = f.read(width * height)
+                    if not img:
+                        break
+                    p.stdin.write(img)
+                    m = f.read(8)
+                    if not m:
+                        break
+                    height, width = struct.unpack(">2I", m)
+                p.stdin.close()
+                p.wait()
+                print(f"Saved in {output_file_path}")
+                output_file_paths.append(output_file_path)
+            except Exception as e:
+                print(f"Error during ffmpeg process for {video_file_path}: {e}")
+                p.kill()
     return output_file_paths
 
 

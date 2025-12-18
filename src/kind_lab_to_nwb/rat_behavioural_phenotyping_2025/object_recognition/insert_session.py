@@ -30,7 +30,7 @@ from kind_lab_to_nwb.spyglass_utils import (
 )
 
 
-nwb_file_name = "sub-408-Arid1b(3)_ses-MI-Test.nwb"
+nwb_file_name = "sub-1072-Grin2b(6)_ses-OR-HabD1.nwb"
 nwbfile_path = Path("/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/raw") / nwb_file_name
 nwb_copy_file_name = get_nwb_copy_filename(nwbfile_path.name)
 nwb_dict = dict(nwb_file_name=nwb_copy_file_name)
@@ -59,7 +59,7 @@ rg = RestrGraph(
     seed_table=sgc.Nwbfile,  # Any table
     leaves=dict(
         table_name=sgc.Nwbfile.full_table_name,  # Node to search from
-        restriction='nwb_file_name="sub-408-Arid1b(3)_ses-MI-Test_.nwb"',  # must be a string restr
+        restriction='nwb_file_name="sub-1072-Grin2b(6)_ses-OR-HabD1_.nwb"',  # must be a string restr
     ),
     direction="down",  # 'down' for descendants, 'up' for ancestors
     verbose=True,  # Log output to see connections

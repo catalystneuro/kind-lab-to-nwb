@@ -81,7 +81,7 @@ def print_tables(nwbfile_path):
 
 def main():
     nwbfile_path = Path(
-        "/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/raw/sub_Rat_1021-ses_Baseline_tone_flash_hab.nwb"
+        "/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/raw/sub-Rat-1021_ses-Baseline-tone-flash-hab.nwb"
     )
 
     clean_db_entry(nwbfile_path)

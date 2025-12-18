@@ -30,7 +30,7 @@ from kind_lab_to_nwb.spyglass_utils import (
 )
 
 
-nwb_file_name = "sub-408-Arid1b(3)_ses-MI-Test.nwb"
+nwb_file_name = "sub-1073-Grin2b(6)_ses-OLM-HabD2.nwb"
 nwbfile_path = Path("/media/alessandra/HD2/kind_lab_conversion_nwb/Spyglass/raw") / nwb_file_name
 nwb_copy_file_name = get_nwb_copy_filename(nwbfile_path.name)
 nwb_dict = dict(nwb_file_name=nwb_copy_file_name)
@@ -39,16 +39,16 @@ clean_db_entry(nwbfile_path)
 
 sgi.insert_sessions(str(nwbfile_path), rollback_on_fail=True, raise_err=True)
 
-nwbf = get_nwb_file(nwbfile_path)
+# nwbf = get_nwb_file(nwbfile_path)
 
-# Insert annotated events data
-events = AnnotatedEvents()
-if not events & nwb_dict:
-    events.insert_from_nwbfile(nwb_copy_file_name, nwbf)
+# # Insert annotated events data
+# events = AnnotatedEvents()
+# if not events & nwb_dict:
+#     events.insert_from_nwbfile(nwb_copy_file_name, nwbf)
 
-# Fetch actions DataFrame
-annotated_events_df = events.fetch1_dataframe("annotated_events")
-print(annotated_events_df.head())
+# # Fetch actions DataFrame
+# annotated_events_df = events.fetch1_dataframe("annotated_events")
+# print(annotated_events_df.head())
 
 print_tables(nwbfile_path)
 # %%
@@ -59,7 +59,7 @@ rg = RestrGraph(
     seed_table=sgc.Nwbfile,  # Any table
     leaves=dict(
         table_name=sgc.Nwbfile.full_table_name,  # Node to search from
-        restriction='nwb_file_name="sub-408-Arid1b(3)_ses-MI-Test_.nwb"',  # must be a string restr
+        restriction='nwb_file_name="sub-1073-Grin2b(6)_ses-OLM-HabD2_.nwb"',  # must be a string restr
     ),
     direction="down",  # 'down' for descendants, 'up' for ancestors
     verbose=True,  # Log output to see connections

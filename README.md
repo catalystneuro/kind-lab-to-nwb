@@ -226,3 +226,44 @@ For questions about specific conversions or to report issues, please:
   - [EMBER:000203](https://dandi.emberarchive.org/dandiset/000203) - One Trial Social
   - [EMBER:000204](https://dandi.emberarchive.org/dandiset/000204) - Prey Capture
   - [EMBER:000205](https://dandi.emberarchive.org/dandiset/000205) - Water Maze
+
+
+# Spyglass 
+## Spyglass Setup Instructions
+
+### Before Installing Mamba
+I recommend uninstalling any Conda and/or Mamba distributions that you have installed already. This will help avoid issues with competing conda/mamba locations. 
+
+### Mamba* (on MacOS)
+1. Install Homebrew
+2. Install mambaforge: `brew install --cask mambaforge`
+3. Run `mamba info` to check that mamba is working*
+    a. If you get `zsh: command not found: mamba`, you might need to update your .zshrc or .bashrc file
+*There are several different ways to install Mamba, including Miniforge and conda-forge. To my knowledge, all of them work equally well. 
+
+### Spyglass Environment
+1. Navigate to the Spyglass directory
+2. Create the Spyglass environment as specified: `mamba env create -f environment.yml`
+3. Activate the Spyglass environment: `mamba activate spyglass`
+4. Install kachery-cloud: `pip install kachery-cloud`
+
+### Spyglass Setup
+
+1. Run the docker container: `docker run --name spyglass-db -p 3306:3306 -e MYSQL_ROOT_PASSWORD=tutorial datajoint/mysql:8.0`
+2. Open [00_Setup.ipynb](https://github.com/LorenFrankLab/spyglass/blob/master/notebooks/00_Setup.ipynb) in VSCode
+3. In the first code cell,
+    - change base_dir to a new directory where you would like to store all the spyglass output files. This should be different from the directory where the spyglass git repo is stored.
+    - change database_user to “root”
+    - change database_password to “tutorial”
+    - change database_host to “localhost”
+4. Run the first code cell
+    - When prompted,
+        a. enter user name: root
+        b. enter password: tutorial
+        c. Update local setting: yes
+        d. Replace existing file: yes
+    - This will create a dj_local_conf.json file with all the relevant info for spyglass configuration
+5. In the dj_local_conf.json file (Line 15), set database.use_tls to false 
+6. On Docker Desktop, stop and delete the spyglass-db container
+7. Run a new docker container with a mounted volume: docker run --name spyglass-db -v dj-vol:/var/lib/mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=tutorial datajoint/mysql
+8. If you HAVE already converted the .nwb files --> move/copy them to base_dir/raw (where base_dir is the directory that you chose for Step 3).
